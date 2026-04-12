@@ -1,0 +1,29 @@
+services:
+  ezbookkeeping:
+    image: mayswind/ezbookkeeping
+    container_name: ezbookkeeping
+
+    ports:
+      - "8090:8080"
+
+    volumes:
+      - /home/diipak/finance/ezbookkeeping/data:/ezbookkeeping/data
+
+    restart: unless-stopped
+
+    environment:
+      - EZBOOKKEEPING_SECRET_KEY=deepak-finance-ezbookkeeping-secret-2026
+
+    networks:
+      - homepage_default
+
+    labels:
+      - homepage.group=Finance
+      - homepage.name=ezBookkeeping
+      - homepage.icon=mdi-cash
+      - homepage.href=http://100.102.237.96:8090
+      - homepage.description=Personal Finance Tracker
+
+networks:
+  homepage_default:
+    external: true
