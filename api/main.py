@@ -5,6 +5,7 @@ import os
 import json
 import pandas as pd
 import logging
+import sys
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Body
 from api.services.preview_service import load_preview
@@ -20,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 UPLOAD_DIR = BASE_DIR / "api" / "uploads"
 RULE_FILE = BASE_DIR / "pipeline" / "merchant_rules.json"
-VENV_PYTHON = BASE_DIR / "pipeline" / "venv" / "bin" / "python"
+VENV_PYTHON = sys.executable
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -66,12 +67,17 @@ def get_recent_imports():
             
             try:
                 df = pd.read_csv(file_path)
+                account_val = "Unknown"
+                if "Account" in df.columns and not df.empty:
+                    val = df["Account"].iloc[0]
+                    if pd.notna(val):
+                        account_val = str(val)
                 imports.append({
                     "id": file_id,
                     "filename": f,
                     "date": pd.to_datetime(stats.st_mtime, unit='s').strftime('%Y-%m-%d %H:%M:%S'),
                     "transactions": len(df),
-                    "account": df["Account"].iloc[0] if "Account" in df.columns and not df.empty else "Unknown"
+                    "account": account_val
                 })
             except Exception as e:
                 logger.error(f"Error reading {f}: {e}")
@@ -87,7 +93,7 @@ def preview(file_id: str):
     return {"transactions": data}
 
 @app.post("/import")
-async def import_file(file: UploadFile = File(...)):
+def import_file(file: UploadFile = File(...)):
     file_id = str(uuid.uuid4())
     extension = Path(file.filename).suffix.lower()
     
@@ -101,25 +107,13 @@ async def import_file(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     try:
-        # 1. Parsing Phase
-        if extension == ".csv":
-            shutil.copy(input_path, parsed_path)
-        elif extension == ".pdf":
-            pipeline_script = BASE_DIR / "pipeline" / "pdf_pipeline.py"
-            result = subprocess.run([str(VENV_PYTHON), str(pipeline_script), str(input_path), str(parsed_path)], 
-                                 cwd=str(BASE_DIR), capture_output=True, text=True)
-            if result.returncode != 0:
-                logger.error(f"PDF Pipeline failed: {result.stderr}")
-                return {"error": "Parsing failed", "details": result.stderr}
-        elif extension in [".xlsx", ".xls"]:
-            pipeline_script = BASE_DIR / "pipeline" / "excel_pipeline.py"
-            result = subprocess.run([str(VENV_PYTHON), str(pipeline_script), str(input_path), str(parsed_path)], 
-                                 cwd=str(BASE_DIR), capture_output=True, text=True)
-            if result.returncode != 0:
-                logger.error(f"Excel Pipeline failed: {result.stderr}")
-                return {"error": "Parsing failed", "details": result.stderr}
-        else:
-            return {"error": f"Unsupported file type: {extension}"}
+        # 1. Parsing Phase (Unified Orchestrator)
+        orchestrator_script = BASE_DIR / "pipeline" / "orchestrator.py"
+        result = subprocess.run([str(VENV_PYTHON), str(orchestrator_script), str(input_path), str(parsed_path)], 
+                             cwd=str(BASE_DIR), capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.error(f"Orchestrator failed: {result.stderr}")
+            return {"error": "Parsing failed", "details": result.stderr}
 
         # 2. Categorization Phase
         categorize_script = BASE_DIR / "pipeline" / "categorize.py"
@@ -142,3 +136,7 @@ async def import_file(file: UploadFile = File(...)):
     except Exception as e:
         logger.error(f"Unexpected error during import: {e}")
         return {"error": str(e)}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

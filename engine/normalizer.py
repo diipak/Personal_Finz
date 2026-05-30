@@ -21,9 +21,7 @@ def normalize(description: str):
 
     text = text.strip()
 
-    words = text.split()
-
-    if words:
-        return words[0]
+    # Ensure single spaces between words
+    text = " ".join(text.split())
 
     return text

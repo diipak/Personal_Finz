@@ -14,17 +14,30 @@ with open(RULE_PATH) as f:
 transfer_keywords = RULES.get("transfer_keywords", [])
 merchant_categories = RULES.get("merchant_categories", {})
 
-def categorize(description):
+import re
 
+def categorize(description):
     desc = str(description).lower() if description is not None else ""
 
     for word in transfer_keywords:
-        if word in desc:
+        if re.search(rf"\b{re.escape(word)}\b", desc):
             return "Transfer"
 
     merchant = normalize(desc)
 
-    if merchant in merchant_categories:
-        return merchant_categories[merchant]
+    # First, try strict regex matching if the rule is defined as a regex pattern
+    for pattern, category in merchant_categories.items():
+        if not pattern: continue
+        # Simple heuristic: if pattern contains special regex characters, compile as regex
+        if any(c in pattern for c in [".*", "^", "$", "\\", "(", "["]):
+            try:
+                if re.search(pattern, merchant, re.IGNORECASE):
+                    return category
+            except re.error:
+                pass
+        
+        # Fallback to word boundary match
+        if re.search(rf"\b{re.escape(pattern)}\b", merchant, re.IGNORECASE):
+            return category
 
     return None

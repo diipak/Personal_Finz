@@ -13,7 +13,7 @@ services:
 
     environment:
       - EZBOOKKEEPING_SECRET_KEY=deepak-finance-ezbookkeeping-secret-2026
-
+      - EBK_SECURITY_ENABLE_API_TOKEN=true
     networks:
       - homepage_default
 

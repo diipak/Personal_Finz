@@ -1,0 +1,34 @@
+# Environment variables
+.env
+.env.*
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+pipeline/venv/
+
+# User Uploaded Data (containing PII)
+api/uploads/*
+!api/uploads/.gitkeep
+statements/*
+!statements/.gitkeep
+
+# Local Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# OS metadata
+.DS_Store
+Thumbs.db
