@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Import Statement - Fintech UI</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Import Statement - FinFlow</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -44,9 +43,9 @@
     <a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="/">Dashboard</a>
     <a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="/import-ui">Import Statement</a>
     <a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="/rules">Rules Engine</a>
-    <a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="/review">Reports</a>
+    <a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="/review">Review</a>
 </div>
-<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-slate-200 dark:border-slate-800" data-alt="User profile avatar circle" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDrwkUTIbPlcIETM95i9JG6rzGf3ILAXSoPs0M5BNYf99P-Hb9L_reNd4rpWU7FDMSZUpBLIrHAF090M1QeTlotxTPRjA0b7bUT3yRnuH4QTE7td4nBs-HgJGSAtu3g3s9dzxanzZICnHIuTq0-Fxclfi0k7SW6hOL6XrVR_HwLa2GkZnkv0iOA3qRDDJvhC2OrL-A_tIG3FRZd3vfvXPY6DDSCpCPIHtpdVdNLM13YsP684w61W-a1nIj2qv-Mo4O7VriuTvjTDbQY");'></div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-slate-200 dark:border-slate-800" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDrwkUTIbPlcIETM95i9JG6rzGf3ILAXSoPs0M5BNYf99P-Hb9L_reNd4rpWU7FDMSZUpBLIrHAF090M1QeTlotxTPRjA0b7bUT3yRnuH4QTE7td4nBs-HgJGSAtu3g3s9dzxanzZICnHIuTq0-Fxclfi0k7SW6hOL6XrVR_HwLa2GkZnkv0iOA3qRDDJvhC2OrL-A_tIG3FRZd3vfvXPY6DDSCpCPIHtpdVdNLM13YsP684w61W-a1nIj2qv-Mo4O7VriuTvjTDbQY");'></div>
 </div>
 </header>
 <div class="flex flex-wrap gap-2 p-4 mt-2">
@@ -57,78 +56,72 @@
 <span class="text-slate-300 dark:text-slate-600 text-sm font-medium leading-normal">/</span>
 <span class="text-primary text-sm font-semibold leading-normal">Import Statement</span>
 </div>
+
 <div class="flex flex-wrap justify-between gap-3 p-4">
 <div class="flex min-w-72 flex-col gap-1">
 <p class="text-slate-900 dark:text-slate-100 text-3xl font-extrabold leading-tight tracking-[-0.033em]">Import Transactions</p>
-<p class="text-slate-500 dark:text-slate-400 text-base font-normal leading-normal">Sync your financial data by uploading a CSV statement.</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Choose target account and upload a CSV, Excel, or PDF bank statement.</p>
 </div>
 </div>
-<div class="flex flex-col p-4">
-<div id="drop-zone" class="flex flex-col items-center gap-6 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-6 py-14 hover:border-primary transition-colors group cursor-pointer">
-<div class="flex flex-col items-center gap-4">
-<div class="size-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-<span class="material-symbols-outlined text-3xl text-primary">upload_file</span>
+
+<!-- Account Selection & Dropzone -->
+<div class="flex flex-col p-4 gap-4">
+    <div class="w-full max-w-sm mb-2">
+        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Target Account:</label>
+        <select id="account-select" class="w-full text-sm rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5">
+            <option value="Revolut">Revolut (CSV/PDF)</option>
+            <option value="HDFC">HDFC (Excel/PDF)</option>
+            <option value="Commerzbank">Commerzbank (PDF)</option>
+            <option value="Advanzia Bank credit card">Advanzia Bank (PDF)</option>
+            <option value="Wise">Wise (CSV)</option>
+            <option value="Trade Republic">Trade Republic (PDF)</option>
+        </select>
+    </div>
+
+    <div id="drop-zone" class="flex flex-col items-center gap-6 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-6 py-14 hover:border-primary transition-colors group cursor-pointer">
+        <div class="flex flex-col items-center gap-4">
+            <div class="size-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <span class="material-symbols-outlined text-3xl text-primary">upload_file</span>
+            </div>
+            <div class="flex max-w-[480px] flex-col items-center gap-2">
+                <p class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] text-center">Drag and drop your statement here</p>
+                <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal text-center">Supports CSV, Excel, and PDF files</p>
+            </div>
+        </div>
+        <input type="file" id="file-input" class="hidden" accept=".csv,.xlsx,.xls,.pdf" />
+        <button id="select-file-btn" class="flex min-w-[140px] items-center justify-center rounded-lg h-11 px-6 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-all shadow-md">
+            <span class="truncate">Select File</span>
+        </button>
+    </div>
 </div>
-<div class="flex max-w-[480px] flex-col items-center gap-2">
-<p class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] text-center">Drag and drop your CSV here</p>
-<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal text-center">Supports .csv (Max 10MB)</p>
-</div>
-</div>
-<input type="file" id="file-input" class="hidden" accept=".csv,.xlsx,.xls,.pdf" />
-<button id="select-file-btn" class="flex min-w-[140px] items-center justify-center rounded-lg h-11 px-6 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-all shadow-md">
-<span class="truncate">Select File</span>
-</button>
-</div>
-</div>
+
+<!-- Upload Progress & Success States -->
 <div id="status-container" class="p-4 hidden">
-    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 flex items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-            <div id="status-icon" class="size-12 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                <span class="material-symbols-outlined">auto_fix_high</span>
-            </div>
-            <div>
-                <h3 id="status-title" class="text-slate-900 dark:text-slate-100 text-lg font-bold">Processing...</h3>
-                <p id="status-desc" class="text-slate-500 dark:text-slate-400 text-sm">Uploading and categorizing transactions.</p>
-            </div>
+    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 flex flex-col items-center justify-center gap-4 text-center">
+        <div id="status-icon" class="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary animate-bounce">
+            <span id="status-sym" class="material-symbols-outlined text-3xl">autorenew</span>
+        </div>
+        <div>
+            <h3 id="status-title" class="text-slate-900 dark:text-slate-100 text-lg font-bold">Uploading File...</h3>
+            <p id="status-desc" class="text-slate-500 dark:text-slate-400 text-sm">Processing transactions, running rules, and matching categories.</p>
+        </div>
+        <div id="done-actions" class="hidden mt-2">
+            <a href="/" class="px-6 py-2.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 shadow-md">Go to Dashboard</a>
         </div>
     </div>
 </div>
-<div id="preview-container" class="flex flex-col p-4 gap-4 hidden">
-<div class="flex items-center justify-between">
-<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-[-0.015em]">Preview Parsed Transactions</h2>
-<div class="flex items-center gap-2">
-<span id="txn-count" class="text-slate-500 dark:text-slate-400 text-sm">0 transactions found</span>
-</div>
-</div>
-<div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-<th class="px-4 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Date</th>
-<th class="px-4 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Description</th>
-<th class="px-4 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider text-right">Amount</th>
-<th class="px-4 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Category</th>
-<th class="px-4 py-4 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Account</th>
-</tr>
-</thead>
-<tbody id="preview-body" class="divide-y divide-slate-100 dark:divide-slate-800">
-    <!-- Preview data will go here -->
-</tbody>
-</table>
-<div class="px-4 py-4 flex items-center justify-end border-t border-slate-200 dark:border-slate-800">
-<div class="flex gap-3">
-<button onclick="window.location.reload()" class="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Cancel</button>
-<button onclick="window.location.href='/'" class="px-6 py-2 text-sm font-bold bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-sm">Done</button>
-</div>
-</div>
-</div>
-</div>
+
 <script>
     const fileInput = document.getElementById('file-input');
     const dropZone = document.getElementById('drop-zone');
     const selectFileBtn = document.getElementById('select-file-btn');
     const statusContainer = document.getElementById('status-container');
-    const previewContainer = document.getElementById('preview-container');
+    const statusIcon = document.getElementById('status-icon');
+    const statusSym = document.getElementById('status-sym');
+    const statusTitle = document.getElementById('status-title');
+    const statusDesc = document.getElementById('status-desc');
+    const doneActions = document.getElementById('done-actions');
+    const accountSelect = document.getElementById('account-select');
 
     selectFileBtn.onclick = () => fileInput.click();
 
@@ -156,11 +149,14 @@
     };
 
     async function uploadFile(file) {
+        const selectedAccount = accountSelect.value;
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('account', selectedAccount);
 
         statusContainer.classList.remove('hidden');
         dropZone.classList.add('hidden');
+        document.querySelector('.max-w-sm').classList.add('hidden'); // Hide dropdown
 
         try {
             const response = await fetch('/import', {
@@ -168,91 +164,45 @@
                 body: formData
             });
             const data = await response.json();
-            loadPreview(data.file_id);
+            
+            if (data.status === 'success') {
+                statusIcon.classList.remove('bg-primary/10', 'text-primary', 'animate-bounce');
+                statusIcon.classList.add('bg-emerald-100', 'dark:bg-emerald-900/30', 'text-emerald-500');
+                statusSym.textContent = "check_circle";
+                statusTitle.textContent = "Import Complete!";
+                statusDesc.textContent = `Successfully processed and imported ${data.inserted_count} transactions for account: ${selectedAccount}.`;
+                doneActions.classList.remove('hidden');
+            } else {
+                throw new Error(data.error || data.details || "Unknown error occurred");
+            }
         } catch (error) {
             console.error('Upload failed:', error);
-            alert('Upload failed');
-            statusContainer.classList.add('hidden');
-            dropZone.classList.remove('hidden');
+            statusIcon.classList.remove('bg-primary/10', 'text-primary', 'animate-bounce');
+            statusIcon.classList.add('bg-red-100', 'dark:bg-red-900/30', 'text-red-500');
+            statusSym.textContent = "error";
+            statusTitle.textContent = "Import Failed";
+            statusDesc.textContent = error.message;
+            
+            const retryBtn = document.createElement('button');
+            retryBtn.className = "mt-4 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-lg";
+            retryBtn.textContent = "Retry";
+            retryBtn.onclick = () => window.location.reload();
+            doneActions.parentElement.appendChild(retryBtn);
         }
-    }
-
-    async function loadPreview(fileId) {
-        try {
-            const response = await fetch(`/preview/${fileId}`);
-            const data = await response.json();
-            
-            if (data.error) {
-                console.error('Error from backend:', data.error);
-                alert('Backend error: ' + data.error);
-                statusContainer.classList.add('hidden');
-                dropZone.classList.remove('hidden');
-                return;
-            }
-
-            if (!data.transactions) {
-                console.error('No transactions found in response:', data);
-                alert('No transactions could be loaded.');
-                statusContainer.classList.add('hidden');
-                dropZone.classList.remove('hidden');
-                return;
-            }
-
-            const previewBody = document.getElementById('preview-body');
-            previewBody.innerHTML = '';
-            
-            data.transactions.forEach(txn => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors';
-                row.innerHTML = `
-                    <td class="px-4 py-4 text-sm text-slate-600 dark:text-slate-400">${txn['Completed Date'] || txn['Date'] || ''}</td>
-                    <td class="px-4 py-4 text-sm font-medium text-slate-900 dark:text-slate-100">${txn['Description']}</td>
-                    <td class="px-4 py-4 text-sm font-bold ${txn['Amount'] < 0 ? 'text-slate-900 dark:text-slate-100' : 'text-emerald-500'} text-right">
-                        ${txn['Amount'] < 0 ? '' : '+'}${txn['Amount']} ${txn['Currency'] || ''}
-                    </td>
-                    <td class="px-4 py-4 text-sm">
-                        <span class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400">
-                            ${txn['Category'] || 'Uncategorized'}
-                        </span>
-                    </td>
-                    <td class="px-4 py-4 text-sm">
-                        <span class="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-1 text-xs font-medium text-slate-600 dark:text-slate-400">
-                            ${txn['Account'] || 'Unknown'}
-                        </span>
-                    </td>
-                `;
-                previewBody.appendChild(row);
-            });
-
-            document.getElementById('txn-count').textContent = `${data.transactions.length} transactions found`;
-            
-            statusContainer.classList.add('hidden');
-            previewContainer.classList.remove('hidden');
-
-        } catch (error) {
-            console.error('Failed to load preview:', error);
-            alert('Error loading preview');
-        }
-    }
-
-    // Check for file_id in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const fileId = urlParams.get('file_id');
-    if (fileId) {
-        dropZone.classList.add('hidden');
-        loadPreview(fileId);
     }
 </script>
+
 <footer class="mt-12 mb-8 px-4 flex flex-col items-center gap-4 text-slate-400 text-sm">
-<div class="flex items-center gap-4">
-<a class="hover:text-primary transition-colors" href="#">Security</a>
-<a class="hover:text-primary transition-colors" href="#">Privacy</a>
-<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
-</div>
-<p>© 2023 FinFlow Technologies Inc. All rights reserved.</p>
+    <div class="flex items-center gap-4">
+        <a class="hover:text-primary transition-colors" href="#">Security</a>
+        <a class="hover:text-primary transition-colors" href="#">Privacy</a>
+        <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+    </div>
+    <p>© 2026 FinFlow Technologies. All rights reserved.</p>
 </footer>
 </div>
 </div>
 </div>
 </div>
-</body></html>
+</body>
+</html>

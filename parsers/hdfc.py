@@ -1,6 +1,6 @@
 import pandas as pd
 
-def parse_excel(file_path):
+def parse(file_path):
     # read without header first to find the correct header row
     df_raw = pd.read_excel(file_path, header=None)
     

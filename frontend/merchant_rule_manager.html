@@ -1,17 +1,13 @@
 <!DOCTYPE html>
-
-<html class="light" lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Merchant Rules Manager</title>
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<!-- Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<!-- Tailwind CSS -->
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script id="tailwind-config">
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Merchant Rules Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -38,75 +34,159 @@
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
 <div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
 <div class="layout-container flex h-full grow flex-col">
-<!-- Top Navigation Bar -->
-<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark px-6 md:px-10 py-3 sticky top-0 z-10">
-<div class="flex items-center gap-8">
-<div class="flex items-center gap-3">
-<div class="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
-<span class="material-symbols-outlined text-xl" data-icon="settings_ethernet">settings_ethernet</span>
+    <!-- Top Navigation Bar -->
+    <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark px-6 md:px-10 py-3 sticky top-0 z-10">
+        <div class="flex items-center gap-8">
+            <div class="flex items-center gap-3">
+                <div class="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-xl">settings_ethernet</span>
+                </div>
+                <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">Rules Engine</h2>
+            </div>
+            <div class="hidden md:flex items-center">
+                <nav class="flex items-center gap-6 ml-8">
+                    <a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="/">Dashboard</a>
+                    <a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="/import-ui">Import Statement</a>
+                    <a class="text-sm font-bold text-primary" href="/rules">Rules Engine</a>
+                    <a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="/review">Review</a>
+                </nav>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="openRuleModal()" class="flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold transition-colors hover:bg-primary/90">
+                <span class="material-symbols-outlined text-lg">add</span>
+                <span class="truncate">Add Rule</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col max-w-[1200px] mx-auto w-full px-6 py-8">
+        <!-- Page Header -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+            <div class="flex flex-col gap-1">
+                <h1 class="text-slate-900 dark:text-slate-100 text-3xl font-bold leading-tight">Merchant Rules Manager</h1>
+                <p class="text-slate-500 dark:text-slate-400 text-sm">Create high-precision matching rules with regex, amount filters, and display names.</p>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-slate-500">
+                <span class="material-symbols-outlined text-base">info</span>
+                <span id="active-rules-count">0 active rules</span>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="bg-white dark:bg-background-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                            <th class="px-6 py-4 font-semibold">Match Pattern</th>
+                            <th class="px-6 py-4 font-semibold">Match Type</th>
+                            <th class="px-6 py-4 font-semibold">Category</th>
+                            <th class="px-6 py-4 font-semibold">Display Name Mapped</th>
+                            <th class="px-6 py-4 font-semibold">Flexibility</th>
+                            <th class="px-6 py-4 font-semibold">Limits (Min/Max)</th>
+                            <th class="px-6 py-4 font-semibold text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rules-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <!-- Rules populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rule Editor Modal -->
+    <div id="rule-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 w-full max-w-lg p-6 shadow-2xl space-y-4">
+            <h3 id="modal-title" class="text-lg font-bold">Add Matching Rule</h3>
+            <form id="rule-form" onsubmit="saveRuleForm(event)" class="space-y-4 text-xs">
+                <input type="hidden" id="rule-id"/>
+                <div>
+                    <label class="block font-semibold text-slate-500 mb-1">Pattern</label>
+                    <input type="text" id="rule-pattern" required class="w-full rounded border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-2 text-xs"/>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-500 mb-1">Match Type</label>
+                        <select id="rule-match-type" class="w-full rounded border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-2 text-xs">
+                            <option value="substring">Substring (contains)</option>
+                            <option value="exact">Exact Match</option>
+                            <option value="regex">Regular Expression</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-500 mb-1">Category</label>
+                        <select id="rule-category" required class="w-full rounded border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-2 text-xs">
+                            <!-- Populated in JS -->
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-500 mb-1">Display Name (Optional)</label>
+                        <input type="text" id="rule-display-name" class="w-full rounded border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-2 text-xs" placeholder="e.g. Netflix"/>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-500 mb-1">Flexibility Layer</label>
+                        <select id="rule-flexibility" class="w-full rounded border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-2 text-xs">
+                            <option value="">Default (Based on Category)</option>
+                            <option value="Fixed">Fixed Expense</option>
+                            <option value="Flexible">Flexible Expense</option>
+                            <option value="Discretionary">Discretionary Expense</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block font-semibold text-slate-500 mb-1">Min Amount (EUR)</label>
+                        <input type="number" step="0.01" id="rule-amount-min" class="w-full rounded border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-2 text-xs" placeholder="None"/>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-500 mb-1">Max Amount (EUR)</label>
+                        <input type="number" step="0.01" id="rule-amount-max" class="w-full rounded border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-2 text-xs" placeholder="None"/>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-500 mb-1">Priority</label>
+                        <input type="number" id="rule-priority" value="0" class="w-full rounded border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 p-2 text-xs"/>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeRuleModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 font-bold rounded-lg text-slate-700 dark:text-slate-200">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/95 shadow-md shadow-primary/20">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
-<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">Rules Engine</h2>
 </div>
-<div class="hidden md:flex items-center">
-    <nav class="flex items-center gap-6 ml-8">
-        <a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="/">Dashboard</a>
-        <a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="/import-ui">Import Statement</a>
-        <a class="text-sm font-bold text-primary" href="/rules">Rules Engine</a>
-        <a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="/review">Review</a>
-    </nav>
-</div>
-</div>
-<div class="flex items-center gap-4">
-<button onclick="addRule()" class="flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold transition-colors hover:bg-primary/90">
-<span class="material-symbols-outlined text-lg" data-icon="add">add</span>
-<span class="truncate">Add Rule</span>
-</button>
-<div class="h-10 w-10 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
-<img alt="User profile" class="h-full w-full object-cover" data-alt="User profile avatar circle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvc-UVLXnPmWWk6r4TCezYE_uT53cwOfUG7eG2r8CkPXc5QVop14h0m9kpe3lvDKwbRRjLTXpMraEX3X1bka9gVH0G0GQH1Sv6v3AdttBKyzBm5LyT1cp2XymtfJR8ZZwd-_9NNOCwIMGNKzmfU7io7SLajqTo1SKQOeqJkViri3HUMMP4d09v8tIn8wQa1PpU_kmjVA5cM4KLtazXAhpTwXlhRAjz3tYTkCyniUhSy4A-otsFg7riDvWjx2QXtTgsqg1MpeMDbv4q"/>
-</div>
-</div>
-</header>
-<main class="flex-1 flex flex-col max-w-[1200px] mx-auto w-full px-6 py-8">
-<!-- Page Header -->
-<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
-<div class="flex flex-col gap-1">
-<h1 class="text-slate-900 dark:text-slate-100 text-3xl font-bold leading-tight">Merchant Rules Manager</h1>
-<p class="text-slate-500 dark:text-slate-400 text-sm">Automate transaction categorization using pattern matching.</p>
-</div>
-<div class="flex items-center gap-2 text-sm text-slate-500">
-<span class="material-symbols-outlined text-base" data-icon="info">info</span>
-<span id="active-rules-count">0 active rules</span>
-</div>
-</div>
-<!-- Table Container -->
-<div class="bg-white dark:bg-background-dark rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[40%]">Merchant Pattern</th>
-<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[40%]">Category</th>
-<th class="px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[20%] text-right">Actions</th>
-</tr>
-</thead>
-<tbody id="rules-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
-    <!-- Rules populated here -->
-</tbody>
-</table>
-</div>
-</div>
-<div class="mt-4 flex justify-end">
-    <button onclick="saveRules()" class="px-6 py-2 bg-emerald-500 text-white font-bold rounded-lg hover:bg-emerald-600 transition-colors">Save Changes</button>
-</div>
-</main>
 
 <script>
-    let allRules = {};
+    const ALLOWED_CATEGORIES = [
+        "Food", "Drink", "Fruit & Snack", "Clothing", "Jewelry", "Cosmetic", "Hair Cuts & Salon", 
+        "Houseware", "Electronics", "Repairs & Maintenance", "Utilities", "Rent", "Public Transit", 
+        "Taxi & Car Rental", "Personal Car Expense", "Train Tickets", "Airline Tickets", "Telephone Bill", 
+        "Internet Bill", "Express Fee", "Sports & Fitness", "Party Expense", "Movies & Shows", "Toys & Games", 
+        "Subscription", "Pet Expense", "Travel", "Books & Magazines", "Training Courses", "Certification", 
+        "Gifts", "Donations", "Diagnosis & Treatment", "Medications", "Medical Devices", "Tax", 
+        "Service Charge", "Insurance", "Interest Expense", "Compensation & Fine", "Transfer", "Income", "Other"
+    ];
+
+    let rulesList = [];
+
+    // Populate Categories dropdown
+    const catSelect = document.getElementById('rule-category');
+    ALLOWED_CATEGORIES.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
+    });
 
     async function loadRules() {
         try {
             const response = await fetch('/api/rules');
-            allRules = await response.json();
+            rulesList = await response.json();
             renderRules();
         } catch (error) {
             console.error('Failed to load rules:', error);
@@ -116,83 +196,116 @@
     function renderRules() {
         const tableBody = document.getElementById('rules-table-body');
         tableBody.innerHTML = '';
-        
-        const merchants = allRules.merchant_categories || {};
-        const merchantKeys = Object.keys(merchants).sort();
 
-        merchantKeys.forEach(merchant => {
+        rulesList.forEach(rule => {
+            const min_amt = rule.amount_min !== null ? `${rule.amount_min}` : '-';
+            const max_amt = rule.amount_max !== null ? `${rule.amount_max}` : '-';
             const row = document.createElement('tr');
             row.className = 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors';
             row.innerHTML = `
-                <td class="px-6 py-4">
-                    <input type="text" value="${merchant}" class="bg-transparent border-none focus:ring-1 focus:ring-primary rounded px-2 py-1 w-full text-sm font-medium text-slate-900 dark:text-slate-100" onchange="updateMerchantName('${merchant}', this.value)" />
-                </td>
-                <td class="px-6 py-4">
-                    <select class="bg-transparent border-none focus:ring-1 focus:ring-primary rounded px-2 py-1 w-full text-sm text-slate-600 dark:text-slate-300" onchange="updateCategory('${merchant}', this.value)">
-                        ${['Groceries', 'Travel', 'Utilities', 'Subscription', 'Transfer', 'Shopping', 'Income', 'Dining', 'Fuel', 'Rent', 'Insurance', 'Transport', 'Entertainment', 'Other', 'Self Transfer'].map(cat => 
-                            `<option value="${cat}" ${merchants[merchant] === cat ? 'selected' : ''}>${cat}</option>`
-                        ).join('')}
-                    </select>
-                </td>
-                <td class="px-6 py-4 text-right">
-                    <button onclick="deleteRule('${merchant}')" class="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
-                        <span class="material-symbols-outlined text-xl">delete</span>
+                <td class="px-6 py-4 font-semibold text-slate-900 dark:text-slate-100">${rule.pattern}</td>
+                <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-xs bg-slate-100 dark:bg-slate-800">${rule.match_type}</span></td>
+                <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-xs bg-primary/10 text-primary font-bold">${rule.category}</span></td>
+                <td class="px-6 py-4 text-slate-500">${rule.display_name || '-'}</td>
+                <td class="px-6 py-4 text-slate-500">${rule.flexibility || '-'}</td>
+                <td class="px-6 py-4 text-slate-500">${min_amt} / ${max_amt}</td>
+                <td class="px-6 py-4 text-right flex justify-end gap-1">
+                    <button onclick='editRule(${JSON.stringify(rule)})' class="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <span class="material-symbols-outlined text-base">edit</span>
+                    </button>
+                    <button onclick="deleteRule(${rule.id})" class="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <span class="material-symbols-outlined text-base">delete</span>
                     </button>
                 </td>
             `;
             tableBody.appendChild(row);
         });
 
-        document.getElementById('active-rules-count').textContent = `${merchantKeys.length} active rules`;
+        document.getElementById('active-rules-count').textContent = `${rulesList.length} active rules`;
     }
 
-    function updateMerchantName(oldName, newName) {
-        if (oldName === newName) return;
-        const category = allRules.merchant_categories[oldName];
-        delete allRules.merchant_categories[oldName];
-        allRules.merchant_categories[newName] = category;
-        renderRules();
+    function openRuleModal() {
+        document.getElementById('rule-form').reset();
+        document.getElementById('rule-id').value = '';
+        document.getElementById('modal-title').textContent = "Add Matching Rule";
+        document.getElementById('rule-modal').classList.remove('hidden');
     }
 
-    function updateCategory(merchant, newCategory) {
-        allRules.merchant_categories[merchant] = newCategory;
+    function closeRuleModal() {
+        document.getElementById('rule-modal').classList.add('hidden');
     }
 
-    function deleteRule(merchant) {
-        if (confirm(`Delete rule for ${merchant}?`)) {
-            delete allRules.merchant_categories[merchant];
-            renderRules();
+    function editRule(rule) {
+        document.getElementById('rule-id').value = rule.id;
+        document.getElementById('rule-pattern').value = rule.pattern;
+        document.getElementById('rule-match-type').value = rule.match_type;
+        document.getElementById('rule-category').value = rule.category;
+        document.getElementById('rule-display-name').value = rule.display_name || '';
+        document.getElementById('rule-flexibility').value = rule.flexibility || '';
+        document.getElementById('rule-amount-min').value = rule.amount_min !== null ? rule.amount_min : '';
+        document.getElementById('rule-amount-max').value = rule.amount_max !== null ? rule.amount_max : '';
+        document.getElementById('rule-priority').value = rule.priority;
+        document.getElementById('modal-title').textContent = "Edit Matching Rule";
+        document.getElementById('rule-modal').classList.remove('hidden');
+    }
+
+    async function saveRuleForm(e) {
+        e.preventDefault();
+        
+        const id = document.getElementById('rule-id').value;
+        const pattern = document.getElementById('rule-pattern').value;
+        const match_type = document.getElementById('rule-match-type').value;
+        const category = document.getElementById('rule-category').value;
+        const display_name = document.getElementById('rule-display-name').value || null;
+        const flexibility = document.getElementById('rule-flexibility').value || null;
+        
+        const min_val = document.getElementById('rule-amount-min').value;
+        const amount_min = min_val !== '' ? parseFloat(min_val) : null;
+        
+        const max_val = document.getElementById('rule-amount-max').value;
+        const amount_max = max_val !== '' ? parseFloat(max_val) : null;
+        
+        const priority = parseInt(document.getElementById('rule-priority').value) || 0;
+
+        const payload = {
+            pattern, match_type, category, display_name, flexibility, amount_min, amount_max, priority
+        };
+        if (id) {
+            payload.id = parseInt(id);
         }
-    }
 
-    function addRule() {
-        const merchant = prompt("Enter merchant name pattern:");
-        if (merchant) {
-            if (!allRules.merchant_categories) allRules.merchant_categories = {};
-            allRules.merchant_categories[merchant] = "Other";
-            renderRules();
-        }
-    }
-
-    async function saveRules() {
         try {
             const response = await fetch('/api/rules', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(allRules)
+                body: JSON.stringify(payload)
             });
             const result = await response.json();
             if (result.status === 'success') {
-                alert('Rules saved successfully!');
+                closeRuleModal();
+                loadRules();
             }
         } catch (error) {
-            console.error('Failed to save rules:', error);
-            alert('Failed to save rules');
+            console.error('Failed to save rule:', error);
+            alert('Error saving rule');
+        }
+    }
+
+    async function deleteRule(id) {
+        if (confirm("Are you sure you want to delete this matching rule?")) {
+            try {
+                const response = await fetch(`/api/rules/${id}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    loadRules();
+                }
+            } catch (error) {
+                console.error('Failed to delete rule:', error);
+            }
         }
     }
 
     document.addEventListener('DOMContentLoaded', loadRules);
 </script>
-</div>
-</div>
-</body></html>
+</body>
+</html>

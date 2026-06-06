@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-
-<html lang="en"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Merchant Review Interface</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
@@ -25,255 +25,415 @@
             },
         }
     </script>
-<title>Merchant Review Interface</title>
 </head>
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased min-h-screen">
 <div class="relative flex min-h-screen w-full flex-col">
-<div class="layout-container flex h-full grow flex-col">
-<!-- Top Navigation Bar -->
-<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 lg:px-20 py-3 sticky top-0 z-50 shadow-sm">
-<div class="flex items-center gap-8">
-<div class="flex items-center gap-3 text-primary">
-<div class="size-8 bg-primary/10 rounded-lg flex items-center justify-center">
-<span class="material-symbols-outlined">account_balance_wallet</span>
-</div>
-<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">FinTrack</h2>
-</div>
-<nav class="hidden md:flex items-center gap-6">
-<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="/">Dashboard</a>
-<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="/import-ui">Import</a>
-<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="/rules">Rules</a>
-<a class="text-primary text-sm font-semibold border-b-2 border-primary pb-1" href="/review">Review</a>
-</nav>
-</div>
-<div class="flex flex-1 justify-end gap-4 items-center">
-<div class="hidden sm:flex relative max-w-xs w-full">
-<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-<span class="material-symbols-outlined text-sm">search</span>
-</div>
-<input class="block w-full pl-10 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Search transactions..." type="text"/>
-</div>
-<button class="relative p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
-<span class="material-symbols-outlined">notifications</span>
-<span class="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-red-500"></span>
-</button>
-<div class="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/30">
-<img alt="User Profile" class="h-full w-full object-cover" data-alt="Professional user profile avatar circular" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUEVgwijDVbmtUdV73AeDXA-jC5FT9zMKRUwIxkzAQoiCNVdSVdVJ3fEv8SqWD5VfKlfg-0v6ozIKz-ihDFb64kSposizNPX-yQKF0iL6ElyEtnu5QQmo1xdZ5aBzowDtZBPxIbCSHB4IML2fDm8E4Nt0AIv8MCv0JOr9QNLMIvpFJxYLnPRqvDB06bHLK4n-D3g-ubLYDk-H9gq-yBScDj3cHtMfvD67vuMq9f0H1apcC1mAUafN80tGAL87PHd3fDUK01-w8fIve"/>
-</div>
-</div>
-</header>
-<main class="flex-1 px-6 lg:px-20 py-8">
-<!-- Header Section -->
-<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
-<div class="flex flex-col gap-2">
-<div class="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
-<span class="material-symbols-outlined text-sm">verified_user</span>
+    <div class="layout-container flex h-full grow flex-col">
+        <!-- Top Navigation Bar -->
+        <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 lg:px-20 py-3 sticky top-0 z-50 shadow-sm">
+            <div class="flex items-center gap-8">
+                <div class="flex items-center gap-3 text-primary">
+                    <div class="size-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <span class="material-symbols-outlined font-bold text-xl">account_balance_wallet</span>
+                    </div>
+                    <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight">FinAuto</h2>
+                </div>
+                <nav class="hidden md:flex items-center gap-6">
+                    <a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="/">Dashboard</a>
+                    <a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="/import-ui">Import</a>
+                    <a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary text-sm font-semibold transition-colors" href="/rules">Rules</a>
+                    <a class="text-primary text-sm font-semibold border-b-2 border-primary pb-1" href="/review">Review</a>
+                </nav>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/30">
+                    <span class="material-symbols-outlined text-slate-600 dark:text-slate-300">person</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 px-6 lg:px-20 py-8 max-w-[1280px] mx-auto w-full">
+            <!-- Header Section -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
+                        <span class="material-symbols-outlined text-sm">verified_user</span>
                         Review Queue
                     </div>
-<h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">Unknown Merchant Review</h1>
-<p class="text-slate-500 dark:text-slate-400 max-w-xl">
-                        Identify and categorize <span class="font-semibold text-slate-700 dark:text-slate-200">24 pending transactions</span> from merchants not currently in your system.
+                    <h1 class="text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">Unknown Merchant Review</h1>
+                    <p id="review-count-text" class="text-slate-500 dark:text-slate-400 max-w-xl">
+                        Loading transaction review queue...
                     </p>
-</div>
-<div class="flex gap-3">
-<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 text-sm font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
-<span class="material-symbols-outlined text-[18px]">download</span>
-                        Export CSV
-                    </button>
-<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 text-sm font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
-<span class="material-symbols-outlined text-[18px]">filter_list</span>
-                        Filters
-                    </button>
-</div>
-</div>
-<!-- Transactions Table Card -->
-<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-<th class="p-4 w-12 text-center">
-<input class="rounded text-primary focus:ring-primary h-4 w-4 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600" type="checkbox"/>
-</th>
-<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Description</th>
-<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 text-right">Amount</th>
-<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Suggested Category</th>
-<th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Final Category</th>
-<th class="px-6 py-4 w-16"></th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-<!-- Row 1 -->
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
-<td class="p-4 text-center">
-<input class="rounded text-primary focus:ring-primary h-4 w-4 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600" type="checkbox"/>
-</td>
-<td class="px-6 py-5">
-<div class="flex flex-col">
-<span class="font-bold text-slate-900 dark:text-slate-100">CLOUDSERVICES_INC_AMZ</span>
-<span class="text-xs text-slate-400">ID: TXN-442109 • Today, 10:45 AM</span>
-</div>
-</td>
-<td class="px-6 py-5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
-                                    -$1,240.00
-                                </td>
-<td class="px-6 py-5">
-<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs font-bold">
-<span class="material-symbols-outlined text-[14px]">auto_awesome</span>
-                                        Software &amp; SaaS
-                                    </span>
-</td>
-<td class="px-6 py-5">
-<select class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary py-2 px-3 text-slate-700 dark:text-slate-300">
-<option value="">Select Category</option>
-<option selected="" value="software">Software &amp; SaaS</option>
-<option value="marketing">Marketing</option>
-<option value="travel">Travel</option>
-<option value="other">Miscellaneous</option>
-</select>
-</td>
-<td class="px-6 py-5 text-center">
-<button class="text-slate-400 hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-<span class="material-symbols-outlined">more_vert</span>
-</button>
-</td>
-</tr>
-<!-- Row 2 -->
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
-<td class="p-4 text-center">
-<input class="rounded text-primary focus:ring-primary h-4 w-4 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600" type="checkbox"/>
-</td>
-<td class="px-6 py-5">
-<div class="flex flex-col">
-<span class="font-bold text-slate-900 dark:text-slate-100">DOWNTOWN_DINER_OFFICE</span>
-<span class="text-xs text-slate-400">ID: TXN-442108 • Yesterday</span>
-</div>
-</td>
-<td class="px-6 py-5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
-                                    -$42.50
-                                </td>
-<td class="px-6 py-5">
-<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs font-bold">
-<span class="material-symbols-outlined text-[14px]">restaurant</span>
-                                        Meals &amp; Entertainment
-                                    </span>
-</td>
-<td class="px-6 py-5">
-<select class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary py-2 px-3 text-slate-700 dark:text-slate-300">
-<option value="">Select Category</option>
-<option selected="" value="meals">Meals &amp; Entertainment</option>
-<option value="supplies">Office Supplies</option>
-<option value="other">Miscellaneous</option>
-</select>
-</td>
-<td class="px-6 py-5 text-center">
-<button class="text-slate-400 hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-<span class="material-symbols-outlined">more_vert</span>
-</button>
-</td>
-</tr>
-<!-- Row 3 -->
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
-<td class="p-4 text-center">
-<input class="rounded text-primary focus:ring-primary h-4 w-4 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600" type="checkbox"/>
-</td>
-<td class="px-6 py-5">
-<div class="flex flex-col">
-<span class="font-bold text-slate-900 dark:text-slate-100">CITY_PRKNG_4201_Q3</span>
-<span class="text-xs text-slate-400">ID: TXN-442107 • Oct 14, 2023</span>
-</div>
-</td>
-<td class="px-6 py-5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
-                                    -$15.00
-                                </td>
-<td class="px-6 py-5">
-<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 text-xs font-bold">
-<span class="material-symbols-outlined text-[14px]">commute</span>
-                                        Travel &amp; Commute
-                                    </span>
-</td>
-<td class="px-6 py-5">
-<select class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary py-2 px-3 text-slate-700 dark:text-slate-300">
-<option value="">Select Category</option>
-<option selected="" value="travel">Travel &amp; Commute</option>
-<option value="meals">Meals</option>
-<option value="other">Miscellaneous</option>
-</select>
-</td>
-<td class="px-6 py-5 text-center">
-<button class="text-slate-400 hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-<span class="material-symbols-outlined">more_vert</span>
-</button>
-</td>
-</tr>
-<!-- Row 4 -->
-<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
-<td class="p-4 text-center">
-<input class="rounded text-primary focus:ring-primary h-4 w-4 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600" type="checkbox"/>
-</td>
-<td class="px-6 py-5">
-<div class="flex flex-col">
-<span class="font-bold text-slate-900 dark:text-slate-100">COFFEE_HOUSE_LTD</span>
-<span class="text-xs text-slate-400">ID: TXN-442106 • Oct 12, 2023</span>
-</div>
-</td>
-<td class="px-6 py-5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
-                                    -$6.80
-                                </td>
-<td class="px-6 py-5">
-<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold">
-<span class="material-symbols-outlined text-[14px]">help_outline</span>
-                                        Uncategorized
-                                    </span>
-</td>
-<td class="px-6 py-5">
-<select class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-sm border-2 border-primary/50 focus:ring-primary focus:border-primary py-2 px-3 text-slate-900 dark:text-slate-100 font-medium">
-<option selected="" value="">Choose Final Category...</option>
-<option value="meals">Meals &amp; Entertainment</option>
-<option value="travel">Travel</option>
-<option value="supplies">Office Supplies</option>
-<option value="other">Miscellaneous</option>
-</select>
-</td>
-<td class="px-6 py-5 text-center">
-<button class="text-slate-400 hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-<span class="material-symbols-outlined">more_vert</span>
-</button>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<!-- Footer Actions -->
-<div class="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
-<div class="flex items-center gap-2">
-<span class="text-sm text-slate-500 dark:text-slate-400">3 transactions selected</span>
-</div>
-<div class="flex gap-3 w-full sm:w-auto">
-<button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 rounded-lg text-sm font-bold transition-all">
+                </div>
+            </div>
+
+            <!-- Empty Queue State -->
+            <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm space-y-4">
+                <div class="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center shadow-inner">
+                    <span class="material-symbols-outlined text-3xl font-bold">check</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100">All Caught Up!</h3>
+                <p class="text-slate-500 dark:text-slate-400 text-center max-w-sm">
+                    No transactions require review at the moment. All syncs and statements are fully categorized.
+                </p>
+                <a href="/" class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white font-bold rounded-lg text-sm transition-all hover:bg-primary/90 shadow-md shadow-primary/20">
+                    <span class="material-symbols-outlined text-lg">dashboard</span>
+                    Return to Dashboard
+                </a>
+            </div>
+
+            <!-- Transactions Table Card -->
+            <div id="table-container" class="hidden bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                                <th class="p-4 w-12 text-center">
+                                    <input id="select-all-checkbox" onchange="toggleSelectAll(this)" class="rounded text-primary focus:ring-primary h-4 w-4 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 cursor-pointer" type="checkbox"/>
+                                </th>
+                                <th class="px-6 py-4 font-semibold">Transaction Details</th>
+                                <th class="px-6 py-4 font-semibold text-right">Amount</th>
+                                <th class="px-6 py-4 font-semibold">Suggestion</th>
+                                <th class="px-6 py-4 font-semibold">Final Mappings</th>
+                                <th class="px-6 py-4 font-semibold">Rule Option</th>
+                                <th class="px-6 py-4 w-28 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="review-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Footer Actions -->
+                <div class="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <span id="selected-count-text" class="text-sm text-slate-500 dark:text-slate-400">0 transactions selected</span>
+                    </div>
+                    <div class="flex gap-3 w-full sm:w-auto">
+                        <button id="approve-selected-btn" disabled onclick="approveSelected()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 rounded-lg text-sm font-bold transition-all opacity-50 cursor-not-allowed">
                             Approve Selected
                         </button>
-<button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white hover:bg-primary/90 rounded-lg text-sm font-bold shadow-md shadow-primary/20 transition-all">
-                            Approve All (24)
+                        <button id="approve-all-btn" onclick="approveAll()" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white hover:bg-primary/90 rounded-lg text-sm font-bold shadow-md shadow-primary/20 transition-all">
+                            Approve All
                         </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 </div>
-</div>
-</div>
-<!-- Pagination -->
-<div class="mt-8 flex items-center justify-center gap-2">
-<button class="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors">
-<span class="material-symbols-outlined">chevron_left</span>
-</button>
-<button class="w-10 h-10 flex items-center justify-center bg-primary text-white rounded-lg font-bold shadow-sm">1</button>
-<button class="w-10 h-10 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg font-medium">2</button>
-<button class="w-10 h-10 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg font-medium">3</button>
-<span class="px-2 text-slate-400">...</span>
-<button class="w-10 h-10 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg font-medium">8</button>
-<button class="p-2 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-lg transition-colors">
-<span class="material-symbols-outlined">chevron_right</span>
-</button>
-</div>
-</main>
-</div>
-</div>
-</body></html>
+
+<!-- Toast Container -->
+<div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+<script>
+    let categories = [];
+    let transactions = [];
+
+    async function init() {
+        try {
+            // Load Categories
+            const catRes = await fetch('/api/categories');
+            categories = await catRes.json();
+            
+            // Load transactions
+            await fetchTransactions();
+        } catch (err) {
+            console.error('Initialization error:', err);
+            showToast('Failed to initialize review details', 'error');
+        }
+    }
+
+    async function fetchTransactions() {
+        try {
+            const res = await fetch('/api/unknown');
+            transactions = await res.json();
+            renderTable();
+            updateSelectedCount();
+            
+            // Uncheck the select-all box
+            document.getElementById('select-all-checkbox').checked = false;
+        } catch (err) {
+            console.error('Error fetching transactions:', err);
+            showToast('Failed to load transaction review queue', 'error');
+        }
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('review-table-body');
+        const emptyState = document.getElementById('empty-state');
+        const tableContainer = document.getElementById('table-container');
+        const headerCount = document.getElementById('review-count-text');
+        const approveAllBtn = document.getElementById('approve-all-btn');
+        
+        if (transactions.length === 0) {
+            tbody.innerHTML = '';
+            tableContainer.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+            headerCount.innerHTML = 'All transactions are categorized. Great job!';
+            return;
+        }
+        
+        tableContainer.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+        approveAllBtn.textContent = `Approve All (${transactions.length})`;
+        headerCount.innerHTML = `Identify and categorize <span class="font-semibold text-slate-700 dark:text-slate-200">${transactions.length} transactions</span> from merchants not currently in your system.`;
+        
+        tbody.innerHTML = '';
+        transactions.forEach(txn => {
+            const isNeg = txn.amount < 0;
+            
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group';
+            row.dataset.txnId = txn.id;
+            row.innerHTML = `
+                <td class="p-4 text-center">
+                    <input type="checkbox" class="txn-select rounded text-primary focus:ring-primary h-4 w-4 bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 cursor-pointer" onchange="updateSelectedCount()">
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex flex-col gap-1.5 max-w-sm">
+                        <span class="font-bold text-slate-900 dark:text-slate-100 truncate" title="${txn.description}">${txn.description}</span>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs text-slate-400 shrink-0">Display Name:</span>
+                            <input type="text" class="txn-display-name block w-full px-2 py-0.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary/30" value="${txn.display_name || txn.description}">
+                        </div>
+                        <span class="text-[10px] text-slate-400">ID: ${txn.id} • ${txn.date} • Account: ${txn.account}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-right font-mono font-bold ${isNeg ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
+                    ${isNeg ? '-' : '+'}${txn.currency} ${Math.abs(txn.amount).toFixed(2)}
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full ${txn.is_guess ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'} text-xs font-bold w-fit">
+                            <span class="material-symbols-outlined text-[14px]">${txn.is_guess ? 'auto_awesome' : 'help_outline'}</span>
+                            ${txn.category || 'Uncategorized'}
+                        </span>
+                        <span class="text-[10px] text-slate-400 pl-1">Flexibility: ${txn.flexibility || 'Flexible'}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex flex-col gap-1.5 max-w-[180px]">
+                        <select class="txn-category w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs py-1 px-2 text-slate-700 dark:text-slate-300 focus:ring-primary focus:border-primary">
+                            <option value="">Choose Category...</option>
+                            ${categories.map(cat => `<option value="${cat}" ${cat === txn.category ? 'selected' : ''}>${cat}</option>`).join('')}
+                        </select>
+                        <select class="txn-flexibility w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-lg text-xs py-1 px-2 text-slate-700 dark:text-slate-300 focus:ring-primary focus:border-primary">
+                            <option value="Fixed" ${txn.flexibility === 'Fixed' ? 'selected' : ''}>Fixed</option>
+                            <option value="Flexible" ${txn.flexibility === 'Flexible' || !txn.flexibility ? 'selected' : ''}>Flexible</option>
+                            <option value="Discretionary" ${txn.flexibility === 'Discretionary' ? 'selected' : ''}>Discretionary</option>
+                        </select>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex flex-col gap-1.5 max-w-[160px]">
+                        <label class="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                            <input type="checkbox" class="txn-create-rule rounded text-primary focus:ring-primary h-3.5 w-3.5 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 cursor-pointer" onchange="toggleRulePattern(this)">
+                            <span>Create Rule</span>
+                        </label>
+                        <input type="text" class="txn-rule-pattern hidden w-full px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-700 dark:text-slate-300 focus:outline-none" value="${txn.description}" placeholder="Pattern">
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                        <button onclick="approveSingleTransaction(this)" class="p-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg transition-all" title="Approve">
+                            <span class="material-symbols-outlined text-[18px]">check</span>
+                        </button>
+                        <button onclick="ignoreSingleTransaction(this)" class="p-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/40 text-rose-600 dark:text-rose-400 rounded-lg transition-all" title="Ignore">
+                            <span class="material-symbols-outlined text-[18px]">block</span>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function toggleRulePattern(checkbox) {
+        const row = checkbox.closest('tr');
+        const patternInput = row.querySelector('.txn-rule-pattern');
+        if (checkbox.checked) {
+            patternInput.classList.remove('hidden');
+            patternInput.focus();
+        } else {
+            patternInput.classList.add('hidden');
+        }
+    }
+
+    function toggleSelectAll(selectAllCheckbox) {
+        const checkboxes = document.querySelectorAll('.txn-select');
+        checkboxes.forEach(cb => {
+            cb.checked = selectAllCheckbox.checked;
+        });
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const checkboxes = document.querySelectorAll('.txn-select:checked');
+        const count = checkboxes.length;
+        const countText = document.getElementById('selected-count-text');
+        const approveSelBtn = document.getElementById('approve-selected-btn');
+        
+        countText.textContent = `${count} transactions selected`;
+        if (count > 0) {
+            approveSelBtn.disabled = false;
+            approveSelBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            approveSelBtn.disabled = true;
+            approveSelBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    async function submitResolutions(rows) {
+        const resolutions = [];
+        
+        for (const row of rows) {
+            const id = parseInt(row.dataset.txnId);
+            const category = row.querySelector('.txn-category').value;
+            const flexibility = row.querySelector('.txn-flexibility').value;
+            const displayName = row.querySelector('.txn-display-name').value;
+            const createRule = row.querySelector('.txn-create-rule').checked;
+            const pattern = row.querySelector('.txn-rule-pattern').value;
+            
+            if (!category) {
+                showToast('Please select a category for all transactions being resolved.', 'error');
+                row.querySelector('.txn-category').focus();
+                return;
+            }
+            
+            const resolution = {
+                id,
+                category,
+                flexibility,
+                display_name: displayName,
+                is_ignored: false,
+                create_rule: createRule
+            };
+            
+            if (createRule) {
+                resolution.rule = {
+                    pattern: pattern || displayName || category,
+                    match_type: "substring",
+                    category,
+                    display_name: displayName,
+                    flexibility,
+                    priority: 0
+                };
+            }
+            
+            resolutions.push(resolution);
+        }
+        
+        if (resolutions.length === 0) return;
+        
+        try {
+            const response = await fetch('/api/unknown/resolve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resolutions })
+            });
+            
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast(`Successfully resolved ${result.updated_count} transaction(s)! Created ${result.rules_created} rule(s).`);
+                await fetchTransactions();
+            } else {
+                showToast(result.detail || 'Resolution failed', 'error');
+            }
+        } catch (err) {
+            console.error('Error submitting resolutions:', err);
+            showToast('Failed to resolve transactions', 'error');
+        }
+    }
+
+    async function approveSelected() {
+        const checkedBoxes = document.querySelectorAll('.txn-select:checked');
+        const rows = Array.from(checkedBoxes).map(cb => cb.closest('tr'));
+        if (rows.length === 0) return;
+        
+        await submitResolutions(rows);
+    }
+
+    async function approveAll() {
+        const rows = document.querySelectorAll('#review-table-body tr');
+        if (rows.length === 0) return;
+        
+        await submitResolutions(Array.from(rows));
+    }
+
+    async function approveSingleTransaction(button) {
+        const row = button.closest('tr');
+        await submitResolutions([row]);
+    }
+
+    async function ignoreSingleTransaction(button) {
+        const row = button.closest('tr');
+        const id = parseInt(row.dataset.txnId);
+        
+        if (!confirm('Are you sure you want to ignore this transaction? It will be excluded from analytics.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/unknown/resolve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    resolutions: [{
+                        id,
+                        category: row.querySelector('.txn-category').value || 'Other',
+                        flexibility: row.querySelector('.txn-flexibility').value,
+                        display_name: row.querySelector('.txn-display-name').value,
+                        is_ignored: true
+                    }]
+                })
+            });
+            
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast('Transaction ignored successfully.');
+                await fetchTransactions();
+            } else {
+                showToast(result.detail || 'Failed to ignore transaction', 'error');
+            }
+        } catch (err) {
+            console.error('Error ignoring transaction:', err);
+            showToast('Failed to ignore transaction', 'error');
+        }
+    }
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `flex items-center gap-2.5 px-4 py-3 rounded-lg text-sm font-semibold shadow-lg transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto max-w-sm ${
+            type === 'success' ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+        }`;
+        
+        const icon = type === 'success' ? 'check_circle' : 'error';
+        toast.innerHTML = `
+            <span class="material-symbols-outlined text-lg">${icon}</span>
+            <span class="truncate">${message}</span>
+        `;
+        
+        container.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => {
+            toast.classList.remove('translate-y-2', 'opacity-0');
+        }, 10);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.classList.add('translate-y-2', 'opacity-0');
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3500);
+    }
+
+    // Trigger on load
+    document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

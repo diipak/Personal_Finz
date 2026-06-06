@@ -210,6 +210,6 @@ def parse_pdf(file_path):
         df_hdfc = parse_hdfc(file_path)
         
         if len(df_commerz) >= len(df_hdfc):
-            return df_commerz
-        else:
             return df_hdfc
+
+parse = parse_pdf
