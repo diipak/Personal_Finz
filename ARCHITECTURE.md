@@ -8,7 +8,7 @@ Personal_Finz is a privacy-first, local-sovereign, multi-currency fintech platfo
 
 ```mermaid
 graph TD
-    A1[GoCardless PSD2 API] -->|Auto Sync| B1[parsers/gocardless_sync.py]
+    A1[Enable Banking PSD2 API] -->|Auto Sync| B1[parsers/enable_banking_sync.py]
     A2[Manual Statements CSV/XLS/PDF] -->|Upload File| B2[parsers/detect.py]
     
     B1 -->|Wipe Ephemeral Pending| C[pipeline.py]
@@ -38,7 +38,7 @@ All state is persisted locally in `~/.personalfinz/data.db`. The database consis
   - `is_pinned` (Boolean): Set to `1` when the user reviews and locks the categorization, protecting it from overwrite.
   - `is_ignored` (Boolean): Set to `1` to exclude specific transactions (such as internal transfer churn) from analytics.
   - `hash` (Unique): Generated for manual statement entries (`sha256(date + description + amount)`) to prevent duplication.
-  - `external_sync_id` (Unique): Maps GoCardless API ids or fallback hashes.
+  - `external_sync_id` (Unique): Maps Enable Banking sync IDs or fallback hashes.
   - `status` (`PENDING` or `SETTLED`): Indicates transaction settlement state.
 - **`rules`**: Stores user-defined and auto-generated merchant categorization rules with priorities, match patterns (substring, regex, exact), and amount bounds.
 - **`sync_logs`**: Logs synchronization events for rate limiting and auditing.
@@ -47,8 +47,8 @@ All state is persisted locally in `~/.personalfinz/data.db`. The database consis
 
 ## 2. Ingestion Paths
 
-### Path A: Automated Bank Feeds (GoCardless PSD2 API)
-Pulls transactions directly from European banking institutions.
+### Path A: Automated Bank Feeds (Enable Banking PSD2 API)
+Pulls transactions directly from European banking institutions using RS256 signed JWTs.
 - **Rate Limit Safeguard**: The system logs successful runs. If a sync is triggered, the engine queries the `sync_logs` table. If the account has had **4 successful syncs in the last 24 hours**, the request is gracefully skipped, logging a `SKIPPED` status to protect the user's API credentials from 429 locks.
 - **Ephemeral Pending Sweeping**: To ensure real-time pending items reflect correctly without duplicating, the pipeline deletes all existing `status = 'PENDING'` records for the specific account before inserting the fresh batch.
 - **Deterministic ID Fallback**: In cases where traditional banks leave the `transactionId` field empty in the PSD2 payload, the parser falls back to generating a composite hash: `gcl_fallback_ + sha256(booking_date + amount + remittance_info)[:16]` to ensure database integrity and avoid multiple NULL conflicts.

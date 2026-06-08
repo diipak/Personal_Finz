@@ -32,3 +32,6 @@ statements/*
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Cryptographic Keys
+*.pem

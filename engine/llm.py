@@ -38,9 +38,13 @@ Respond with ONLY the exact category name from the list, and nothing else. Do no
             json={
                 "model": LLM_MODEL,
                 "prompt": prompt,
-                "stream": False
+                "stream": False,
+                "options": {
+                    "temperature": 0.0,
+                    "num_predict": 15
+                }
             },
-            timeout=15
+            timeout=30
         )
         response.raise_for_status()
         result = response.json().get("response", "").strip()

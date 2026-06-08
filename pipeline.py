@@ -8,7 +8,7 @@ import pandas as pd
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from parsers.detect import parse_file
-from parsers.gocardless_sync import sync_account_transactions
+from parsers.enable_banking_sync import sync_account_transactions
 from engine.normalizer import normalize
 from engine.rules import match_rule
 from engine.llm import ask_llm
@@ -97,15 +97,15 @@ def process_manual_file(file_path: str, account_name: str) -> int:
     
     return success_count
 
-def process_gocardless_sync(account_id: str, account_name: str, secret_id: str, secret_key: str) -> int:
+def process_enable_banking_sync(account_id: str, account_name: str) -> int:
     """
-    Pulls recent transactions from GoCardless API, clears transient pending state,
+    Pulls recent transactions from Enable Banking API, clears transient pending state,
     applies rules/LLM fallback, upserts to SQLite, and syncs to ezBookkeeping.
     """
-    logger.info(f"Syncing GoCardless account {account_id} ({account_name})")
+    logger.info(f"Syncing Enable Banking account {account_id} ({account_name})")
     
-    # Fetch transactions via GoCardless client
-    txns = sync_account_transactions(account_id, account_name, secret_id, secret_key)
+    # Fetch transactions via Enable Banking client
+    txns = sync_account_transactions(account_id, account_name)
     
     conn = get_db()
     

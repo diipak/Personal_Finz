@@ -7,7 +7,11 @@ if os.path.exists(_env_path):
         for line in f:
             if '=' in line and not line.startswith('#'):
                 k, v = line.strip().split('=', 1)
-                os.environ.setdefault(k.strip(), v.strip())
+                k = k.strip()
+                v = v.strip()
+                if (v.startswith('"') and v.endswith('"')) or (v.startswith("'") and v.endswith("'")):
+                    v = v[1:-1]
+                os.environ.setdefault(k, v)
 
 # Core configuration values
 SELF_NAME = os.getenv("SELF_NAME", "deepak batham")
@@ -23,9 +27,32 @@ DB_PATH = os.getenv("DB_PATH", os.path.join(DEFAULT_DB_DIR, "data.db"))
 EZBOOKKEEPING_API_URL = os.getenv("EZBOOKKEEPING_API_URL", "http://100.115.35.4:8090/api/v1")
 EZBOOKKEEPING_TOKEN = os.getenv("EZBOOKKEEPING_TOKEN", "")
 
-# GoCardless PSD2 Sync settings
-GOCARDLESS_SECRET_ID = os.getenv("GOCARDLESS_SECRET_ID", "")
-GOCARDLESS_SECRET_KEY = os.getenv("GOCARDLESS_SECRET_KEY", "")
+# Enable Banking PSD2 Sync settings
+ENABLE_BANKING_APP_ID = os.getenv("ENABLE_BANKING_APP_ID", "")
+ENABLE_BANKING_KEY_PATH = os.getenv("ENABLE_BANKING_KEY_PATH", "pipeline/enable_banking_key.pem")
+ENABLE_BANKING_REDIRECT_URI = os.getenv("ENABLE_BANKING_REDIRECT_URI", "")
+ENABLE_BANKING_PRIVATE_KEY = b""
+
+if ENABLE_BANKING_KEY_PATH:
+    # Resolve relative path from project root
+    _base_dir = os.path.dirname(os.path.abspath(__file__))
+    _key_path = os.path.join(_base_dir, ENABLE_BANKING_KEY_PATH) if not os.path.isabs(ENABLE_BANKING_KEY_PATH) else ENABLE_BANKING_KEY_PATH
+    
+    if not os.path.exists(_key_path):
+        raise FileNotFoundError(f"Enable Banking Private Key file not found at: {_key_path}")
+    if not os.access(_key_path, os.R_OK):
+        raise PermissionError(f"Enable Banking Private Key file at {_key_path} is not readable.")
+    
+    try:
+        with open(_key_path, "rb") as key_file:
+            ENABLE_BANKING_PRIVATE_KEY = key_file.read()
+            if not ENABLE_BANKING_PRIVATE_KEY.strip():
+                raise ValueError("Enable Banking Private Key file is empty.")
+    except Exception as e:
+        raise ValueError(f"Failed to read Enable Banking Private Key: {e}")
+else:
+    raise ValueError("ENABLE_BANKING_KEY_PATH environment variable is not set.")
+
 
 # Currency conversion rate (1 EUR = X INR)
 EUR_INR_RATE = float(os.getenv("EUR_INR_RATE", "90.0"))

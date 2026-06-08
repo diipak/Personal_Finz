@@ -62,12 +62,15 @@ def sync_new_transactions():
         
         for row in rows:
             try:
-                # Map type (2 = Income, 3 = Expense, 4 = Transfer)
-                tx_type = 2 if row["type"] == "Income" else 3 if row["type"] == "Expense" else 4
-                
                 # Map category
                 cat_name = row["category"] or "Other"
                 category_id = CATEGORY_MAP.get(cat_name, CATEGORY_MAP["Other"])
+                
+                # Map type (2 = Income, 3 = Expense, 4 = Transfer)
+                if cat_name == "Transfer" or category_id in transfer_category_ids:
+                    tx_type = 4
+                else:
+                    tx_type = 2 if row["type"] == "Income" else 3
                 
                 # Type boundaries safeguard
                 if tx_type == 2: # Income
@@ -100,7 +103,7 @@ def sync_new_transactions():
                     "sourceAmount": amount_cents,
                     "time": unix_time,
                     "utcOffset": 120,
-                    "comment": row["description"],
+                    "comment": row["description"][:250],
                     "tagIds": tag_ids
                 }
                 
@@ -119,6 +122,10 @@ def sync_new_transactions():
                         dest_acc_id = ACCOUNT_MAP["Trade Republic"]
                     elif "hdfc" in desc_lower:
                         dest_acc_id = ACCOUNT_MAP["HDFC"]
+                    elif "advanzia" in desc_lower:
+                        dest_acc_id = ACCOUNT_MAP["Advanzia Bank credit card"]
+                    elif "zinia" in desc_lower:
+                        dest_acc_id = ACCOUNT_MAP["Amazon Zinia credit"]
                         
                     if dest_acc_id and dest_acc_id != source_acc_id:
                         payload["destinationAccountId"] = dest_acc_id

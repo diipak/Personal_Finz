@@ -32,7 +32,7 @@ def match_rule(description: str, amount: float) -> dict:
             
             matched = False
             if match_type == "substring":
-                if pattern.lower() in desc.lower():
+                if re.search(rf"\b{re.escape(pattern)}\b", desc, re.IGNORECASE):
                     matched = True
             elif match_type == "exact":
                 if pattern.lower() == desc.lower():

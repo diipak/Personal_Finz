@@ -55,36 +55,51 @@ def migrate():
     # Clear existing rules
     cursor.execute("DELETE FROM rules")
     
+    from engine.normalizer import normalize
+
     # Migrate transfer_keywords
     for pattern in rules_data.get("transfer_keywords", []):
         flex = get_default_flexibility("Transfer")
+        norm_pattern = normalize(pattern)
         cursor.execute(
             """
             INSERT INTO rules (pattern, match_type, category, flexibility, priority)
             VALUES (?, 'substring', 'Transfer', ?, 10)
             """,
-            (pattern, flex)
+            (norm_pattern, flex)
         )
         
     # Migrate income_keywords
     for pattern in rules_data.get("income_keywords", []):
         flex = get_default_flexibility("Income")
+        norm_pattern = normalize(pattern)
         cursor.execute(
             """
             INSERT INTO rules (pattern, match_type, category, flexibility, priority)
             VALUES (?, 'substring', 'Income', ?, 10)
             """,
-            (pattern, flex)
+            (norm_pattern, flex)
         )
         
     # Migrate merchant_categories
-    for pattern, category in rules_data.get("merchant_categories", {}).items():
+    for pattern, rule_val in rules_data.get("merchant_categories", {}).items():
         if not pattern:
             continue
+            
+        if isinstance(rule_val, dict):
+            category = rule_val.get("category")
+            display_name = rule_val.get("display_name")
+        else:
+            category = rule_val
+            display_name = None
+            
         # Check if it looks like a regex pattern
         match_type = 'substring'
         if any(c in pattern for c in [".*", "^", "$", "\\", "(", "["]):
             match_type = 'regex'
+            
+        # Normalize pattern if not a regex
+        final_pattern = pattern if match_type == 'regex' else normalize(pattern)
             
         flex = get_default_flexibility(category)
         
@@ -93,10 +108,10 @@ def migrate():
         
         cursor.execute(
             """
-            INSERT INTO rules (pattern, match_type, category, flexibility, priority)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO rules (pattern, match_type, category, display_name, flexibility, priority)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (pattern, match_type, category, flex, priority)
+            (final_pattern, match_type, category, display_name, flex, priority)
         )
         
     conn.commit()

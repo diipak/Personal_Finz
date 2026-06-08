@@ -17,7 +17,7 @@ def normalize(description: str):
     for word in REMOVE_WORDS:
         text = text.replace(word, "")
 
-    text = re.sub(r"[^\w\s]", "", text)
+    text = re.sub(r"[^\w\s]", " ", text)
 
     text = text.strip()
 

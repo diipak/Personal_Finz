@@ -203,7 +203,7 @@ def push_to_ezbookkeeping(df):
                 "sourceAmount": amount_cents,
                 "time": unix_time,
                 "utcOffset": 120,
-                "comment": row["Description"],
+                "comment": row["Description"][:250],
                 "tagIds": tag_ids
             }
             

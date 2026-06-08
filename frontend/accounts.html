@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FinSync Pro | Bank Feed Management</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Custom scrollbar for audit log */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#f8f9ff",
+                        "primary": "#3525cd",
+                        "secondary-fixed": "#c9e6ff",
+                        "secondary-fixed-dim": "#89ceff",
+                        "surface": "#f8f9ff",
+                        "inverse-primary": "#c3c0ff",
+                        "on-secondary-fixed": "#001e2f",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "surface-tint": "#4d44e3",
+                        "on-secondary": "#ffffff",
+                        "inverse-surface": "#213145",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-surface": "#0b1c30",
+                        "outline": "#777587",
+                        "surface-variant": "#d3e4fe",
+                        "tertiary-container": "#a44100",
+                        "outline-variant": "#c7c4d8",
+                        "on-tertiary-fixed": "#351000",
+                        "on-tertiary-container": "#ffd2be",
+                        "surface-container-low": "#eff4ff",
+                        "secondary-container": "#39b8fd",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "on-secondary-container": "#004666",
+                        "surface-container-high": "#dce9ff",
+                        "tertiary": "#7e3000",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "on-primary": "#ffffff",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "surface-container": "#e5eeff",
+                        "tertiary-fixed": "#ffdbcc",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#e2dfff",
+                        "on-primary-container": "#dad7ff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#4f46e5",
+                        "on-surface-variant": "#464555",
+                        "error": "#ba1a1a",
+                        "on-background": "#0b1c30",
+                        "surface-dim": "#cbdbf5",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#d3e4fe",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#0f0069",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary-fixed-variant": "#004c6e",
+                        "on-error-container": "#93000a",
+                        "secondary": "#006591"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "stack-lg": "24px",
+                        "margin-desktop": "32px",
+                        "container-max-width": "1440px",
+                        "stack-sm": "8px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background text-on-surface">
+    <div class="h-screen w-screen overflow-hidden flex">
+        <!-- Side Navigation Shell -->
+        <aside
+            class="hidden md:flex flex-col h-screen overflow-y-auto w-64 bg-surface-container-low py-stack-lg px-stack-md shrink-0 border-r border-outline-variant">
+            <div class="mb-stack-lg">
+                <h1 class="text-headline-sm font-black text-primary">FinSync Pro</h1>
+                <p class="text-body-sm text-on-surface-variant">Global Overview</p>
+            </div>
+            <nav class="flex-grow space-y-1">
+                <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all"
+                    href="/">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="text-label-md font-label-md">Dashboard</span>
+                </a>
+                <a class="flex items-center space-x-3 px-4 py-3 text-primary font-bold bg-secondary-fixed rounded-lg translate-x-1 transition-transform"
+                    href="/accounts">
+                    <span class="material-symbols-outlined">account_balance</span>
+                    <span class="text-label-md font-label-md">Accounts</span>
+                </a>
+                <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all"
+                    href="/import-ui">
+                    <span class="material-symbols-outlined">upload_file</span>
+                    <span class="text-label-md font-label-md">Import Statement</span>
+                </a>
+                <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all"
+                    href="/rules">
+                    <span class="material-symbols-outlined">gavel</span>
+                    <span class="text-label-md font-label-md">Rules Engine</span>
+                </a>
+                <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all"
+                    href="/review">
+                    <span class="material-symbols-outlined">rate_review</span>
+                    <span class="text-label-md font-label-md">Review Queue</span>
+                </a>
+            </nav>
+            <div class="pt-stack-lg border-t border-outline-variant space-y-1">
+                <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="text-label-md font-label-md">Settings</span>
+                </a>
+                <a class="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span class="text-label-md font-label-md">Logout</span>
+                </a>
+            </div>
+        </aside>
+        <!-- Main Content Area -->
+        <div class="flex-1 h-screen flex flex-col min-w-0">
+            <!-- Top App Bar Shell -->
+            <header class="sticky top-0 z-10 w-full bg-surface shadow-sm border-b border-outline-variant">
+                <div
+                    class="flex justify-between items-center w-full px-margin-desktop h-16 max-w-container-max-width mx-auto">
+                    <div class="flex items-center space-x-8">
+                        <span class="text-headline-md font-bold text-primary">FinSync Pro</span>
+                        <nav class="hidden md:flex items-center gap-6">
+                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
+                                href="/">Dashboard</a>
+                            <a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-2 hover:text-primary transition-colors"
+                                href="/accounts">Accounts</a>
+                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
+                                href="/import-ui">Import</a>
+                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
+                                href="/rules">Rules</a>
+                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
+                                href="/review">Review</a>
+                        </nav>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="triggerBankSync()"
+                            class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-all">
+                            <span class="material-symbols-outlined text-sm">sync</span>
+                            Link New Bank
+                        </button>
+                        <button
+                            class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+                        <div
+                            class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center overflow-hidden border border-primary">
+                            <img alt="User profile avatar" class="w-full h-full object-cover"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf0ikCNZJnR6wQQJ0d6A8jVhVVoh6CTE03_Fh7XJrUMvwrZgYgzvttYtD0tzFm2WoavPUgWmyDm0xfnAMU13_in3WR4XuFezJOXiMNh1kQPRiyaUanIXmUcWf10xd_eARVEiN2LQKMMyOY2nZ4xQxVdwGdNUd4xVHIJk3jABDmu7NJXPT2hoCDGfz0DjGQXQ4pZD0rXOhGU_nKhk2J38LqTCEzzpRxJkCBkNYl5zMlfVP3QFUesw0IMqHrdHGm59E0LKtoKnpGjta6" />
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <!-- Dashboard Content -->
+            <main class="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop max-w-container-max-width mx-auto w-full space-y-stack-lg">
+                <!-- Status Notifications -->
+                <div id="status-alert-container" class="hidden">
+                    <!-- Dynamic Alert Message -->
+                </div>
+
+                <!-- Section 1: Connected Bank Feeds -->
+                <section
+                    class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_2px_4px_-2px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <div class="p-stack-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-headline-sm font-headline-sm text-on-surface">Connected Bank Feeds</h2>
+                            <p class="text-body-sm font-body-sm text-on-surface-variant">Manage open banking API connections.</p>
+                        </div>
+                        <button
+                            class="bg-primary text-on-primary px-stack-md py-2.5 rounded-lg font-label-md text-label-md flex items-center justify-center space-x-2 hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                            id="connect-bank-btn">
+                            <span class="material-symbols-outlined text-[18px]">add</span>
+                            <span>Link New Bank</span>
+                        </button>
+                    </div>
+                    <div class="border-t border-outline-variant divide-y divide-outline-variant"
+                        id="accounts-list-container">
+                        <!-- Populated dynamically -->
+                    </div>
+                </section>
+                <!-- Section 2: Sync Audit Log -->
+                <section
+                    class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),0_2px_4px_-2px_rgba(0,0,0,0.05)] overflow-hidden">
+                    <div class="p-stack-lg border-b border-outline-variant">
+                        <h2 class="text-headline-sm font-headline-sm text-on-surface">Sync Audit Log</h2>
+                        <p class="text-body-sm font-body-sm text-on-surface-variant">Real-time execution status of background pipelines.</p>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse" id="sync-history-table">
+                            <thead class="bg-surface-container-low border-b border-outline-variant">
+                                <tr>
+                                    <th
+                                        class="px-stack-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
+                                        Timestamp</th>
+                                    <th
+                                        class="px-stack-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
+                                        Feed Source</th>
+                                    <th
+                                        class="px-stack-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
+                                        Status</th>
+                                    <th
+                                        class="px-stack-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
+                                        Details</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-outline-variant" id="sync-history-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-stack-md bg-surface-container-low flex justify-center">
+                        <button onclick="loadSyncHistory(50)"
+                            class="text-label-md font-label-md text-primary hover:underline flex items-center space-x-1">
+                            <span>View Full History</span>
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                        </button>
+                    </div>
+                </section>
+                <!-- Additional Context / Tips -->
+                <div class="grid md:grid-cols-3 gap-gutter">
+                    <div
+                        class="bg-secondary-fixed/30 p-stack-lg rounded-xl border border-secondary-fixed flex items-start space-x-4">
+                        <span class="material-symbols-outlined text-secondary">info</span>
+                        <div class="space-y-1">
+                            <h4 class="text-body-md font-bold text-on-secondary-fixed">Security Tip</h4>
+                            <p class="text-body-sm text-on-secondary-fixed-variant">All bank connections use OAuth 2.0 with read-only scopes for maximum security.</p>
+                        </div>
+                    </div>
+                    <div
+                        class="md:col-span-2 bg-surface-container-high p-stack-lg rounded-xl border border-outline-variant flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="p-3 bg-white rounded-lg shadow-sm">
+                                <span class="material-symbols-outlined text-primary" data-weight="fill">bolt</span>
+                            </div>
+                            <div>
+                                <h4 class="text-body-md font-bold text-on-surface">Auto-Sync Enabled</h4>
+                                <p class="text-body-sm text-on-surface-variant">Feeds update every 6 hours automatically.</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input id="auto-sync-checkbox" class="sr-only peer" type="checkbox" />
+                            <div
+                                class="w-11 h-6 bg-outline rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <!-- Mobile Navigation Shell (Bottom Bar) -->
+    <nav
+        class="md:hidden fixed bottom-0 left-0 right-0 bg-surface shadow-[0_-4px_10px_rgba(0,0,0,0.05)] border-t border-outline-variant flex justify-around items-center h-16 px-margin-mobile z-50">
+        <a class="flex flex-col items-center text-on-surface-variant" href="/">
+            <span class="material-symbols-outlined">dashboard</span>
+            <span class="text-[10px] font-bold">Dash</span>
+        </a>
+        <a class="flex flex-col items-center text-primary" href="/accounts">
+            <span class="material-symbols-outlined" data-weight="fill">account_balance</span>
+            <span class="text-[10px] font-bold">Banks</span>
+        </a>
+        <a class="flex flex-col items-center text-on-surface-variant" href="/import-ui">
+            <span class="material-symbols-outlined">upload_file</span>
+            <span class="text-[10px] font-bold">Import</span>
+        </a>
+        <a class="flex flex-col items-center text-on-surface-variant" href="/rules">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="text-[10px] font-bold">Rules</span>
+        </a>
+    </nav>
+    <script>
+        // Micro-interactions for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.97)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = 'scale(1)';
+            });
+            btn.addEventListener('mouseleave', () => {
+                btn.style.transform = 'scale(1)';
+            });
+        });
+
+        async function loadAccountsData() {
+            try {
+                const accountsRes = await fetch('/api/accounts');
+                const accounts = await accountsRes.json();
+                
+                const container = document.getElementById('accounts-list-container');
+                container.innerHTML = '';
+                
+                if (accounts.length === 0) {
+                    container.innerHTML = `
+                        <div class="p-stack-lg text-center text-on-surface-variant text-body-sm">
+                            No connected bank feeds. Click "+ Link New Bank" to connect.
+                        </div>
+                    `;
+                } else {
+                    accounts.forEach(acc => {
+                        const initial = (acc.display_name || 'B').charAt(0).toUpperCase();
+                        
+                        // Format relative time or last sync
+                        let lastSyncStr = 'Never synced';
+                        if (acc.last_synced_at) {
+                            const diffMs = new Date() - new Date(acc.last_synced_at + "Z"); // Parse as UTC
+                            const diffMins = Math.floor(diffMs / 60000);
+                            if (diffMins < 1) {
+                                lastSyncStr = 'Just now';
+                            } else if (diffMins < 60) {
+                                lastSyncStr = `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+                            } else {
+                                const diffHrs = Math.floor(diffMins / 60);
+                                if (diffHrs < 24) {
+                                    lastSyncStr = `${diffHrs} hour${diffHrs > 1 ? 's' : ''} ago`;
+                                } else {
+                                    const diffDays = Math.floor(diffHrs / 24);
+                                    lastSyncStr = `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+                                }
+                            }
+                        }
+                        
+                        const row = document.createElement('div');
+                        row.className = 'p-stack-lg flex items-center justify-between group hover:bg-surface-container-low transition-colors';
+                        row.innerHTML = `
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 rounded-full bg-primary/10 border border-outline-variant flex items-center justify-center text-primary font-bold text-headline-sm">
+                                    ${initial}
+                                </div>
+                                <div>
+                                    <h3 class="text-body-md font-semibold text-on-surface">${acc.display_name}</h3>
+                                    <p class="text-label-md text-on-surface-variant uppercase tracking-wider">${acc.institution_id} (${acc.currency})</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-8">
+                                <div class="hidden md:block text-right">
+                                    <p class="text-body-sm text-on-surface-variant">Last sync</p>
+                                    <p class="text-label-md font-semibold text-on-surface">${lastSyncStr}</p>
+                                </div>
+                                <button onclick="triggerSync('${acc.resource_id}', '${acc.display_name}', this)"
+                                    class="border border-outline text-on-surface hover:bg-primary-container hover:text-white hover:border-primary-container px-6 py-2 rounded-lg text-label-md font-label-md transition-all active:scale-95">
+                                    Sync
+                                </button>
+                            </div>
+                        `;
+                        container.appendChild(row);
+                    });
+                }
+                
+                await loadSyncHistory();
+            } catch (err) {
+                console.error('Error loading accounts data:', err);
+            }
+        }
+
+        async function loadSyncHistory(limit = 20) {
+            try {
+                const historyRes = await fetch(`/api/sync/history?limit=${limit}`);
+                const history = await historyRes.json();
+                
+                const tableBody = document.getElementById('sync-history-body');
+                tableBody.innerHTML = '';
+                
+                if (history.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-stack-lg py-8 text-center text-on-surface-variant text-body-sm">
+                                No sync logs available.
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    history.forEach(item => {
+                        let badgeClass = 'bg-slate-100 text-slate-700 border-slate-200';
+                        let dotClass = 'bg-outline';
+                        if (item.status === 'SUCCESS') {
+                            badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+                            dotClass = 'bg-emerald-500';
+                        } else if (item.status === 'FAILED') {
+                            badgeClass = 'bg-rose-50 text-rose-700 border-rose-100';
+                            dotClass = 'bg-rose-500';
+                        } else if (item.status === 'SKIPPED') {
+                            badgeClass = 'bg-amber-50 text-amber-700 border-amber-100';
+                            dotClass = 'bg-amber-500';
+                        }
+                        
+                        const detailsText = item.status === 'SUCCESS' 
+                            ? `${item.transactions_fetched} transaction${item.transactions_fetched !== 1 ? 's' : ''} ingested.`
+                            : `<span class="text-error font-medium">${item.error_details || 'Sync execution failed'}</span>`;
+                        
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-surface-container-low transition-colors';
+                        row.innerHTML = `
+                            <td class="px-stack-lg py-4 text-body-sm font-mono text-on-surface">${item.executed_at}</td>
+                            <td class="px-stack-lg py-4">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-2 h-2 rounded-full ${dotClass}"></span>
+                                    <span class="text-body-sm font-semibold text-on-surface">${item.institution_id}</span>
+                                </div>
+                            </td>
+                            <td class="px-stack-lg py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeClass}">
+                                    ${item.status}
+                                </span>
+                            </td>
+                            <td class="px-stack-lg py-4 text-body-sm text-on-surface-variant">${detailsText}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading sync history:', err);
+            }
+        }
+
+        async function triggerSync(resourceId, displayName, buttonElement) {
+            const originalText = buttonElement.innerText;
+            buttonElement.disabled = true;
+            buttonElement.innerHTML = '<span class="material-symbols-outlined animate-spin text-[16px]">sync</span>';
+            
+            try {
+                const res = await fetch('/api/sync/auto', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ account_id: resourceId, account_name: displayName, initiated_by: "USER_BUTTON" })
+                });
+                const data = await res.json();
+                
+                if (data.status === 'SUCCESS') {
+                    buttonElement.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span>';
+                    buttonElement.classList.add('bg-emerald-500', 'text-white', 'border-emerald-500');
+                    setTimeout(() => {
+                        buttonElement.innerText = originalText;
+                        buttonElement.disabled = false;
+                        buttonElement.classList.remove('bg-emerald-500', 'text-white', 'border-emerald-500');
+                        loadAccountsData();
+                    }, 2000);
+                } else if (data.status === 'SKIPPED') {
+                    alert(data.message || 'Sync skipped due to rate limiting.');
+                    buttonElement.innerText = originalText;
+                    buttonElement.disabled = false;
+                    loadAccountsData();
+                } else {
+                    alert(`Sync failed: ${data.error || 'Unknown error'}`);
+                    buttonElement.innerText = originalText;
+                    buttonElement.disabled = false;
+                    loadAccountsData();
+                }
+            } catch (err) {
+                alert(`Error triggering sync: ${err.message}`);
+                buttonElement.innerText = originalText;
+                buttonElement.disabled = false;
+            }
+        }
+
+        async function triggerBankSync() {
+            const institutionId = prompt("Enter the bank/institution name (e.g., 'Commerzbank (DE)', 'Advanzia Bank (DE)'):");
+            if (!institutionId || !institutionId.trim()) {
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/sync/link', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ institution_id: institutionId.trim() })
+                });
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.detail || 'Failed to get authorization link');
+                }
+                const data = await res.json();
+                if (data.link) {
+                    window.location.href = data.link;
+                } else {
+                    alert("Authorization link not returned from server.");
+                }
+            } catch (err) {
+                alert(`Error linking bank: ${err.message}`);
+            }
+        }
+
+        // Check for URL query status alerts
+        function checkAlerts() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const container = document.getElementById('status-alert-container');
+            
+            if (urlParams.has('success')) {
+                container.className = 'p-4 mb-stack-lg bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center space-x-2 text-body-sm';
+                container.innerHTML = '<span class="material-symbols-outlined text-emerald-500">check_circle</span><span>Bank feed authorized and linked successfully!</span>';
+                // Remove parameter from URL without page reload
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (urlParams.has('error')) {
+                const err = urlParams.get('error');
+                container.className = 'p-4 mb-stack-lg bg-rose-50 border border-rose-200 text-rose-800 rounded-xl flex items-center space-x-2 text-body-sm';
+                container.innerHTML = `<span class="material-symbols-outlined text-rose-500">error</span><span>Failed to authorize bank feed: ${err}</span>`;
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        async function loadAutoSyncSetting() {
+            try {
+                const res = await fetch('/api/settings/auto-sync');
+                const data = await res.json();
+                document.getElementById('auto-sync-checkbox').checked = data.enabled;
+            } catch (err) {
+                console.error('Error loading auto-sync setting:', err);
+            }
+        }
+
+        async function saveAutoSyncSetting(enabled) {
+            try {
+                const res = await fetch('/api/settings/auto-sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                const data = await res.json();
+                if (data.status !== 'success') {
+                    alert('Failed to save auto-sync setting.');
+                }
+            } catch (err) {
+                console.error('Error saving auto-sync setting:', err);
+                alert(`Error saving setting: ${err.message}`);
+            }
+        }
+
+        document.getElementById('connect-bank-btn').addEventListener('click', triggerBankSync);
+        
+        document.getElementById('auto-sync-checkbox').addEventListener('change', (e) => {
+            saveAutoSyncSetting(e.target.checked);
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAlerts();
+            loadAccountsData();
+            loadAutoSyncSetting();
+        });
+    </script>
+</body>
+
+</html>
