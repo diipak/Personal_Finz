@@ -186,36 +186,30 @@
         <!-- Main Content Area -->
         <div class="flex-1 h-screen flex flex-col min-w-0">
             <!-- Top App Bar Shell -->
-            <header class="sticky top-0 z-10 w-full bg-surface shadow-sm border-b border-outline-variant">
+            <header class="bg-surface border-b border-outline-variant w-full shrink-0 z-10 shadow-sm h-20">
                 <div
-                    class="flex justify-between items-center w-full px-margin-desktop h-16 max-w-container-max-width mx-auto">
-                    <div class="flex items-center space-x-8">
+                    class="flex justify-between items-center w-full px-margin-desktop h-full max-w-container-max-width mx-auto">
+                    <div class="flex items-center gap-8">
                         <span class="text-headline-md font-bold text-primary">FinSync Pro</span>
-                        <nav class="hidden md:flex items-center gap-6">
-                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
-                                href="/">Dashboard</a>
-                            <a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-2 hover:text-primary transition-colors"
-                                href="/accounts">Accounts</a>
-                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
-                                href="/import-ui">Import</a>
-                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
-                                href="/rules">Rules</a>
-                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
-                                href="/review">Review</a>
-                        </nav>
                     </div>
-                    <div class="flex items-center space-x-4">
+                    <div class="flex items-center gap-4">
                         <button onclick="triggerBankSync()"
                             class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-all">
                             <span class="material-symbols-outlined text-sm">sync</span>
                             Link New Bank
                         </button>
-                        <button
-                            class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
-                        <div
-                            class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center overflow-hidden border border-primary">
-                            <img alt="User profile avatar" class="w-full h-full object-cover"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf0ikCNZJnR6wQQJ0d6A8jVhVVoh6CTE03_Fh7XJrUMvwrZgYgzvttYtD0tzFm2WoavPUgWmyDm0xfnAMU13_in3WR4XuFezJOXiMNh1kQPRiyaUanIXmUcWf10xd_eARVEiN2LQKMMyOY2nZ4xQxVdwGdNUd4xVHIJk3jABDmu7NJXPT2hoCDGfz0DjGQXQ4pZD0rXOhGU_nKhk2J38LqTCEzzpRxJkCBkNYl5zMlfVP3QFUesw0IMqHrdHGm59E0LKtoKnpGjta6" />
+                        <div class="flex items-center gap-3">
+                            <button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-all">
+                                <span class="material-symbols-outlined">notifications</span>
+                            </button>
+                            <button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-all">
+                                <span class="material-symbols-outlined">settings</span>
+                            </button>
+                            <div
+                                class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center overflow-hidden border border-primary">
+                                <img alt="User profile avatar" class="w-full h-full object-cover"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf0ikCNZJnR6wQQJ0d6A8jVhVVoh6CTE03_Fh7XJrUMvwrZgYgzvttYtD0tzFm2WoavPUgWmyDm0xfnAMU13_in3WR4XuFezJOXiMNh1kQPRiyaUanIXmUcWf10xd_eARVEiN2LQKMMyOY2nZ4xQxVdwGdNUd4xVHIJk3jABDmu7NJXPT2hoCDGfz0DjGQXQ4pZD0rXOhGU_nKhk2J38LqTCEzzpRxJkCBkNYl5zMlfVP3QFUesw0IMqHrdHGm59E0LKtoKnpGjta6" />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -254,10 +248,10 @@
                         <h2 class="text-headline-sm font-headline-sm text-on-surface">Sync Audit Log</h2>
                         <p class="text-body-sm font-body-sm text-on-surface-variant">Real-time execution status of background pipelines.</p>
                     </div>
-                    <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full text-left border-collapse" id="sync-history-table">
-                            <thead class="bg-surface-container-low border-b border-outline-variant">
-                                <tr>
+                    <div class="max-h-[400px] overflow-y-auto overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse min-w-[800px]" id="sync-history-table">
+                            <thead class="sticky top-0 z-10">
+                                <tr class="bg-surface-container-low border-b border-outline-variant bg-white/95 backdrop-blur-md">
                                     <th
                                         class="px-stack-lg py-4 text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">
                                         Timestamp</th>

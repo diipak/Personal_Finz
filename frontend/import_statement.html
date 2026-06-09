@@ -1,208 +1,454 @@
 <!DOCTYPE html>
 <html class="light" lang="en">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Import Statement - FinFlow</title>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Import Statement - FinSync Pro</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .upload-dashed-border {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='24' ry='24' stroke='%23C7C4D8' stroke-width='2' stroke-dasharray='12%2c 12' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+            border-radius: 24px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
-                    colors: {
-                        "primary": "#136dec",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101822",
+                    "colors": {
+                        "outline": "#777587",
+                        "surface-tint": "#4d44e3",
+                        "tertiary": "#7e3000",
+                        "on-tertiary-fixed": "#351000",
+                        "on-primary-fixed": "#0f0069",
+                        "on-surface-variant": "#464555",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#004c6e",
+                        "inverse-primary": "#c3c0ff",
+                        "surface-dim": "#cbdbf5",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "primary-container": "#4f46e5",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#c9e6ff",
+                        "secondary": "#006591",
+                        "surface": "#f8f9ff",
+                        "on-primary-container": "#dad7ff",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "surface-container-low": "#eff4ff",
+                        "secondary-container": "#39b8fd",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed": "#ffdbcc",
+                        "surface-variant": "#d3e4fe",
+                        "on-secondary-container": "#004666",
+                        "primary": "#3525cd",
+                        "on-secondary": "#ffffff",
+                        "surface-container": "#e5eeff",
+                        "primary-fixed": "#e2dfff",
+                        "surface-container-high": "#dce9ff",
+                        "on-tertiary-container": "#ffd2be",
+                        "outline-variant": "#c7c4d8",
+                        "on-surface": "#0b1c30",
+                        "background": "#f8f9ff",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#89ceff",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#001e2f",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "surface-container-highest": "#d3e4fe",
+                        "tertiary-container": "#a44100",
+                        "on-background": "#0b1c30",
+                        "inverse-surface": "#213145",
+                        "surface-bright": "#f8f9ff",
+                        "on-tertiary-fixed-variant": "#7b2f00"
                     },
-                    fontFamily: {
-                        "display": ["Manrope"]
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
                     },
-                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                    "spacing": {
+                        "unit": "4px",
+                        "margin-desktop": "32px",
+                        "container-max-width": "1440px",
+                        "stack-lg": "24px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "stack-sm": "8px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "1.2", "fontWeight": "700" }]
+                    }
                 },
             },
         }
     </script>
 </head>
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
-<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
-<div class="layout-container flex h-full grow flex-col">
-<div class="px-4 md:px-20 lg:px-40 flex flex-1 justify-center py-5">
-<div class="layout-content-container flex flex-col max-w-[960px] flex-1">
-<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 px-4 md:px-10 py-3">
-<div class="flex items-center gap-4 text-primary">
-<div class="size-8 flex items-center justify-center bg-primary/10 rounded-lg">
-<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
-</div>
-<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em]">FinFlow</h2>
-</div>
-<div class="flex flex-1 justify-end gap-8">
-<div class="hidden md:flex items-center gap-9">
-    <a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="/">Dashboard</a>
-    <a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="/import-ui">Import Statement</a>
-    <a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="/rules">Rules Engine</a>
-    <a class="text-slate-600 dark:text-slate-400 text-sm font-medium leading-normal hover:text-primary transition-colors" href="/review">Review</a>
-</div>
-<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-slate-200 dark:border-slate-800" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDrwkUTIbPlcIETM95i9JG6rzGf3ILAXSoPs0M5BNYf99P-Hb9L_reNd4rpWU7FDMSZUpBLIrHAF090M1QeTlotxTPRjA0b7bUT3yRnuH4QTE7td4nBs-HgJGSAtu3g3s9dzxanzZICnHIuTq0-Fxclfi0k7SW6hOL6XrVR_HwLa2GkZnkv0iOA3qRDDJvhC2OrL-A_tIG3FRZd3vfvXPY6DDSCpCPIHtpdVdNLM13YsP684w61W-a1nIj2qv-Mo4O7VriuTvjTDbQY");'></div>
-</div>
-</header>
-<div class="flex flex-wrap gap-2 p-4 mt-2">
-<a class="text-slate-500 dark:text-slate-400 text-sm font-medium leading-normal flex items-center gap-1" href="/">
-<span class="material-symbols-outlined text-sm">home</span>
-                            Dashboard
-                        </a>
-<span class="text-slate-300 dark:text-slate-600 text-sm font-medium leading-normal">/</span>
-<span class="text-primary text-sm font-semibold leading-normal">Import Statement</span>
-</div>
 
-<div class="flex flex-wrap justify-between gap-3 p-4">
-<div class="flex min-w-72 flex-col gap-1">
-<p class="text-slate-900 dark:text-slate-100 text-3xl font-extrabold leading-tight tracking-[-0.033em]">Import Transactions</p>
-<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal">Choose target account and upload a CSV, Excel, or PDF bank statement.</p>
-</div>
-</div>
-
-<!-- Account Selection & Dropzone -->
-<div class="flex flex-col p-4 gap-4">
-    <div class="w-full max-w-sm mb-2">
-        <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Target Account:</label>
-        <select id="account-select" class="w-full text-sm rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2.5">
-            <option value="Revolut">Revolut (CSV/PDF)</option>
-            <option value="HDFC">HDFC (Excel/PDF)</option>
-            <option value="Commerzbank">Commerzbank (PDF)</option>
-            <option value="Advanzia Bank credit card">Advanzia Bank (PDF)</option>
-            <option value="Wise">Wise (CSV)</option>
-            <option value="Trade Republic">Trade Republic (PDF)</option>
-        </select>
-    </div>
-
-    <div id="drop-zone" class="flex flex-col items-center gap-6 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/50 px-6 py-14 hover:border-primary transition-colors group cursor-pointer">
-        <div class="flex flex-col items-center gap-4">
-            <div class="size-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <span class="material-symbols-outlined text-3xl text-primary">upload_file</span>
+<body class="bg-background text-on-background min-h-screen">
+    <div class="h-screen w-screen overflow-hidden flex">
+        <!-- SideNavBar -->
+        <aside
+            class="hidden md:flex flex-col h-screen overflow-y-auto w-64 border-r border-outline-variant bg-surface-container-low py-stack-lg px-stack-md shrink-0">
+            <div class="flex items-center gap-3 mb-8 px-2">
+                <div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-on-primary-container">account_balance_wallet</span>
+                </div>
+                <div>
+                    <h2 class="font-headline-sm text-headline-sm text-primary">FinSync Pro</h2>
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant opacity-60">Financial
+                        Management</p>
+                </div>
             </div>
-            <div class="flex max-w-[480px] flex-col items-center gap-2">
-                <p class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] text-center">Drag and drop your statement here</p>
-                <p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal text-center">Supports CSV, Excel, and PDF files</p>
+            <nav class="flex-grow flex flex-col gap-2">
+                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
+                    href="/">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="font-body-md text-body-md">Dashboard</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
+                    href="/accounts">
+                    <span class="material-symbols-outlined">account_balance</span>
+                    <span class="font-body-md text-body-md">Accounts</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 bg-primary-container text-on-primary-container rounded-lg font-bold scale-98 transition-transform"
+                    href="/import-ui">
+                    <span class="material-symbols-outlined">upload_file</span>
+                    <span class="font-body-md text-body-md">Import Statement</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
+                    href="/rules">
+                    <span class="material-symbols-outlined">gavel</span>
+                    <span class="font-body-md text-body-md">Rules Engine</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
+                    href="/review">
+                    <span class="material-symbols-outlined">rate_review</span>
+                    <span class="font-body-md text-body-md">Review Queue</span>
+                </a>
+            </nav>
+            <div class="mt-auto flex flex-col gap-2">
+                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span class="font-body-md text-body-md">Settings</span>
+                </a>
+                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span class="font-body-md text-body-md">Logout</span>
+                </a>
             </div>
+        </aside>
+
+        <!-- Workspace Area -->
+        <div class="flex-1 h-screen flex flex-col min-w-0">
+            <!-- TopNavBar -->
+            <header class="bg-surface border-b border-outline-variant w-full shrink-0 z-10 shadow-sm h-20">
+                <div
+                    class="flex justify-between items-center px-margin-desktop h-full w-full max-w-container-max-width mx-auto">
+                    <div class="flex items-center gap-8">
+                        <span class="text-headline-md font-bold text-primary">FinSync Pro</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button onclick="triggerBankSync()" class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-all">
+                            <span class="material-symbols-outlined text-sm">sync</span>
+                            Link New Bank
+                        </button>
+                        <div class="flex items-center gap-3">
+                            <button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-all">
+                                <span class="material-symbols-outlined">notifications</span>
+                            </button>
+                            <button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-all">
+                                <span class="material-symbols-outlined">settings</span>
+                            </button>
+                            <div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center overflow-hidden border border-primary">
+                                <img alt="User profile avatar" class="w-full h-full object-cover"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf0ikCNZJnR6wQQJ0d6A8jVhVVoh6CTE03_Fh7XJrUMvwrZgYgzvttYtD0tzFm2WoavPUgWmyDm0xfnAMU13_in3WR4XuFezJOXiMNh1kQPRiyaUanIXmUcWf10xd_eARVEiN2LQKMMyOY2nZ4xQxVdwGdNUd4xVHIJk3jABDmu7NJXPT2hoCDGfz0DjGQXQ4pZD0rXOhGU_nKhk2J38LqTCEzzpRxJkCBkNYl5zMlfVP3QFUesw0IMqHrdHGm59E0LKtoKnpGjta6" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Canvas -->
+            <main class="flex-1 overflow-y-auto px-margin-mobile md:px-margin-desktop py-stack-lg pb-12">
+                <div class="max-w-4xl mx-auto space-y-stack-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <!-- Breadcrumbs -->
+                    <nav class="flex items-center gap-2 text-on-surface-variant text-label-md mb-2">
+                        <span class="material-symbols-outlined text-[16px]">home</span>
+                        <a href="/" class="hover:text-primary transition-colors">Dashboard</a>
+                        <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+                        <span class="text-primary font-bold">Import Statement</span>
+                    </nav>
+                    <!-- Header Section -->
+                    <div class="text-center space-y-2 mb-8">
+                        <h2 class="font-headline-lg text-headline-lg text-on-surface">Import Transactions</h2>
+                        <p class="text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+                            Choose target account and upload a CSV, Excel, or PDF bank statement.
+                        </p>
+                    </div>
+
+                    <!-- Main Interactive Card -->
+                    <div class="bg-white border border-outline-variant rounded-[32px] p-stack-lg shadow-sm glass-card" id="interactive-card">
+                        <div class="space-y-stack-lg">
+                            <!-- Account Selector -->
+                            <div class="space-y-stack-sm max-w-md mx-auto" id="account-selector-container">
+                                <label class="block font-label-md text-on-surface uppercase tracking-wider text-xs font-bold text-slate-700 dark:text-slate-300">Target Account</label>
+                                <div class="relative">
+                                    <select id="account-select"
+                                        class="w-full h-14 pl-4 pr-12 bg-white border border-outline-variant rounded-2xl appearance-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all font-semibold text-on-surface cursor-pointer">
+                                        <option value="Revolut">Revolut (CSV/PDF)</option>
+                                        <option value="HDFC">HDFC (Excel/PDF)</option>
+                                        <option value="Commerzbank">Commerzbank (PDF)</option>
+                                        <option value="Advanzia Bank credit card">Advanzia Bank (PDF)</option>
+                                        <option value="Wise">Wise (CSV)</option>
+                                        <option value="Trade Republic">Trade Republic (PDF)</option>
+                                    </select>
+                                    <span
+                                        class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
+                                </div>
+                            </div>
+
+                            <!-- Upload Zone -->
+                            <div class="upload-dashed-border bg-surface-container-low min-h-[340px] flex flex-col items-center justify-center p-12 transition-all duration-300 group hover:bg-primary-container/5 hover:scale-[1.01] cursor-pointer"
+                                id="drop-zone">
+                                <div class="relative mb-6">
+                                    <div
+                                        class="absolute -inset-4 bg-primary-container/10 rounded-full blur-xl group-hover:scale-125 transition-transform duration-500">
+                                    </div>
+                                    <span class="material-symbols-outlined text-[64px] text-primary relative z-10"
+                                        data-weight="fill">upload_file</span>
+                                </div>
+                                <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Drag and drop your statement here</h3>
+                                <p class="text-body-md text-on-surface-variant mb-8">Supports CSV, Excel, and PDF files</p>
+                                <label class="cursor-pointer" for="file-upload">
+                                    <input accept=".csv, .xlsx, .xls, .pdf" class="hidden" id="file-upload" type="file" />
+                                    <span
+                                        class="bg-primary text-white px-8 py-3 rounded-full font-bold shadow-lg shadow-primary-container/20 hover:shadow-primary-container/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2">
+                                        <span class="material-symbols-outlined">attach_file</span>
+                                        Select File
+                                    </span>
+                                </label>
+                            </div>
+
+                            <!-- Progress & Success/Error Status Container (Hidden initially) -->
+                            <div id="status-container" class="hidden py-8">
+                                <div class="rounded-2xl border border-outline-variant/30 bg-surface-container-low p-8 flex flex-col items-center justify-center gap-6 text-center">
+                                    <div id="status-icon" class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary animate-bounce">
+                                        <span id="status-sym" class="material-symbols-outlined text-3xl">autorenew</span>
+                                    </div>
+                                    <div>
+                                        <h3 id="status-title" class="font-headline-sm text-headline-sm text-on-surface mb-2">Uploading File...</h3>
+                                        <p id="status-desc" class="text-body-md text-on-surface-variant max-w-md">Processing transactions, running rules, and matching categories.</p>
+                                    </div>
+                                    <div id="done-actions" class="hidden mt-4">
+                                        <a href="/" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl font-bold shadow-md shadow-primary-container/20 hover:opacity-90 transition-all">
+                                            <span class="material-symbols-outlined">dashboard</span>
+                                            Go to Dashboard
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recent Activity / Guidance -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter pt-4" id="guidance-grid">
+                                <div
+                                    class="p-4 rounded-2xl bg-surface-container border border-outline-variant/30 flex items-start gap-4">
+                                    <span class="material-symbols-outlined text-secondary">security</span>
+                                    <div>
+                                        <p class="font-bold text-sm text-on-surface">Secure Upload</p>
+                                        <p class="text-xs text-on-surface-variant">Bank-grade 256-bit encryption for all data.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div
+                                    class="p-4 rounded-2xl bg-surface-container border border-outline-variant/30 flex items-start gap-4">
+                                    <span class="material-symbols-outlined text-secondary">magic_button</span>
+                                    <div>
+                                        <p class="font-bold text-sm text-on-surface">Auto-Categorization</p>
+                                        <p class="text-xs text-on-surface-variant">Smart AI maps transactions instantly.</p>
+                                    </div>
+                                </div>
+                                <div
+                                    class="p-4 rounded-2xl bg-surface-container border border-outline-variant/30 flex items-start gap-4">
+                                    <span class="material-symbols-outlined text-secondary">history</span>
+                                    <div>
+                                        <p class="font-bold text-sm text-on-surface">Duplicate Check</p>
+                                        <p class="text-xs text-on-surface-variant">We cross-verify with existing records.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Meta -->
+                    <footer class="text-center pt-8 space-y-4">
+                        <div class="flex justify-center gap-6 text-body-sm text-on-surface-variant">
+                            <a class="hover:text-primary transition-colors" href="#">Security</a>
+                            <a class="hover:text-primary transition-colors" href="#">Privacy</a>
+                            <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+                        </div>
+                        <p class="text-label-md text-outline">© 2026 FinSync Technologies. All rights reserved.</p>
+                    </footer>
+                </div>
+            </main>
         </div>
-        <input type="file" id="file-input" class="hidden" accept=".csv,.xlsx,.xls,.pdf" />
-        <button id="select-file-btn" class="flex min-w-[140px] items-center justify-center rounded-lg h-11 px-6 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-all shadow-md">
-            <span class="truncate">Select File</span>
-        </button>
     </div>
-</div>
 
-<!-- Upload Progress & Success States -->
-<div id="status-container" class="p-4 hidden">
-    <div class="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 flex flex-col items-center justify-center gap-4 text-center">
-        <div id="status-icon" class="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary animate-bounce">
-            <span id="status-sym" class="material-symbols-outlined text-3xl">autorenew</span>
-        </div>
-        <div>
-            <h3 id="status-title" class="text-slate-900 dark:text-slate-100 text-lg font-bold">Uploading File...</h3>
-            <p id="status-desc" class="text-slate-500 dark:text-slate-400 text-sm">Processing transactions, running rules, and matching categories.</p>
-        </div>
-        <div id="done-actions" class="hidden mt-2">
-            <a href="/" class="px-6 py-2.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 shadow-md">Go to Dashboard</a>
-        </div>
-    </div>
-</div>
+    <!-- Active script for Upload & Dropzone logic -->
+    <script>
+        const fileInput = document.getElementById('file-upload');
+        const dropZone = document.getElementById('drop-zone');
+        const statusContainer = document.getElementById('status-container');
+        const statusIcon = document.getElementById('status-icon');
+        const statusSym = document.getElementById('status-sym');
+        const statusTitle = document.getElementById('status-title');
+        const statusDesc = document.getElementById('status-desc');
+        const doneActions = document.getElementById('done-actions');
+        const accountSelect = document.getElementById('account-select');
+        const accountSelectorContainer = document.getElementById('account-selector-container');
+        const guidanceGrid = document.getElementById('guidance-grid');
 
-<script>
-    const fileInput = document.getElementById('file-input');
-    const dropZone = document.getElementById('drop-zone');
-    const selectFileBtn = document.getElementById('select-file-btn');
-    const statusContainer = document.getElementById('status-container');
-    const statusIcon = document.getElementById('status-icon');
-    const statusSym = document.getElementById('status-sym');
-    const statusTitle = document.getElementById('status-title');
-    const statusDesc = document.getElementById('status-desc');
-    const doneActions = document.getElementById('done-actions');
-    const accountSelect = document.getElementById('account-select');
-
-    selectFileBtn.onclick = () => fileInput.click();
-
-    fileInput.onchange = (e) => {
-        if (e.target.files.length > 0) {
-            uploadFile(e.target.files[0]);
-        }
-    };
-
-    dropZone.ondragover = (e) => {
-        e.preventDefault();
-        dropZone.classList.add('border-primary');
-    };
-
-    dropZone.ondragleave = () => {
-        dropZone.classList.remove('border-primary');
-    };
-
-    dropZone.ondrop = (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('border-primary');
-        if (e.dataTransfer.files.length > 0) {
-            uploadFile(e.dataTransfer.files[0]);
-        }
-    };
-
-    async function uploadFile(file) {
-        const selectedAccount = accountSelect.value;
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('account', selectedAccount);
-
-        statusContainer.classList.remove('hidden');
-        dropZone.classList.add('hidden');
-        document.querySelector('.max-w-sm').classList.add('hidden'); // Hide dropdown
-
-        try {
-            const response = await fetch('/import', {
-                method: 'POST',
-                body: formData
-            });
-            const data = await response.json();
-            
-            if (data.status === 'success') {
-                statusIcon.classList.remove('bg-primary/10', 'text-primary', 'animate-bounce');
-                statusIcon.classList.add('bg-emerald-100', 'dark:bg-emerald-900/30', 'text-emerald-500');
-                statusSym.textContent = "check_circle";
-                statusTitle.textContent = "Import Complete!";
-                statusDesc.textContent = `Successfully processed and imported ${data.inserted_count} transactions for account: ${selectedAccount}.`;
-                doneActions.classList.remove('hidden');
-            } else {
-                throw new Error(data.error || data.details || "Unknown error occurred");
+        // Allow clicking anywhere in the dropzone to trigger selection
+        dropZone.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'SPAN' && e.target.tagName !== 'INPUT') {
+                fileInput.click();
             }
-        } catch (error) {
-            console.error('Upload failed:', error);
-            statusIcon.classList.remove('bg-primary/10', 'text-primary', 'animate-bounce');
-            statusIcon.classList.add('bg-red-100', 'dark:bg-red-900/30', 'text-red-500');
-            statusSym.textContent = "error";
-            statusTitle.textContent = "Import Failed";
-            statusDesc.textContent = error.message;
-            
-            const retryBtn = document.createElement('button');
-            retryBtn.className = "mt-4 px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold rounded-lg";
-            retryBtn.textContent = "Retry";
-            retryBtn.onclick = () => window.location.reload();
-            doneActions.parentElement.appendChild(retryBtn);
-        }
-    }
-</script>
+        });
 
-<footer class="mt-12 mb-8 px-4 flex flex-col items-center gap-4 text-slate-400 text-sm">
-    <div class="flex items-center gap-4">
-        <a class="hover:text-primary transition-colors" href="#">Security</a>
-        <a class="hover:text-primary transition-colors" href="#">Privacy</a>
-        <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
-    </div>
-    <p>© 2026 FinFlow Technologies. All rights reserved.</p>
-</footer>
-</div>
-</div>
-</div>
-</div>
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                uploadFile(e.target.files[0]);
+            }
+        });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('bg-primary-container/10', 'scale-[1.02]');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('bg-primary-container/10', 'scale-[1.02]');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                uploadFile(files[0]);
+            }
+        }
+
+        async function uploadFile(file) {
+            const selectedAccount = accountSelect.value;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('account', selectedAccount);
+
+            statusContainer.classList.remove('hidden');
+            dropZone.classList.add('hidden');
+            accountSelectorContainer.classList.add('hidden');
+            guidanceGrid.classList.add('hidden');
+
+            try {
+                const response = await fetch('/import', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    statusIcon.classList.remove('bg-primary/10', 'text-primary', 'animate-bounce');
+                    statusIcon.classList.add('bg-emerald-100', 'text-emerald-600');
+                    statusSym.textContent = "check_circle";
+                    statusTitle.textContent = "Import Complete!";
+                    statusDesc.textContent = `Successfully processed and imported ${data.inserted_count} transactions for account: ${selectedAccount}.`;
+                    doneActions.classList.remove('hidden');
+                } else {
+                    throw new Error(data.error || data.details || "Unknown error occurred");
+                }
+            } catch (error) {
+                console.error('Upload failed:', error);
+                statusIcon.classList.remove('bg-primary/10', 'text-primary', 'animate-bounce');
+                statusIcon.classList.add('bg-rose-100', 'text-rose-600');
+                statusSym.textContent = "error";
+                statusTitle.textContent = "Import Failed";
+                statusDesc.textContent = error.message;
+
+                const retryBtn = document.createElement('button');
+                retryBtn.className = "mt-4 px-6 py-2.5 bg-slate-200 text-slate-800 text-sm font-bold rounded-xl hover:bg-slate-300 transition-all";
+                retryBtn.textContent = "Retry";
+                retryBtn.onclick = () => window.location.reload();
+                doneActions.parentElement.appendChild(retryBtn);
+            }
+        }
+
+        function triggerBankSync() {
+            window.location.href = "/accounts";
+        }
+    </script>
 </body>
+
 </html>

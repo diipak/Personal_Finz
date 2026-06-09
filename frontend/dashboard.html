@@ -124,6 +124,21 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
+
+        /* Custom scrollbar for tables */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
     </style>
 </head>
 
@@ -191,18 +206,6 @@
                     class="flex justify-between items-center px-margin-desktop h-full w-full max-w-container-max-width mx-auto">
                     <div class="flex items-center gap-8">
                         <span class="font-headline-md text-headline-md font-bold text-primary">FinSync Pro</span>
-                        <nav class="hidden md:flex items-center gap-6">
-                            <a class="font-label-md text-label-md text-primary border-b-2 border-primary pb-2 hover:text-primary transition-colors"
-                                href="/">Dashboard</a>
-                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
-                                href="/accounts">Accounts</a>
-                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
-                                href="/import-ui">Import</a>
-                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
-                                href="/rules">Rules</a>
-                            <a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors"
-                                href="/review">Review</a>
-                        </nav>
                     </div>
                     <div class="flex items-center gap-4">
                         <button onclick="triggerBankSync()" class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-all">
@@ -351,11 +354,11 @@
                             </h3>
                             <a href="/accounts" class="text-primary font-label-md text-label-md hover:underline">View All</a>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left">
+                        <div class="max-h-[300px] overflow-y-auto overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
                                 <thead
-                                    class="bg-surface-container-low font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-                                    <tr>
+                                    class="bg-surface-container-low font-label-md text-label-md text-on-surface-variant uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-md">
+                                    <tr class="border-b border-outline-variant">
                                         <th class="px-stack-lg py-4">Date</th>
                                         <th class="px-stack-lg py-4">Account</th>
                                         <th class="px-stack-lg py-4 text-right">Transactions</th>
