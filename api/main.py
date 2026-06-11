@@ -21,6 +21,7 @@ from pipeline import process_manual_file, process_enable_banking_sync
 from api.services.analytics import get_financial_summary, get_health_metrics
 from agent.assistant import ask_assistant
 from parsers.enable_banking_sync import EnableBankingClient
+from parsers.detect import detect_bank_type
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -63,8 +64,9 @@ async def auto_sync_scheduler_loop():
                         """
                         SELECT resource_id, display_name, last_synced_at 
                         FROM linked_accounts 
-                        WHERE last_synced_at IS NULL 
-                           OR datetime(last_synced_at) <= datetime('now', '-24 hours')
+                        WHERE (last_synced_at IS NULL 
+                           OR datetime(last_synced_at) <= datetime('now', '-24 hours'))
+                           AND resource_id NOT LIKE '%-manual-id'
                         """
                     )
                     due_accounts = [dict(row) for row in cursor.fetchall()]
@@ -164,6 +166,7 @@ def get_rules():
 # Rules API Endpoint: Create or Update rule in SQLite
 @app.post("/api/rules")
 def save_rule(rule: dict = Body(...)):
+    rule.setdefault("tags", None)
     conn = get_db()
     cursor = conn.cursor()
     try:
@@ -196,6 +199,11 @@ def save_rule(rule: dict = Body(...)):
                 rule
             )
         conn.commit()
+        
+        # Retroactively apply rules to local unpinned transactions
+        from engine.rules import apply_rules_to_unpinned_transactions
+        apply_rules_to_unpinned_transactions()
+        
         return {"status": "success"}
     except Exception as e:
         logger.error(f"Error saving rule: {e}")
@@ -221,19 +229,60 @@ def delete_rule(rule_id: int):
 
 # In-memory Manual File Ingestion (no subprocesses)
 @app.post("/import")
-def import_file(file: UploadFile = File(...), account: str = Form("Statement")):
+def import_file(
+    file: UploadFile = File(...), 
+    bank_type: Optional[str] = Form(None)
+):
     file_id = str(uuid.uuid4())
     extension = Path(file.filename).suffix.lower()
     
     input_path = UPLOAD_DIR / f"{file_id}{extension}"
-    logger.info(f"Importing manual statement {file.filename} as {file_id} for account {account}")
+    logger.info(f"Importing manual statement {file.filename} as {file_id} (optional bank_type: {bank_type})")
 
     with open(input_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    resolved_bank = bank_type
+    if not resolved_bank:
+        try:
+            resolved_bank = detect_bank_type(str(input_path))
+        except ValueError as detect_err:
+            # Clean up local file before returning ambiguous response
+            if input_path.exists():
+                os.remove(input_path)
+            return {
+                "status": "ambiguous",
+                "message": str(detect_err),
+                "options": ["Revolut", "Commerzbank", "Advanzia Bank credit card", "HDFC"]
+            }
+
+    # Query linked_accounts for the detected bank to find matched display name
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "SELECT display_name FROM linked_accounts WHERE LOWER(institution_id) = LOWER(?)",
+            (resolved_bank,)
+        )
+        row = cursor.fetchone()
+    except Exception as db_err:
+        logger.error(f"Failed to check linked accounts: {db_err}")
+        row = None
+    finally:
+        conn.close()
+
+    if not row:
+        if input_path.exists():
+            os.remove(input_path)
+        raise HTTPException(
+            status_code=400,
+            detail=f"Bank identified as {resolved_bank}, but no corresponding feed is linked in your Accounts panel."
+        )
+
+    target_account_name = row["display_name"]
     inserted = 0
     try:
-        inserted = process_manual_file(str(input_path), account)
+        inserted = process_manual_file(str(input_path), target_account_name, bank_type=resolved_bank)
         
         # Log successful manual import to sync_history
         conn = get_db()
@@ -244,7 +293,7 @@ def import_file(file: UploadFile = File(...), account: str = Form("Statement")):
                 INSERT INTO sync_history (institution_id, status, transactions_fetched)
                 VALUES (?, 'SUCCESS', ?)
                 """,
-                (account, inserted)
+                (resolved_bank, inserted)
             )
             conn.commit()
         except Exception as log_err:
@@ -255,7 +304,9 @@ def import_file(file: UploadFile = File(...), account: str = Form("Statement")):
         return {
             "status": "success",
             "file_id": file_id,
-            "inserted_count": inserted
+            "inserted_count": inserted,
+            "detected_bank": resolved_bank,
+            "account_name": target_account_name
         }
     except Exception as e:
         logger.error(f"Error processing manual import: {e}")
@@ -268,7 +319,7 @@ def import_file(file: UploadFile = File(...), account: str = Form("Statement")):
                 INSERT INTO sync_history (institution_id, status, transactions_fetched, error_details)
                 VALUES (?, 'FAILED', 0, ?)
                 """,
-                (account, str(e))
+                (resolved_bank or "Unknown Bank", str(e))
             )
             conn.commit()
         except Exception as log_err:
@@ -276,7 +327,12 @@ def import_file(file: UploadFile = File(...), account: str = Form("Statement")):
         finally:
             conn.close()
             
-        return {"status": "error", "error": "Import processing failed", "details": str(e)}
+        return {
+            "status": "error", 
+            "error": "Import processing failed", 
+            "details": str(e), 
+            "detected_bank": resolved_bank
+        }
     finally:
         # Clean up local file after processing
         if input_path.exists():
@@ -396,6 +452,8 @@ def auth_callback(code: str, state: str = None):
         return RedirectResponse(url=f"/accounts?error={str(e)}")
 
 def run_sync_for_account(account_id: str, account_name: Optional[str] = None, initiated_by: str = "USER_BUTTON") -> dict:
+    if account_id and account_id.endswith("-manual-id"):
+        return {"status": "SKIPPED", "message": "Manual offline account - sync skipped."}
     if not ENABLE_BANKING_APP_ID:
         return {"status": "FAILED", "error": "Enable Banking APP ID not set in environment."}
 

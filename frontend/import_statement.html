@@ -232,31 +232,13 @@
                     <div class="text-center space-y-2 mb-8">
                         <h2 class="font-headline-lg text-headline-lg text-on-surface">Import Transactions</h2>
                         <p class="text-body-lg text-on-surface-variant max-w-2xl mx-auto">
-                            Choose target account and upload a CSV, Excel, or PDF bank statement.
+                            Upload a CSV, Excel, or PDF bank statement. FinSync Pro will automatically detect and match your bank.
                         </p>
                     </div>
 
                     <!-- Main Interactive Card -->
                     <div class="bg-white border border-outline-variant rounded-[32px] p-stack-lg shadow-sm glass-card" id="interactive-card">
                         <div class="space-y-stack-lg">
-                            <!-- Account Selector -->
-                            <div class="space-y-stack-sm max-w-md mx-auto" id="account-selector-container">
-                                <label class="block font-label-md text-on-surface uppercase tracking-wider text-xs font-bold text-slate-700 dark:text-slate-300">Target Account</label>
-                                <div class="relative">
-                                    <select id="account-select"
-                                        class="w-full h-14 pl-4 pr-12 bg-white border border-outline-variant rounded-2xl appearance-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all font-semibold text-on-surface cursor-pointer">
-                                        <option value="Revolut">Revolut (CSV/PDF)</option>
-                                        <option value="HDFC">HDFC (Excel/PDF)</option>
-                                        <option value="Commerzbank">Commerzbank (PDF)</option>
-                                        <option value="Advanzia Bank credit card">Advanzia Bank (PDF)</option>
-                                        <option value="Wise">Wise (CSV)</option>
-                                        <option value="Trade Republic">Trade Republic (PDF)</option>
-                                    </select>
-                                    <span
-                                        class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">expand_more</span>
-                                </div>
-                            </div>
-
                             <!-- Upload Zone -->
                             <div class="upload-dashed-border bg-surface-container-low min-h-[340px] flex flex-col items-center justify-center p-12 transition-all duration-300 group hover:bg-primary-container/5 hover:scale-[1.01] cursor-pointer"
                                 id="drop-zone">
@@ -267,8 +249,8 @@
                                     <span class="material-symbols-outlined text-[64px] text-primary relative z-10"
                                         data-weight="fill">upload_file</span>
                                 </div>
-                                <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Drag and drop your statement here</h3>
-                                <p class="text-body-md text-on-surface-variant mb-8">Supports CSV, Excel, and PDF files</p>
+                                <h3 class="font-headline-sm text-headline-sm text-on-surface mb-2 text-center">Drag and drop any bank statement file (PDF, CSV, XLS) here</h3>
+                                <p class="text-body-md text-on-surface-variant mb-8 text-center max-w-lg">FinSync Pro will automatically detect, normalize, and process your data.</p>
                                 <label class="cursor-pointer" for="file-upload">
                                     <input accept=".csv, .xlsx, .xls, .pdf" class="hidden" id="file-upload" type="file" />
                                     <span
@@ -343,6 +325,23 @@
         </div>
     </div>
 
+    <!-- Ambiguous Bank Detection Modal -->
+    <div id="ambiguous-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+        <div class="bg-white border border-outline-variant rounded-[32px] p-8 max-w-md w-full shadow-2xl glass-card text-center space-y-6 animate-in fade-in zoom-in-95 duration-200">
+            <div class="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
+                <span class="material-symbols-outlined text-3xl">question_mark</span>
+            </div>
+            <div>
+                <h3 class="text-headline-sm font-headline-sm text-on-surface mb-2">Select Bank Manually</h3>
+                <p class="text-body-sm text-on-surface-variant">We couldn't automatically detect the bank statement format. Please select your bank to continue:</p>
+            </div>
+            <div class="grid grid-cols-1 gap-3" id="bank-options-list">
+                <!-- Dynamically populated -->
+            </div>
+            <button onclick="closeAmbiguousModal()" class="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl transition-all">Cancel</button>
+        </div>
+    </div>
+
     <!-- Active script for Upload & Dropzone logic -->
     <script>
         const fileInput = document.getElementById('file-upload');
@@ -353,9 +352,11 @@
         const statusTitle = document.getElementById('status-title');
         const statusDesc = document.getElementById('status-desc');
         const doneActions = document.getElementById('done-actions');
-        const accountSelect = document.getElementById('account-select');
-        const accountSelectorContainer = document.getElementById('account-selector-container');
         const guidanceGrid = document.getElementById('guidance-grid');
+        const ambiguousModal = document.getElementById('ambiguous-modal');
+        const bankOptionsList = document.getElementById('bank-options-list');
+
+        let currentFile = null;
 
         // Allow clicking anywhere in the dropzone to trigger selection
         dropZone.addEventListener('click', (e) => {
@@ -401,22 +402,41 @@
             }
         }
 
-        async function uploadFile(file) {
-            const selectedAccount = accountSelect.value;
+        async function uploadFile(file, bankType = null) {
+            currentFile = file;
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('account', selectedAccount);
+            if (bankType) {
+                formData.append('bank_type', bankType);
+            }
 
             statusContainer.classList.remove('hidden');
             dropZone.classList.add('hidden');
-            accountSelectorContainer.classList.add('hidden');
             guidanceGrid.classList.add('hidden');
+            closeAmbiguousModal();
+
+            // Clear previous errors/retry buttons if any
+            const prevRetry = statusContainer.querySelector('button');
+            if (prevRetry) prevRetry.remove();
+
+            // Reset status views
+            statusIcon.className = "w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary animate-bounce";
+            statusSym.textContent = "autorenew";
+            statusTitle.textContent = "Uploading File...";
+            statusDesc.textContent = "Processing transactions, running rules, and matching categories.";
+            doneActions.classList.add('hidden');
 
             try {
                 const response = await fetch('/import', {
                     method: 'POST',
                     body: formData
                 });
+                
+                if (response.status === 400) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "Verification failed");
+                }
+                
                 const data = await response.json();
 
                 if (data.status === 'success') {
@@ -424,8 +444,14 @@
                     statusIcon.classList.add('bg-emerald-100', 'text-emerald-600');
                     statusSym.textContent = "check_circle";
                     statusTitle.textContent = "Import Complete!";
-                    statusDesc.textContent = `Successfully processed and imported ${data.inserted_count} transactions for account: ${selectedAccount}.`;
+                    statusDesc.textContent = `Successfully detected as ${data.detected_bank}. Imported ${data.inserted_count} transactions into account: "${data.account_name}".`;
                     doneActions.classList.remove('hidden');
+                } else if (data.status === 'ambiguous') {
+                    // Show manual select popup modal
+                    statusContainer.classList.add('hidden');
+                    dropZone.classList.remove('hidden');
+                    guidanceGrid.classList.remove('hidden');
+                    showAmbiguousModal(data.options || ['Revolut', 'Commerzbank', 'Advanzia Bank credit card', 'HDFC']);
                 } else {
                     throw new Error(data.error || data.details || "Unknown error occurred");
                 }
@@ -443,6 +469,26 @@
                 retryBtn.onclick = () => window.location.reload();
                 doneActions.parentElement.appendChild(retryBtn);
             }
+        }
+
+        function showAmbiguousModal(options) {
+            bankOptionsList.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full py-3.5 bg-slate-50 hover:bg-primary-container/10 border border-outline-variant/60 rounded-2xl font-bold text-on-surface hover:text-primary hover:border-primary/30 transition-all flex items-center justify-center gap-2";
+                btn.innerHTML = `<span class="material-symbols-outlined text-sm">account_balance</span> <span>${opt}</span>`;
+                btn.onclick = () => {
+                    if (currentFile) {
+                        uploadFile(currentFile, opt);
+                    }
+                };
+                bankOptionsList.appendChild(btn);
+            });
+            ambiguousModal.classList.remove('hidden');
+        }
+
+        function closeAmbiguousModal() {
+            ambiguousModal.classList.add('hidden');
         }
 
         function triggerBankSync() {

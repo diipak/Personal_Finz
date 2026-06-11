@@ -37,6 +37,7 @@ class EnableBankingClient:
 
     def get_auth_link(self, institution_id: str, redirect_uri: str, state: str) -> str:
         """Calls POST /auth to generate user redirect link for authorization."""
+        redirect_uri = redirect_uri.strip("'\"")
         headers = self.get_headers()
         url = f"{self.base_url}/auth"
         
@@ -69,8 +70,15 @@ class EnableBankingClient:
             res = requests.post(url, json=payload, headers=headers, timeout=15)
             res.raise_for_status()
         except requests.exceptions.HTTPError as e:
+            err_msg = str(e)
+            try:
+                err_json = res.json()
+                if "message" in err_json:
+                    err_msg = f"{err_json.get('message')} ({err_json.get('error')})"
+            except Exception:
+                pass
             logger.error(f"Enable Banking /auth HTTPError response: {res.text}")
-            raise
+            raise ValueError(err_msg)
         return res.json().get("url")
 
     def create_session(self, code: str) -> dict:

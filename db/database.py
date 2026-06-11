@@ -30,7 +30,9 @@ def backfill_historic_data(conn):
                 INSERT OR IGNORE INTO linked_accounts (resource_id, institution_id, display_name, currency, last_synced_at)
                 VALUES 
                 ('b941a58f-79ce-4e81-9da2-39dc370be4f1', 'Revolut', 'Revolut Personal', 'EUR', '2026-06-07 08:02:47'),
-                ('cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b', 'Commerzbank', 'Commerzbank Giro', 'EUR', '2026-06-07 08:16:11')
+                ('cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b', 'Commerzbank', 'Commerzbank Giro', 'EUR', '2026-06-07 08:16:11'),
+                ('advanzia-manual-id', 'Advanzia Bank credit card', 'Advanzia Bank credit card', 'EUR', NULL),
+                ('hdfc-manual-id', 'HDFC', 'HDFC Bank Account', 'INR', NULL)
                 """
             )
             conn.commit()

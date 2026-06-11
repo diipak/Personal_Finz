@@ -17,14 +17,14 @@ from db.sync_ez import sync_new_transactions
 
 logger = logging.getLogger(__name__)
 
-def process_manual_file(file_path: str, account_name: str) -> int:
+def process_manual_file(file_path: str, account_name: str, bank_type: str = None) -> int:
     """
     Parses a bank statement file, categorizes transactions,
     writes them to SQLite, and syncs to ezBookkeeping.
     """
-    logger.info(f"Processing manual file: {file_path} for account: {account_name}")
+    logger.info(f"Processing manual file: {file_path} for account: {account_name} with bank_type: {bank_type}")
     try:
-        df = parse_file(file_path)
+        df = parse_file(file_path, bank_type=bank_type)
     except Exception as e:
         logger.error(f"Failed to parse file {file_path}: {e}")
         raise

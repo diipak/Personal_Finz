@@ -11,7 +11,7 @@ def parse_date_to_iso(date_str, bank_type):
             # format 04/04/20 -> 2020-04-04
             dt = datetime.strptime(date_str, "%d/%m/%y")
             return dt.strftime("%Y-%m-%d")
-        elif bank_type == "Commerzbank":
+        elif bank_type in ["Commerzbank", "Advanzia"]:
             # format 31.05.2023 -> 2023-05-31
             dt = datetime.strptime(date_str, "%d.%m.%Y")
             return dt.strftime("%Y-%m-%d")
@@ -189,19 +189,64 @@ def parse_revolut(file_path):
                     })
     return pd.DataFrame(rows)
 
+def parse_advanzia(file_path):
+    rows = []
+    # Pattern to match date description and amount for Advanzia
+    pattern = re.compile(r'^(\d{2}\.\d{2}\.\d{4})\s+(.+?)\s+(-?\s*\d{1,3}(?:\.\d{3})*(?:,\d{2}))\s*$')
+    with pdfplumber.open(file_path) as pdf:
+        for page in pdf.pages:
+            text = page.extract_text()
+            if not text:
+                continue
+            for line in text.split('\n'):
+                line = line.strip()
+                match = pattern.match(line)
+                if match:
+                    date_str = match.group(1)
+                    description = match.group(2).strip()
+                    amount_str = match.group(3).strip()
+                    
+                    if description.upper() in ["ALTER SALDO", "NEUER SALDO"]:
+                        continue
+                        
+                    try:
+                        clean_amt_str = amount_str.replace(".", "").replace(",", ".").replace(" ", "")
+                        val = float(clean_amt_str)
+                        # Invert signs: credit card purchases are positive in statement but negative/expense in app.
+                        # Payments/credits are negative in statement but positive/income in app.
+                        val = -val
+                        
+                        iso_date = parse_date_to_iso(date_str, "Advanzia")
+                        rows.append({
+                            "Completed Date": iso_date,
+                            "Description": description,
+                            "Amount": val,
+                            "Currency": "EUR",
+                            "Account": "Advanzia Bank credit card"
+                        })
+                    except Exception:
+                        pass
+    return pd.DataFrame(rows)
+
 def parse_pdf(file_path):
     # Detect bank type
     with pdfplumber.open(file_path) as pdf:
         first_page_text = pdf.pages[0].extract_text() or ""
         
-    if "hdfc" in first_page_text.lower():
+    if "advanzia" in first_page_text.lower() or "gebührenfrei" in first_page_text.lower():
+        return parse_advanzia(file_path)
+    elif "hdfc" in first_page_text.lower():
         return parse_hdfc(file_path)
     elif "commerzbank" in first_page_text.lower():
         return parse_commerzbank(file_path)
     elif "revolut" in first_page_text.lower() or "revolt" in first_page_text.lower():
         return parse_revolut(file_path)
     else:
-        # Fallback: try all three and choose the one that extracts the most transactions
+        # Fallback: try all and choose the one that extracts the most transactions
+        df_advanzia = parse_advanzia(file_path)
+        if len(df_advanzia) > 0:
+            return df_advanzia
+            
         df_revolut = parse_revolut(file_path)
         if len(df_revolut) > 0:
             return df_revolut
@@ -210,6 +255,8 @@ def parse_pdf(file_path):
         df_hdfc = parse_hdfc(file_path)
         
         if len(df_commerz) >= len(df_hdfc):
+            return df_commerz
+        else:
             return df_hdfc
 
 parse = parse_pdf
