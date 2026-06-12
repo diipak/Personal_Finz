@@ -27,8 +27,26 @@ def sync_new_transactions():
     cursor = conn.cursor()
     
     try:
-        # Load all unsynced transactions
-        cursor.execute("SELECT * FROM transactions WHERE ez_synced = 0 AND status = 'SETTLED'")
+        # Load all unsynced transactions joined with account display names
+        cursor.execute(
+            """
+            SELECT 
+                t.transaction_id,
+                t.booking_date as date,
+                a.account_name as account,
+                t.description,
+                t.display_name,
+                t.flexibility_tier as flexibility,
+                t.category,
+                t.amount,
+                t.currency,
+                t.is_guess,
+                CASE WHEN t.amount > 0 THEN 'Income' ELSE 'Expense' END as type
+            FROM transactions t
+            LEFT JOIN accounts a ON t.account_id = a.account_id
+            WHERE t.ez_synced = 0 AND t.status = 'SETTLED'
+            """
+        )
         rows = cursor.fetchall()
         
         if not rows:
@@ -149,13 +167,13 @@ def sync_new_transactions():
                     
                 res = requests.post(f"{EZBOOKKEEPING_API_URL}/transactions/add.json", json=payload, headers=headers, timeout=10)
                 if res.status_code == 200 and res.json().get("success") == True:
-                    cursor.execute("UPDATE transactions SET ez_synced = 1 WHERE id = ?", (row["id"],))
+                    cursor.execute("UPDATE transactions SET ez_synced = 1 WHERE transaction_id = ?", (row["transaction_id"],))
                     success_count += 1
                 else:
-                    logger.error(f"Failed to push txn {row['id']} to ezBookkeeping: {res.text}")
+                    logger.error(f"Failed to push txn {row['transaction_id']} to ezBookkeeping: {res.text}")
                     
             except Exception as ex:
-                logger.error(f"Error processing row {row['id']} push: {ex}")
+                logger.error(f"Error processing row {row['transaction_id'] if 'transaction_id' in row.keys() else 'unknown'} push: {ex}")
                 
         conn.commit()
         logger.info(f"Successfully pushed {success_count} transactions to ezBookkeeping.")

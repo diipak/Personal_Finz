@@ -77,8 +77,11 @@ CATEGORY_MAP = {
 # Account mapping from statement names to ezBookkeeping account IDs
 ACCOUNT_MAP = {
     "Revolut": "3806661759180210176",
+    "Revolut Personal": "3806661759180210176",
     "HDFC": "3806661881586778112",
+    "HDFC Bank Account": "3806661881586778112",
     "Commerzbank": "3806661791392464896",
+    "Commerzbank Giro": "3806661791392464896",
     "Advanzia Bank credit card": "3806662012583280640",
     "Amazon Zinia credit": "3806662098482626560",
     "Wise": "3806661937421352960",

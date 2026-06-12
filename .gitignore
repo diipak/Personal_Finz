@@ -23,6 +23,8 @@ api/uploads/*
 !api/uploads/.gitkeep
 statements/*
 !statements/.gitkeep
+instruction/*
+!instruction/.gitkeep
 
 # Local Databases
 *.db
@@ -35,3 +37,8 @@ Thumbs.db
 
 # Cryptographic Keys
 *.pem
+
+# Local agent scratch & reference files
+Instructions/
+scratch/
+

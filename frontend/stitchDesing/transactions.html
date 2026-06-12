@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Personal_Finz | Transactions</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#1800a7",
+                        "on-secondary-container": "#b7b4b7",
+                        "on-primary-fixed-variant": "#332dbc",
+                        "inverse-primary": "#4d4ad5",
+                        "on-secondary-fixed-variant": "#474649",
+                        "on-tertiary-fixed": "#311300",
+                        "on-secondary-fixed": "#1c1b1d",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "text-muted": "#a1a1aa",
+                        "surface-container-high": "#2a2932",
+                        "surface-base": "#09090b",
+                        "inverse-on-surface": "#302f38",
+                        "success": "#30d158",
+                        "surface-glass": "rgba(255, 255, 255, 0.03)",
+                        "surface": "#13131b",
+                        "inverse-surface": "#e4e1ed",
+                        "on-background": "#e4e1ed",
+                        "surface-variant": "#34343d",
+                        "on-primary-container": "#f4f1ff",
+                        "secondary-fixed-dim": "#c8c6c8",
+                        "error-container": "#93000a",
+                        "surface-bright": "#393841",
+                        "warning": "#ffd60a",
+                        "on-secondary": "#313032",
+                        "tertiary-container": "#ae5600",
+                        "on-primary-fixed": "#0c006b",
+                        "surface-tint": "#c2c1ff",
+                        "surface-container-highest": "#34343d",
+                        "tertiary": "#ffb786",
+                        "on-tertiary": "#502400",
+                        "primary-fixed": "#e2dfff",
+                        "outline-variant": "#464554",
+                        "on-surface-variant": "#c7c4d7",
+                        "border-subtle": "rgba(255, 255, 255, 0.06)",
+                        "surface-dim": "#13131b",
+                        "on-surface": "#e4e1ed",
+                        "background": "#13131b",
+                        "surface-container-low": "#1b1b23",
+                        "secondary-fixed": "#e5e1e4",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#ffdcc6",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "outline": "#918fa0",
+                        "primary-container": "#5e5ce6",
+                        "error": "#ff453a",
+                        "surface-container": "#1f1f27",
+                        "primary": "#c2c1ff",
+                        "on-tertiary-container": "#ffefe7",
+                        "secondary-container": "#474649",
+                        "secondary": "#c8c6c8",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#0e0d15"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "view-padding": "2rem",
+                        "section-margin": "2.5rem",
+                        "panel-gap": "1rem",
+                        "element-stack": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "data-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-base": ["Inter"],
+                        "data-md": ["JetBrains Mono"],
+                        "data-lg": ["JetBrains Mono"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "data-sm": ["12px", { "lineHeight": "1.1", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-base": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "data-md": ["14px", { "lineHeight": "1.2", "fontWeight": "400" }],
+                        "data-lg": ["20px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "label-sm": ["13px", { "lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            background-color: #09090b;
+            color: #e4e1ed;
+            overflow: hidden;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+        }
+
+        .scroll-zone {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        .scroll-zone::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .scroll-zone::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .transaction-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .action-pip {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+
+<body class="font-body-base text-body-base h-screen flex">
+    <!-- Side Navigation -->
+    <aside
+        class="hidden md:flex flex-col h-screen py-6 bg-surface dark:bg-surface-base w-[280px] fixed left-0 top-0 border-r border-border-subtle z-50">
+        <div class="px-6 mb-10">
+            <h1 class="text-headline-md font-headline-md font-bold text-on-surface dark:text-on-surface"><span
+                    style="color: rgb(76, 215, 246); font-size: 32px; letter-spacing: -1.6px; background-color: rgba(24, 24, 27, 0.4);">FinSync
+                    Pro</span></h1>
+            <p class="text-label-sm font-label-sm text-text-muted">Premium OS</p>
+        </div>
+        <nav class="flex-1 space-y-1">
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-label-sm font-label-sm">Overview</span>
+            </a>
+            <a class="flex items-center gap-3 bg-primary-container text-on-primary-container rounded-lg px-4 py-2 mx-2 scale-[0.98] transition-transform"
+                href="#">
+                <span class="material-symbols-outlined">payments</span>
+                <span class="text-label-sm font-label-sm">Transactions</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+                <span class="text-label-sm font-label-sm">Budgets</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">account_balance</span>
+                <span class="text-label-sm font-label-sm">Assets</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">trending_up</span>
+                <span class="text-label-sm font-label-sm">Investments</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">insights</span>
+                <span class="text-label-sm font-label-sm">Insights</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">robot_2</span>
+                <span class="text-label-sm font-label-sm">Automation</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="text-label-sm font-label-sm">Reports</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-label-sm font-label-sm">Settings</span>
+            </a>
+        </nav>
+        <div class="mt-auto px-2">
+            <button
+                class="flex items-center justify-center gap-3 w-full bg-secondary-container text-on-surface py-3 rounded-xl hover:bg-surface-variant transition-colors">
+                <span class="material-symbols-outlined">lock</span>
+                <span class="text-label-sm font-label-sm">Secure Vault</span>
+            </button>
+        </div>
+    </aside>
+    <!-- Main Stage -->
+    <main class="flex-1 ml-0 md:ml-[280px] flex flex-col h-screen relative">
+        <!-- Top App Bar -->
+        <header
+            class="h-16 fixed top-0 right-0 left-0 md:left-[280px] z-40 flex items-center justify-between px-view-padding bg-surface/80 dark:bg-surface-base/80 backdrop-blur-md border-b border-border-subtle">
+            <div class="flex items-center gap-4">
+                <div class="relative w-96">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+                    <input
+                        class="w-full bg-surface-container-low border-none rounded-full pl-10 pr-4 py-1.5 text-label-sm focus:ring-1 focus:ring-primary-container"
+                        placeholder="Search transactions, merchants, categories..." type="text">
+                </div>
+                <div class="hidden lg:flex items-center gap-4 ml-4">
+                    <span class="text-label-sm font-medium text-primary">EUR/INR</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button
+                    class="bg-primary-container text-on-primary-container px-4 py-1.5 rounded-full text-label-sm font-bold flex items-center gap-2 hover:opacity-80 active:scale-95 transition-all">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                    New Transaction
+                </button>
+                <div class="flex items-center gap-2 border-l border-border-subtle pl-4">
+                    <button
+                        class="w-9 h-9 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">notifications</span>
+                    </button>
+                    <div
+                        class="w-9 h-9 rounded-full bg-secondary-container flex items-center justify-center overflow-hidden border border-border-subtle">
+                        <img alt="User Avatar" class="w-full h-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_2Pc52js1rZs_BJAQ9a59MT5ubzT-anRtyTfG5Mvlec6OaVYimiyRzCJcHoQvJEa2AzoOdqxgEcxQvcYTvmHEK8_3AjvJ-iZRhVHkFW0hjCwhxZavvu9-7FR03GqTjSgNMUnMWYdaV88ZEP7OU_LliyrSHrxV0KtsZYhoON5Yyi5-kpKuNX5_q0M1MYU2c3BZk6oz52Log9ahXWSjndPadT3UE9zApQ49z18D5JpUQP-Piz_ICS6bClVqvs87ae0qoS68cyMwqGti">
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- Page Content -->
+        <div class="flex-1 mt-16 p-view-padding overflow-hidden flex flex-col">
+            <!-- Summary Header -->
+            <div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h2 class="text-headline-md font-headline-md text-on-surface">Transactions</h2>
+                    <p class="text-body-base text-text-muted">Track, review and manage your financial movement.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex bg-surface-container rounded-lg p-1 border border-border-subtle">
+                        <button class="px-3 py-1.5 text-label-sm rounded-md bg-surface-variant text-on-surface">All
+                            Transactions</button>
+                        <button
+                            class="px-3 py-1.5 text-label-sm rounded-md text-on-surface-variant hover:text-on-surface transition-colors">To
+                            Review (8)</button>
+                        <button
+                            class="px-3 py-1.5 text-label-sm rounded-md text-on-surface-variant hover:text-on-surface transition-colors">Rule
+                            Exceptions (3)</button>
+                    </div>
+                    <button
+                        class="flex items-center gap-2 px-4 py-1.5 text-label-sm border border-border-subtle rounded-lg bg-surface-container hover:bg-surface-variant transition-colors">
+                        Bulk Actions
+                        <span class="material-symbols-outlined text-[16px]">expand_more</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Dashboard Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-panel-gap mb-section-margin">
+                <div class="glass-panel p-5 flex flex-col justify-between h-32">
+                    <span class="text-label-sm text-text-muted">Total Transactions</span>
+                    <div class="flex items-end justify-between">
+                        <span class="text-headline-md font-data-md">156</span>
+                        <span class="text-success text-label-sm flex items-center"><span
+                                class="material-symbols-outlined text-[14px]">arrow_upward</span> 1.2%</span>
+                    </div>
+                    <div class="w-full h-1 bg-surface-variant rounded-full mt-2 overflow-hidden">
+                        <div class="bg-primary-container h-full w-[65%]"></div>
+                    </div>
+                </div>
+                <div class="glass-panel p-5 flex flex-col justify-between h-32">
+                    <span class="text-label-sm text-text-muted">Total Spent</span>
+                    <div class="flex items-end justify-between">
+                        <span class="text-headline-md font-data-md">€3,240.85</span>
+                        <span class="text-success text-label-sm flex items-center"><span
+                                class="material-symbols-outlined text-[14px]">arrow_downward</span> 8.5%</span>
+                    </div>
+                    <div class="w-full h-1 bg-surface-variant rounded-full mt-2 overflow-hidden">
+                        <div class="bg-error h-full w-[78%]"></div>
+                    </div>
+                </div>
+                <div class="glass-panel p-5 flex flex-col justify-between h-32">
+                    <span class="text-label-sm text-text-muted">Total Income</span>
+                    <div class="flex items-end justify-between">
+                        <span class="text-headline-md font-data-md">€5,200.00</span>
+                        <span class="text-success text-label-sm flex items-center"><span
+                                class="material-symbols-outlined text-[14px]">arrow_upward</span> 11%</span>
+                    </div>
+                    <div class="w-full h-1 bg-surface-variant rounded-full mt-2 overflow-hidden">
+                        <div class="bg-success h-full w-[90%]"></div>
+                    </div>
+                </div>
+                <div class="glass-panel p-5 border-warning/20 flex flex-col justify-between h-32">
+                    <div class="flex justify-between items-start">
+                        <span class="text-label-sm text-warning font-bold">To Review</span>
+                        <span class="material-symbols-outlined text-warning text-[20px]">warning</span>
+                    </div>
+                    <div class="flex items-end justify-between">
+                        <span class="text-headline-md font-data-md">8</span>
+                        <span class="text-text-muted text-label-sm">Needs attention</span>
+                    </div>
+                    <div class="w-full h-1 bg-surface-variant rounded-full mt-2 overflow-hidden">
+                        <div class="bg-warning h-full w-[25%]"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Filters Bar -->
+            <div class="glass-panel px-6 py-4 mb-4 flex flex-wrap items-center gap-4">
+                <div class="flex flex-col gap-1">
+                    <span class="text-[10px] uppercase tracking-wider text-text-muted">Date Range</span>
+                    <button class="flex items-center gap-2 text-label-sm font-medium">
+                        Jun 1 – Jun 30, 2024
+                        <span class="material-symbols-outlined text-[16px]">calendar_today</span>
+                    </button>
+                </div>
+                <div class="h-8 w-px bg-border-subtle"></div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-[10px] uppercase tracking-wider text-text-muted">Accounts</span>
+                    <button class="flex items-center gap-2 text-label-sm font-medium">
+                        All Accounts
+                        <span class="material-symbols-outlined text-[16px]">expand_more</span>
+                    </button>
+                </div>
+                <div class="h-8 w-px bg-border-subtle"></div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-[10px] uppercase tracking-wider text-text-muted">Categories</span>
+                    <button class="flex items-center gap-2 text-label-sm font-medium">
+                        All Categories
+                        <span class="material-symbols-outlined text-[16px]">expand_more</span>
+                    </button>
+                </div>
+                <div class="h-8 w-px bg-border-subtle"></div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-[10px] uppercase tracking-wider text-text-muted">Type</span>
+                    <button class="flex items-center gap-2 text-label-sm font-medium">
+                        All Types
+                        <span class="material-symbols-outlined text-[16px]">expand_more</span>
+                    </button>
+                </div>
+                <div class="ml-auto flex items-center gap-3">
+                    <button
+                        class="p-2 border border-border-subtle rounded-lg hover:bg-surface-variant transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">tune</span>
+                    </button>
+                    <button
+                        class="p-2 border border-border-subtle rounded-lg hover:bg-surface-variant transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">download</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Transactions Table -->
+            <div class="glass-panel flex-1 flex flex-col overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-label-sm text-text-muted border-b border-border-subtle">
+                                <th class="px-6 py-4 font-medium w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></th>
+                                <th class="px-6 py-4 font-medium">Date</th>
+                                <th class="px-6 py-4 font-medium">Merchant</th>
+                                <th class="px-6 py-4 font-medium">Category</th>
+                                <th class="px-6 py-4 font-medium">Account</th>
+                                <th class="px-6 py-4 font-medium text-right">Amount</th>
+                                <th class="px-6 py-4 font-medium text-center">Status</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div class="flex-1 overflow-y-auto scroll-zone">
+                    <table class="w-full text-left border-collapse">
+                        <tbody class="text-body-base">
+                            <!-- Row 1 -->
+                            <tr class="transaction-row transition-colors border-b border-border-subtle group">
+                                <td class="px-6 py-4 w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></td>
+                                <td class="px-6 py-4 text-data-sm text-text-muted">Jun 15, 2024</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-border-subtle">
+                                            <img alt="Revolut" class="w-5 h-5"
+                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDFkRkRnKETrgYyayHkHxnzHMsPu9tM1DtdKrgpBxLgVAOqeaOYcrNF8jnUKvbD6ZfudKXmc3tUL_KWI5EpYXUO_5VdAo76rqjDVURfvqYw3YQ8tvhkzvzD5eLCdSjEtpldF6QV6196ZylJKr_lMLEqHp_dDtktACZZORwaClDqnsHD8qLXADxLPcpB2qp7X3nX7pSmtG6mby1M-gpPs-bzwIzbzr_8RislKg4s_3rpBraXqk2ugZYzDAUCP_rMCw_OMmjLNSb2GxJ">
+                                        </div>
+                                        <span class="font-medium">Revolut</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="px-2 py-1 rounded bg-blue-500/10 text-blue-400 text-[11px] font-medium uppercase tracking-tight">Transfer</span>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm">Main Account</td>
+                                <td class="px-6 py-4 text-right font-data-md text-success">+ €1,200.00</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="material-symbols-outlined text-success text-[18px]">check_circle</span>
+                                </td>
+                            </tr>
+                            <!-- Row 2 (To Review) -->
+                            <tr
+                                class="transaction-row transition-colors border-b border-border-subtle group bg-warning/5">
+                                <td class="px-6 py-4 w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></td>
+                                <td class="px-6 py-4 text-data-sm text-text-muted">Jun 14, 2024</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-border-subtle">
+                                            <img alt="Adobe" class="w-5 h-5"
+                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_2WM7oVwVQJgejO9R0v1iu_G7G2vIlPf3J3pRgkrm-8Fv7qUodu3oiqjtmlvShqoLH7-v7e6ICFpB7gL9P3_aZnwiVuv1rfLTWe2v9y-ru_39up-EPxLSqw4d_g3cwIvnY6VV3hrStGBu2Zy65TNoyJdQVL0EH-yIjJcCcH6SjPO1y0psjzvAUWOrk9rilKfzKz5GYQiQpLGLMPcaHGcDgsBCUCsV-rx_VbySU1xgPeheLq5QJdz5vbpyGQW_K96UrKaJQvmpGlHR">
+                                        </div>
+                                        <span class="font-medium">Adobe Creative Cloud</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col gap-1">
+                                        <span
+                                            class="px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[11px] font-medium uppercase tracking-tight w-fit">Subscriptions</span>
+                                        <span class="text-[10px] text-warning flex items-center gap-1"><span
+                                                class="material-symbols-outlined text-[12px]">magic_button</span> AI:
+                                            Auto-Renew</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm">Main Account</td>
+                                <td class="px-6 py-4 text-right font-data-md">- €59.99</td>
+                                <td class="px-6 py-4 text-center">
+                                    <button
+                                        class="px-3 py-1 rounded-full bg-warning text-on-secondary text-[11px] font-bold hover:scale-105 transition-transform">To
+                                        Review</button>
+                                </td>
+                            </tr>
+                            <!-- Row 3 -->
+                            <tr class="transaction-row transition-colors border-b border-border-subtle group">
+                                <td class="px-6 py-4 w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></td>
+                                <td class="px-6 py-4 text-data-sm text-text-muted">Jun 14, 2024</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-border-subtle">
+                                            <img alt="REWE" class="w-5 h-5"
+                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDADcPUnmsaiNlZZ7sBO_JBqqndi2YC423z7PtqWZoUKE9fODZxeeaQnulv5Duxz56hUHW0U0BK23TImNvMuOFOZPComA3_D9AzPThtTgoi6Gk9m8oIuM1lxVFsGvjiNpzq78Ly-gknhwT1uiTISdWFH_PXSFS2fMx0osddqx7TfuC57kS7mxM89GxPjYhdZ-nz55gHH-FNvefigMJUEC6ZCD83V-rmkevV_h0ZE4C6zU-DH79MC6HsYjjfsgJhQkX3Y5mAjexKbrPX">
+                                        </div>
+                                        <span class="font-medium">REWE</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="px-2 py-1 rounded bg-orange-500/10 text-orange-400 text-[11px] font-medium uppercase tracking-tight">Groceries</span>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm">Main Account</td>
+                                <td class="px-6 py-4 text-right font-data-md">- €64.25</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="material-symbols-outlined text-success text-[18px]">check_circle</span>
+                                </td>
+                            </tr>
+                            <!-- Row 4 -->
+                            <tr class="transaction-row transition-colors border-b border-border-subtle group">
+                                <td class="px-6 py-4 w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></td>
+                                <td class="px-6 py-4 text-data-sm text-text-muted">Jun 13, 2024</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-border-subtle">
+                                            <img alt="Uber" class="w-5 h-5"
+                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRJtNjhOmlD8CwzzCS37mJeew1gLoAmBHLkphXNNwF72hB_gjvJp7UMS91CGycbOn4vdU8EbZ5Jw6K_u2iCrmMlG1ZPfhWQsoW-kkqoa6EGjxEyzKv5YeDH-753uzA7XwP6nR8TnXBkOnNNg-FF2eRrJ7CwaED5ca_JlBY1F8WgGnQ4w6VDmoOpVk9-IcNFAgYe9zcMORl4Y0MHexS9BMm_rnOvJlY4qzMCZH5P9h-cI0HXZuV0FeZO7Jx3XrqQrDS66MunOBXGayI">
+                                        </div>
+                                        <span class="font-medium">Uber</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="px-2 py-1 rounded bg-green-500/10 text-green-400 text-[11px] font-medium uppercase tracking-tight">Transport</span>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm">Main Account</td>
+                                <td class="px-6 py-4 text-right font-data-md">- €18.50</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="material-symbols-outlined text-success text-[18px]">check_circle</span>
+                                </td>
+                            </tr>
+                            <!-- Row 5 (To Review) -->
+                            <tr
+                                class="transaction-row transition-colors border-b border-border-subtle group bg-warning/5">
+                                <td class="px-6 py-4 w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></td>
+                                <td class="px-6 py-4 text-data-sm text-text-muted">Jun 13, 2024</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-border-subtle text-on-surface-variant">
+                                            <span class="material-symbols-outlined">bolt</span>
+                                        </div>
+                                        <span class="font-medium">Electricity Bill</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col gap-1">
+                                        <span
+                                            class="px-2 py-1 rounded bg-surface-variant text-on-surface-variant text-[11px] font-medium uppercase tracking-tight w-fit">Utilities</span>
+                                        <span class="text-[10px] text-warning flex items-center gap-1"><span
+                                                class="material-symbols-outlined text-[12px]">priority_high</span> 15%
+                                            Higher than Avg</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm">Main Account</td>
+                                <td class="px-6 py-4 text-right font-data-md">- €102.34</td>
+                                <td class="px-6 py-4 text-center">
+                                    <button
+                                        class="px-3 py-1 rounded-full bg-warning text-on-secondary text-[11px] font-bold hover:scale-105 transition-transform">To
+                                        Review</button>
+                                </td>
+                            </tr>
+                            <!-- Row 6 -->
+                            <tr class="transaction-row transition-colors border-b border-border-subtle group">
+                                <td class="px-6 py-4 w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></td>
+                                <td class="px-6 py-4 text-data-sm text-text-muted">Jun 12, 2024</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-border-subtle text-success">
+                                            <span class="material-symbols-outlined">payments</span>
+                                        </div>
+                                        <span class="font-medium">Salary</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="px-2 py-1 rounded bg-success/10 text-success text-[11px] font-medium uppercase tracking-tight">Income</span>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm">Main Account</td>
+                                <td class="px-6 py-4 text-right font-data-md text-success">+ €5,200.00</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="material-symbols-outlined text-success text-[18px]">check_circle</span>
+                                </td>
+                            </tr>
+                            <!-- Row 7 -->
+                            <tr class="transaction-row transition-colors border-b border-border-subtle group">
+                                <td class="px-6 py-4 w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></td>
+                                <td class="px-6 py-4 text-data-sm text-text-muted">Jun 11, 2024</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-border-subtle">
+                                            <img alt="Spotify" class="w-5 h-5"
+                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtzS_dQPLjmdio9MNDbfVBmSH_QJVYSRkHwctAajGuAabn1VvcCC_34zq0_F0nX9C_rtfPqjXf8qSHGG_LXBC8o-kghggBfglUvKF1GBoMDhWlVxtqrjzQlVHoFKXnOoGshv0R96K0_TEp96F45veKubLVMuR40R4ERKbvu7oSocKM7kN4NYcRadfZBjXv7HNh6Sgz09xVUFsEYcJEkr-c8Rbb1rxzG4PsYnPP9teFD0C5R5tdVArZCLozoIX9wFtYOyAeluqfDs6J">
+                                        </div>
+                                        <span class="font-medium">Spotify</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="px-2 py-1 rounded bg-purple-500/10 text-purple-400 text-[11px] font-medium uppercase tracking-tight">Subscriptions</span>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm">Main Account</td>
+                                <td class="px-6 py-4 text-right font-data-md">- €9.99</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="material-symbols-outlined text-success text-[18px]">check_circle</span>
+                                </td>
+                            </tr>
+                            <!-- Row 8 -->
+                            <tr class="transaction-row transition-colors border-b border-border-subtle group">
+                                <td class="px-6 py-4 w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></td>
+                                <td class="px-6 py-4 text-data-sm text-text-muted">Jun 10, 2024</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-border-subtle">
+                                            <img alt="Lidl" class="w-5 h-5"
+                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_--tUAYvTgLCxhUIZfX1EVjtIEsW9JtEupqXgCJMF1UGteo9DkkGn4hsQDZnQH9gOzlP0Q3uJXAkMb1dJ5FrtO7vzmpoXKV_HVDNAQkXITiPwTqBflwRndrwl6iWoRrQ9vJoKJBtIDflSR4pKzRDsePkSKIs6sRxWdwUxfV6eSkCtWmR_FAHVe_JOjOG8dD4I6K-oLu3h68Y7MbR6Cf5m9BbmOhVgMeuL_yOKgKtH4en4DjSFi8xuScRUAj_DAQDussuaTaKRuY4M">
+                                        </div>
+                                        <span class="font-medium">Lidl</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="px-2 py-1 rounded bg-orange-500/10 text-orange-400 text-[11px] font-medium uppercase tracking-tight">Groceries</span>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm">Main Account</td>
+                                <td class="px-6 py-4 text-right font-data-md">- €48.71</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="material-symbols-outlined text-success text-[18px]">check_circle</span>
+                                </td>
+                            </tr>
+                            <!-- Row 9 -->
+                            <tr class="transaction-row transition-colors border-b border-border-subtle group">
+                                <td class="px-6 py-4 w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></td>
+                                <td class="px-6 py-4 text-data-sm text-text-muted">Jun 10, 2024</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-border-subtle">
+                                            <img alt="Amazon" class="w-5 h-5"
+                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBel7ojZuhI8zx8eWjiC13CSgKk1TpDxr6whPEhfzsoRjZrVtmkc5unJMYJnYD1ov0PSP4WkiD_Hs_sRCwj0Pr9hW66jbZVYBWl1pll1YFwTCuey-QOwpFQHkpkxk8TQFwIYGVy8l7y3GYELsieAFixkY1NMaMhg46C2UYMRwJz1RpaREEDh1b7_-e_0KpBfHJVzKdk6Ll6tO4zRVXDNJAVrLgCT-Rwc8wG_ClIJ9g_y-Oe2-dtgY9ug_FEOgIYDyEXhB06Ve7UkGc3">
+                                        </div>
+                                        <span class="font-medium">Amazon</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="px-2 py-1 rounded bg-yellow-500/10 text-yellow-400 text-[11px] font-medium uppercase tracking-tight">Shopping</span>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm">Credit Card</td>
+                                <td class="px-6 py-4 text-right font-data-md">- €129.00</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="material-symbols-outlined text-success text-[18px]">check_circle</span>
+                                </td>
+                            </tr>
+                            <!-- Row 10 -->
+                            <tr class="transaction-row transition-colors border-b border-border-subtle group">
+                                <td class="px-6 py-4 w-12"><input
+                                        class="rounded bg-surface border-border-subtle focus:ring-primary-container"
+                                        type="checkbox"></td>
+                                <td class="px-6 py-4 text-data-sm text-text-muted">Jun 9, 2024</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center border border-border-subtle">
+                                            <img alt="Shell" class="w-5 h-5"
+                                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFP-9k9FrgoxWOAfQ7F4ubG3TgcuBAvvWzbs94G6Lto7WiYHDQuFdf8o27NrwN5jeXMr_9Z2Gxlux2s-UiKD8lVvJ8MC9ONI2j2V7TXZC560-Y_zG3xYwGYIta-LoFCUuYJd1pNXZxAEktLMtt_8hJWF40B2ypxgJJPSgm1AlAVBkDudQZUnB92S7UHpoWJt-tPgDuGVaS3yDGh-1G09B2EzmgXh9h1C0963F_r7hwHD-zi88D1G_mPI8TtZWa0BExG71D9eGP_D39">
+                                        </div>
+                                        <span class="font-medium">Shell</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        class="px-2 py-1 rounded bg-green-500/10 text-green-400 text-[11px] font-medium uppercase tracking-tight">Transport</span>
+                                </td>
+                                <td class="px-6 py-4 text-label-sm">Credit Card</td>
+                                <td class="px-6 py-4 text-right font-data-md">- €87.12</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="material-symbols-outlined text-success text-[18px]">check_circle</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination -->
+                <div
+                    class="px-6 py-4 flex items-center justify-between border-t border-border-subtle bg-surface-container-low">
+                    <span class="text-label-sm text-text-muted">1-10 of 156</span>
+                    <div class="flex items-center gap-1">
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-variant text-on-surface-variant">
+                            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                        </button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary-container text-on-primary-container text-label-sm font-bold">1</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-variant text-on-surface-variant text-label-sm">2</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-variant text-on-surface-variant text-label-sm">3</button>
+                        <span class="px-2 text-text-muted text-[10px]">...</span>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-variant text-on-surface-variant text-label-sm">16</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-variant text-on-surface-variant">
+                            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Contextual FAB (Only visible if primary intent aligns - suppressed for management view but adding as a subtle action trigger) -->
+    <button
+        class="fixed bottom-8 right-8 w-14 h-14 bg-primary-container text-on-primary-container rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+        <span class="material-symbols-outlined text-[28px]">add</span>
+        <span
+            class="absolute right-16 bg-surface-container px-3 py-1.5 rounded-lg border border-border-subtle text-label-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">New
+            Entry</span>
+    </button>
+    <script>
+        // Micro-interactions for table rows
+        document.querySelectorAll('.transaction-row').forEach(row => {
+            row.addEventListener('click', (e) => {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+                    // Logic for opening a detail sheet could go here
+                    console.log('Row clicked, opening transaction detail...');
+                }
+            });
+        });
+    </script>
+
+
+</body>
+
+</html>

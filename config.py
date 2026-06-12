@@ -15,13 +15,13 @@ if os.path.exists(_env_path):
 
 # Core configuration values
 SELF_NAME = os.getenv("SELF_NAME", "deepak batham")
-LLM_MODEL = os.getenv("LLM_MODEL", "qwen3.5:4b")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemma4:12b")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://100.103.104.90:11434")
 
 # SQLite Database Path
 DEFAULT_DB_DIR = os.path.expanduser("~/.personalfinz")
 os.makedirs(DEFAULT_DB_DIR, exist_ok=True)
-DB_PATH = os.getenv("DB_PATH", os.path.join(DEFAULT_DB_DIR, "data.db"))
+DB_PATH = os.getenv("DB_PATH", os.path.join(DEFAULT_DB_DIR, "personal_finz.db"))
 
 # ezBookkeeping integration settings
 EZBOOKKEEPING_API_URL = os.getenv("EZBOOKKEEPING_API_URL", "http://100.115.35.4:8090/api/v1")

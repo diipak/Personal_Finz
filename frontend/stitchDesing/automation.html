@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Personal_Finz | Automation</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --glass-blur: 24px;
+        }
+
+        body {
+            background-color: #09090b;
+            color: #e4e1ed;
+            overflow: hidden;
+            /* Viewport-locked mandate */
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .active-glow {
+            box-shadow: 0 0 20px rgba(94, 92, 230, 0.15);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#1800a7",
+                        "on-secondary-container": "#b7b4b7",
+                        "on-primary-fixed-variant": "#332dbc",
+                        "inverse-primary": "#4d4ad5",
+                        "on-secondary-fixed-variant": "#474649",
+                        "on-tertiary-fixed": "#311300",
+                        "on-secondary-fixed": "#1c1b1d",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "text-muted": "#a1a1aa",
+                        "surface-container-high": "#2a2932",
+                        "surface-base": "#09090b",
+                        "inverse-on-surface": "#302f38",
+                        "success": "#30d158",
+                        "surface-glass": "rgba(255, 255, 255, 0.03)",
+                        "surface": "#13131b",
+                        "inverse-surface": "#e4e1ed",
+                        "on-background": "#e4e1ed",
+                        "surface-variant": "#34343d",
+                        "on-primary-container": "#f4f1ff",
+                        "secondary-fixed-dim": "#c8c6c8",
+                        "error-container": "#93000a",
+                        "surface-bright": "#393841",
+                        "warning": "#ffd60a",
+                        "on-secondary": "#313032",
+                        "tertiary-container": "#ae5600",
+                        "on-primary-fixed": "#0c006b",
+                        "surface-tint": "#c2c1ff",
+                        "surface-container-highest": "#34343d",
+                        "tertiary": "#ffb786",
+                        "on-tertiary": "#502400",
+                        "primary-fixed": "#e2dfff",
+                        "outline-variant": "#464554",
+                        "on-surface-variant": "#c7c4d7",
+                        "border-subtle": "rgba(255, 255, 255, 0.06)",
+                        "surface-dim": "#13131b",
+                        "on-surface": "#e4e1ed",
+                        "background": "#13131b",
+                        "surface-container-low": "#1b1b23",
+                        "secondary-fixed": "#e5e1e4",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#ffdcc6",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "outline": "#918fa0",
+                        "primary-container": "#5e5ce6",
+                        "error": "#ff453a",
+                        "surface-container": "#1f1f27",
+                        "primary": "#c2c1ff",
+                        "on-tertiary-container": "#ffefe7",
+                        "secondary-container": "#474649",
+                        "secondary": "#c8c6c8",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#0e0d15"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "view-padding": "2rem",
+                        "section-margin": "2.5rem",
+                        "panel-gap": "1rem",
+                        "element-stack": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "data-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-base": ["Inter"],
+                        "data-md": ["JetBrains Mono"],
+                        "data-lg": ["JetBrains Mono"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "data-sm": ["12px", { "lineHeight": "1.1", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-base": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "data-md": ["14px", { "lineHeight": "1.2", "fontWeight": "400" }],
+                        "data-lg": ["20px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "label-sm": ["13px", { "lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-surface-base flex h-screen overflow-hidden">
+    <!-- SideNavBar (Shared Component) -->
+    <aside
+        class="flex flex-col h-screen py-6 bg-surface-glass backdrop-blur-xl border-r border-border-subtle fixed left-0 top-0 w-[280px] z-[60]">
+        <div class="px-6 mb-8">
+            <h1 class="text-headline-md font-headline-md font-bold text-on-surface"><span
+                    style="color: rgb(76, 215, 246); font-size: 32px; letter-spacing: -1.6px; background-color: rgba(24, 24, 27, 0.4);">FinSync
+                    Pro</span></h1>
+            <p class="text-label-sm font-label-sm text-on-surface-variant opacity-60">Premium OS</p>
+        </div>
+        <nav class="flex-1 space-y-1 custom-scrollbar overflow-y-auto">
+            <!-- Labels & Icons mapped from JSON -->
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-body-base font-body-base">Overview</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">payments</span>
+                <span class="text-body-base font-body-base">Transactions</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+                <span class="text-body-base font-body-base">Budgets</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">account_balance</span>
+                <span class="text-body-base font-body-base">Assets</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">trending_up</span>
+                <span class="text-body-base font-body-base">Investments</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">insights</span>
+                <span class="text-body-base font-body-base">Insights</span>
+            </a>
+            <!-- ACTIVE: Automation -->
+            <a class="flex items-center gap-3 bg-primary-container text-on-primary-container rounded-lg px-4 py-2 mx-2 scale-[0.98] transition-transform"
+                href="#">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">robot_2</span>
+                <span class="text-body-base font-body-base">Automation</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="text-body-base font-body-base">Reports</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-body-base font-body-base">Settings</span>
+            </a>
+        </nav>
+        <div class="mt-auto px-4 pt-6 border-t border-border-subtle">
+            <button
+                class="w-full flex items-center justify-center gap-2 bg-surface-variant/30 hover:bg-surface-variant/50 py-3 rounded-xl transition-all mb-4 text-label-sm font-label-sm">
+                <span class="material-symbols-outlined">lock</span>
+                Lock Vault
+            </button>
+            <div class="flex items-center gap-3 px-2">
+                <div class="w-10 h-10 rounded-full overflow-hidden border border-border-subtle">
+                    <img alt="Deepak's professional profile photo" class="w-full h-full object-cover"
+                        data-alt="A professional close-up portrait of a South Asian man in his early 30s wearing a dark charcoal turtleneck. The lighting is soft and cinematic, coming from the side to create depth. The background is a clean, dark, minimalist studio setting that aligns with a high-end personal finance operating system aesthetic. The mood is confident, calm, and sophisticated."
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYextJMBvdYyhp9-2ynzVXfMKetU5kYDx3ihcd0Q7fRmSTgqMWEXNoEG68mtyIpV-OEo60FZT5b7zwFRcBdDUATNrJoSySFXtgcU7BYyMDipX5_u_SVjSw27Q2akEBskUwIxLyetkvJ6BuR9kFW9x_rpH4kTlTjcyx6yhl7Hbe8HYP_vfugbFC4WAZgaMGEe3BTl95jtDS2IXUoW4lHeYThtt9cvK6Z0vTr5t491ONjonaGJR90OBb-A8gisvfcyVgnmQ-SFivy5Az">
+                </div>
+                <div class="flex-1">
+                    <p class="text-label-sm font-label-sm text-on-surface">Deepak R.</p>
+                    <p class="text-[11px] text-on-surface-variant opacity-60">Prime Member</p>
+                </div>
+                <span class="material-symbols-outlined text-on-surface-variant">more_vert</span>
+            </div>
+        </div>
+    </aside>
+    <!-- Main Content Area -->
+    <main class="flex-1 ml-[280px] h-screen flex flex-col overflow-hidden">
+        <!-- TopAppBar (Shared Component) -->
+        <header
+            class="h-16 flex items-center justify-between px-view-padding fixed top-0 right-0 left-[280px] z-50 bg-surface/80 backdrop-blur-md border-b border-border-subtle">
+            <div class="flex items-center gap-6">
+                <div class="relative w-80">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                    <input
+                        class="w-full bg-surface-container-low border border-border-subtle rounded-lg pl-10 pr-4 py-1.5 text-body-base focus:ring-1 focus:ring-primary-container outline-none"
+                        placeholder="Search rules, automations, logs..." type="text">
+                </div>
+                <div class="h-4 w-[1px] bg-border-subtle"></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-label-sm font-label-sm text-on-surface-variant">Active Pair:</span>
+                    <span class="text-label-sm font-label-sm text-primary font-bold">EUR/INR</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button
+                    class="flex items-center gap-2 bg-primary-container text-on-primary-container px-4 py-2 rounded-lg text-label-sm font-label-sm hover:opacity-80 transition-opacity">
+                    <span class="material-symbols-outlined text-sm">add</span>
+                    New Rule
+                </button>
+                <button
+                    class="relative w-10 h-10 flex items-center justify-center text-on-surface hover:bg-surface-variant/30 rounded-full transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+                </button>
+                <div class="w-8 h-8 rounded-full overflow-hidden border border-border-subtle">
+                    <img alt="User Avatar" class="w-full h-full object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-G24Utzg82a7n8NDMMnvkktM4LJ6_L772CjD83p49YHq0KkysZ_AsZSm6fDLf_NjXeFPD3q318ad-TsTfjlKfwtg2403tKqPTOkPM6I121UwMYjMJHX2L9bmfza0D_Q1l5DuVZZAhEcYAbzHlS34tjDXN63Q6o3k5FX7ltdXI_VcKzvQZyLRXWYpTnvrWKMCNMg-LkCeoymI6JA9YjsIXlmIv_AAJkN1qTbbF-BBqXG6-3AGdkkXLjv9npddJ74cVfk5_PYBVZZBL">
+                </div>
+            </div>
+        </header>
+        <!-- Content Canvas -->
+        <div class="flex-1 mt-16 p-view-padding overflow-y-auto custom-scrollbar bg-surface-base">
+            <div class="max-w-7xl mx-auto space-y-panel-gap">
+                <!-- Page Title & Quick Stats -->
+                <div class="flex items-end justify-between mb-8">
+                    <div>
+                        <h2 class="text-display-lg font-display-lg text-on-surface">Automation OS</h2>
+                        <p class="text-body-base font-body-base text-on-surface-variant mt-2">Manage your financial
+                            logic, smart categories, and recurring flows.</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="glass-card px-6 py-4 flex flex-col min-w-[160px]">
+                            <span class="text-label-sm text-on-surface-variant">Success Rate</span>
+                            <span class="text-data-lg font-data-lg text-success mt-1">98.4%</span>
+                        </div>
+                        <div class="glass-card px-6 py-4 flex flex-col min-w-[160px]">
+                            <span class="text-label-sm text-on-surface-variant">Manual Review</span>
+                            <span class="text-data-lg font-data-lg text-warning mt-1">12 Items</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bento Grid Layout -->
+                <div class="grid grid-cols-12 gap-panel-gap">
+                    <!-- LEFT COLUMN: Automation Health & Processing Queue -->
+                    <div class="col-span-12 lg:col-span-4 space-y-panel-gap">
+                        <!-- Failed Matches Alert -->
+                        <div class="glass-card p-6 border-error/20 bg-error/5 relative overflow-hidden">
+                            <div class="flex items-start justify-between relative z-10">
+                                <div>
+                                    <div class="flex items-center gap-2 text-error mb-2">
+                                        <span class="material-symbols-outlined">warning</span>
+                                        <span class="text-label-sm font-label-sm font-bold">CRITICAL ACTION
+                                            REQUIRED</span>
+                                    </div>
+                                    <h4 class="text-headline-md font-headline-md text-on-surface leading-tight">4 Failed
+                                        Matches</h4>
+                                    <p class="text-body-base text-on-surface-variant mt-2">Transactions from 'Chase
+                                        ...8812' could not be categorized automatically.</p>
+                                </div>
+                            </div>
+                            <button
+                                class="mt-6 w-full py-3 bg-error text-white font-label-sm rounded-xl hover:opacity-90 transition-opacity">
+                                Review &amp; Resolve
+                            </button>
+                        </div>
+                        <!-- Processing Queue -->
+                        <div class="glass-card p-6 h-fit">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-label-sm font-label-sm text-on-surface uppercase tracking-wider">Live
+                                    Processing Queue</h3>
+                                <span class="text-data-sm text-primary animate-pulse">Scanning...</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div
+                                    class="flex items-center gap-4 p-3 bg-surface-container-low rounded-xl border border-border-subtle">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-surface-variant/50 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-on-surface-variant">sync</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-label-sm text-on-surface">Amazon Prime Subscription</p>
+                                        <div class="w-full bg-surface-variant h-1 mt-2 rounded-full overflow-hidden">
+                                            <div class="bg-primary h-full w-2/3"></div>
+                                        </div>
+                                    </div>
+                                    <span class="text-data-sm text-on-surface-variant">68%</span>
+                                </div>
+                                <div class="flex items-center gap-4 p-3 opacity-60">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-surface-variant/50 flex items-center justify-center">
+                                        <span
+                                            class="material-symbols-outlined text-on-surface-variant">check_circle</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-label-sm text-on-surface">Uber Monthly Summary</p>
+                                        <p class="text-data-sm text-success">Completed</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4 p-3 opacity-60">
+                                    <div
+                                        class="w-10 h-10 rounded-lg bg-surface-variant/50 flex items-center justify-center">
+                                        <span
+                                            class="material-symbols-outlined text-on-surface-variant">check_circle</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-label-sm text-on-surface">Starbucks Rewards Loop</p>
+                                        <p class="text-data-sm text-success">Completed</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Suggested Automations -->
+                        <div class="glass-card p-6">
+                            <h3 class="text-label-sm font-label-sm text-on-surface uppercase tracking-wider mb-6">Smart
+                                Suggestions</h3>
+                            <div class="p-4 bg-primary-container/10 border border-primary-container/20 rounded-2xl">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="material-symbols-outlined text-primary">lightbulb</span>
+                                    <span class="text-label-sm font-bold text-primary">Recurrent Flow Detected</span>
+                                </div>
+                                <p class="text-body-base text-on-surface-variant mb-4">You pay <span
+                                        class="text-on-surface font-semibold">€14.99</span> to 'Adobe' every 14th of the
+                                    month. Automate this category?</p>
+                                <div class="flex gap-2">
+                                    <button
+                                        class="flex-1 py-2 bg-primary-container text-on-primary-container text-label-sm rounded-lg hover:brightness-110">Automate</button>
+                                    <button
+                                        class="px-4 py-2 text-label-sm text-on-surface-variant hover:text-on-surface">Dismiss</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- RIGHT COLUMN: Rule Library (The Engine) -->
+                    <div class="col-span-12 lg:col-span-8 space-y-panel-gap">
+                        <div class="glass-card overflow-hidden h-full flex flex-col">
+                            <div class="p-6 border-b border-border-subtle flex items-center justify-between">
+                                <div class="flex gap-4">
+                                    <button
+                                        class="text-label-sm font-bold text-primary border-b-2 border-primary pb-2">Active
+                                        Rules (18)</button>
+                                    <button
+                                        class="text-label-sm font-medium text-on-surface-variant hover:text-on-surface pb-2">Templates</button>
+                                    <button
+                                        class="text-label-sm font-medium text-on-surface-variant hover:text-on-surface pb-2">History
+                                        Log</button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-data-sm text-on-surface-variant">Filter by:</span>
+                                    <select
+                                        class="bg-surface-variant/30 border-none text-data-sm rounded-md px-2 py-1 outline-none">
+                                        <option>All Accounts</option>
+                                        <option>Main Bank</option>
+                                        <option>Credit Card</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex-1 custom-scrollbar overflow-y-auto">
+                                <table class="w-full text-left border-collapse">
+                                    <thead
+                                        class="sticky top-0 bg-surface/90 backdrop-blur-sm z-10 border-b border-border-subtle">
+                                        <tr>
+                                            <th class="px-6 py-4 text-data-sm text-on-surface-variant font-medium">Rule
+                                                Name</th>
+                                            <th class="px-6 py-4 text-data-sm text-on-surface-variant font-medium">
+                                                Condition</th>
+                                            <th class="px-6 py-4 text-data-sm text-on-surface-variant font-medium">
+                                                Action</th>
+                                            <th
+                                                class="px-6 py-4 text-data-sm text-on-surface-variant font-medium text-right">
+                                                Last Run</th>
+                                            <th class="px-6 py-4 text-data-sm text-on-surface-variant font-medium">
+                                                Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-border-subtle/30">
+                                        <!-- Rule Row 1 -->
+                                        <tr class="hover:bg-surface-variant/20 transition-colors group">
+                                            <td class="px-6 py-5">
+                                                <div class="flex items-center gap-3">
+                                                    <span
+                                                        class="material-symbols-outlined text-primary text-lg">category</span>
+                                                    <div>
+                                                        <p class="text-label-sm text-on-surface font-semibold">Rent
+                                                            Categorization</p>
+                                                        <p class="text-[11px] text-on-surface-variant">Logic:
+                                                            Transaction Keyword</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-5 text-data-sm">If text contains "PropMgmt-24"</td>
+                                            <td class="px-6 py-5">
+                                                <span
+                                                    class="px-2 py-1 bg-surface-container-high rounded text-[11px] border border-border-subtle">Move
+                                                    to 'Housing'</span>
+                                            </td>
+                                            <td class="px-6 py-5 text-data-sm text-right text-on-surface-variant">2h ago
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input checked="" class="sr-only peer" type="checkbox">
+                                                    <div
+                                                        class="w-10 h-5 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-success">
+                                                    </div>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <!-- Rule Row 2 -->
+                                        <tr class="hover:bg-surface-variant/20 transition-colors group">
+                                            <td class="px-6 py-5">
+                                                <div class="flex items-center gap-3">
+                                                    <span
+                                                        class="material-symbols-outlined text-tertiary text-lg">savings</span>
+                                                    <div>
+                                                        <p class="text-label-sm text-on-surface font-semibold">
+                                                            Auto-Savings Split</p>
+                                                        <p class="text-[11px] text-on-surface-variant">Logic: Percentage
+                                                            %</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-5 text-data-sm">If income &gt; €500.00</td>
+                                            <td class="px-6 py-5">
+                                                <span
+                                                    class="px-2 py-1 bg-surface-container-high rounded text-[11px] border border-border-subtle">Transfer
+                                                    15% to Vault</span>
+                                            </td>
+                                            <td class="px-6 py-5 text-data-sm text-right text-on-surface-variant">
+                                                Yesterday</td>
+                                            <td class="px-6 py-5">
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input checked="" class="sr-only peer" type="checkbox">
+                                                    <div
+                                                        class="w-10 h-5 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-success">
+                                                    </div>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <!-- Rule Row 3 -->
+                                        <tr class="hover:bg-surface-variant/20 transition-colors group">
+                                            <td class="px-6 py-5">
+                                                <div class="flex items-center gap-3">
+                                                    <span
+                                                        class="material-symbols-outlined text-error text-lg">error</span>
+                                                    <div>
+                                                        <p class="text-label-sm text-on-surface font-semibold">Flag
+                                                            Unusual Gas</p>
+                                                        <p class="text-[11px] text-on-surface-variant">Logic: Variance σ
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-5 text-data-sm">If category 'Fuel' &gt; €80.00</td>
+                                            <td class="px-6 py-5">
+                                                <span
+                                                    class="px-2 py-1 bg-surface-container-high rounded text-[11px] border border-border-subtle">Notify
+                                                    &amp; Pause Rule</span>
+                                            </td>
+                                            <td class="px-6 py-5 text-data-sm text-right text-on-surface-variant">14 May
+                                                24</td>
+                                            <td class="px-6 py-5">
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input class="sr-only peer" type="checkbox">
+                                                    <div
+                                                        class="w-10 h-5 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-success">
+                                                    </div>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <!-- Rule Row 4 -->
+                                        <tr class="hover:bg-surface-variant/20 transition-colors group">
+                                            <td class="px-6 py-5">
+                                                <div class="flex items-center gap-3">
+                                                    <span
+                                                        class="material-symbols-outlined text-on-surface-variant text-lg">receipt_long</span>
+                                                    <div>
+                                                        <p class="text-label-sm text-on-surface font-semibold">Monthly
+                                                            PDF Export</p>
+                                                        <p class="text-[11px] text-on-surface-variant">Logic: Date
+                                                            Trigger</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-5 text-data-sm">On 1st of every month</td>
+                                            <td class="px-6 py-5">
+                                                <span
+                                                    class="px-2 py-1 bg-surface-container-high rounded text-[11px] border border-border-subtle">Email
+                                                    PDF to Accountant</span>
+                                            </td>
+                                            <td class="px-6 py-5 text-data-sm text-right text-on-surface-variant">01 May
+                                                24</td>
+                                            <td class="px-6 py-5">
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input checked="" class="sr-only peer" type="checkbox">
+                                                    <div
+                                                        class="w-10 h-5 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-success">
+                                                    </div>
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <!-- Placeholder Rows for visual density -->
+                                        <tr class="opacity-40">
+                                            <td class="px-6 py-5">
+                                                <div class="h-4 w-32 bg-surface-variant rounded"></div>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <div class="h-4 w-40 bg-surface-variant rounded"></div>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <div class="h-4 w-24 bg-surface-variant rounded"></div>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <div class="h-4 w-16 bg-surface-variant ml-auto rounded"></div>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <div class="h-4 w-10 bg-surface-variant rounded-full"></div>
+                                            </td>
+                                        </tr>
+                                        <tr class="opacity-20">
+                                            <td class="px-6 py-5">
+                                                <div class="h-4 w-28 bg-surface-variant rounded"></div>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <div class="h-4 w-48 bg-surface-variant rounded"></div>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <div class="h-4 w-20 bg-surface-variant rounded"></div>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <div class="h-4 w-16 bg-surface-variant ml-auto rounded"></div>
+                                            </td>
+                                            <td class="px-6 py-5">
+                                                <div class="h-4 w-10 bg-surface-variant rounded-full"></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div
+                                class="p-4 bg-surface-container-high/50 border-t border-border-subtle flex justify-between items-center">
+                                <span class="text-data-sm text-on-surface-variant">Showing 18 of 24 rules</span>
+                                <div class="flex gap-2">
+                                    <button
+                                        class="px-3 py-1 border border-border-subtle rounded text-data-sm hover:bg-surface-variant">Previous</button>
+                                    <button
+                                        class="px-3 py-1 border border-border-subtle rounded text-data-sm hover:bg-surface-variant">Next</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Technical Footer Decoration -->
+                <div class="mt-8 flex items-center justify-between opacity-40">
+                    <div class="flex items-center gap-2">
+                        <span class="status-dot bg-success"></span>
+                        <span class="text-data-sm">All automation engines online. Latency: 42ms</span>
+                    </div>
+                    <div class="flex gap-6">
+                        <span class="text-data-sm">Ver: 2.0.4-STABLE</span>
+                        <span class="text-data-sm">Last Synced: 2024-05-24 09:41:02</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Micro-interaction Script -->
+    <script>
+        // Simple scale effect on rule toggles
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function () {
+                const row = this.closest('tr');
+                if (this.checked) {
+                    row.classList.remove('opacity-60');
+                } else {
+                    row.classList.add('opacity-60');
+                }
+            });
+        });
+
+        // Search Bar Focus Effect
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-2', 'ring-primary-container/30');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-2', 'ring-primary-container/30');
+        });
+    </script>
+
+
+</body>
+
+</html>

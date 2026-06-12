@@ -35,10 +35,10 @@ def get_financial_summary() -> dict:
         total_balance = get_normalized_sum(cursor, "is_ignored = 0 AND status = 'SETTLED'")
         
         # Total Income (all time)
-        total_income = get_normalized_sum(cursor, "type = 'Income' AND is_ignored = 0 AND status = 'SETTLED'")
+        total_income = get_normalized_sum(cursor, "amount > 0 AND is_ignored = 0 AND status = 'SETTLED'")
         
         # Total Expenses (all time)
-        total_expenses = abs(get_normalized_sum(cursor, "type = 'Expense' AND is_ignored = 0 AND status = 'SETTLED'"))
+        total_expenses = abs(get_normalized_sum(cursor, "amount < 0 AND is_ignored = 0 AND status = 'SETTLED'"))
         
         # Category Breakdown
         cursor.execute(
@@ -47,7 +47,7 @@ def get_financial_summary() -> dict:
                 category,
                 SUM(CASE WHEN currency = 'INR' THEN amount / {EUR_INR_RATE} ELSE amount END) as total
             FROM transactions
-            WHERE type = 'Expense' AND is_ignored = 0 AND status = 'SETTLED'
+            WHERE amount < 0 AND is_ignored = 0 AND status = 'SETTLED'
             GROUP BY category
             ORDER BY total ASC
             """
@@ -58,14 +58,14 @@ def get_financial_summary() -> dict:
         cursor.execute(
             f"""
             SELECT 
-                flexibility,
+                flexibility_tier,
                 SUM(CASE WHEN currency = 'INR' THEN amount / {EUR_INR_RATE} ELSE amount END) as total
             FROM transactions
-            WHERE type = 'Expense' AND is_ignored = 0 AND status = 'SETTLED'
-            GROUP BY flexibility
+            WHERE amount < 0 AND is_ignored = 0 AND status = 'SETTLED'
+            GROUP BY flexibility_tier
             """
         )
-        flexibility = {row["flexibility"]: abs(float(row["total"])) for row in cursor.fetchall()}
+        flexibility = {row["flexibility_tier"]: abs(float(row["total"])) for row in cursor.fetchall()}
         
         return {
             "total_balance_eur": total_balance,
@@ -103,7 +103,7 @@ def get_health_metrics() -> dict:
         # Monthly fixed + flexible expense average
         fixed_flex_sum = abs(get_normalized_sum(
             cursor, 
-            "type = 'Expense' AND flexibility IN ('Fixed', 'Flexible') AND date >= ? AND is_ignored = 0 AND status = 'SETTLED'",
+            "amount < 0 AND flexibility_tier IN ('Fixed', 'Flexible') AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED'",
             (cut_date,)
         ))
         avg_monthly_essential = fixed_flex_sum / 3.0 if fixed_flex_sum > 0 else 0.0
@@ -112,12 +112,12 @@ def get_health_metrics() -> dict:
         runway_months = cash_reserves / avg_monthly_essential if avg_monthly_essential > 0 else 999.0
         
         # Savings Rate in the last 90 days
-        income_90d = get_normalized_sum(cursor, "type = 'Income' AND date >= ? AND is_ignored = 0 AND status = 'SETTLED'", (cut_date,))
-        expense_90d = abs(get_normalized_sum(cursor, "type = 'Expense' AND date >= ? AND is_ignored = 0 AND status = 'SETTLED'", (cut_date,)))
+        income_90d = get_normalized_sum(cursor, "amount > 0 AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED'", (cut_date,))
+        expense_90d = abs(get_normalized_sum(cursor, "amount < 0 AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED'", (cut_date,)))
         savings_rate = (1.0 - (expense_90d / income_90d)) * 100.0 if income_90d > 0 else 0.0
         
         # FIRE Targets (based on average monthly expenses of all types in last 90 days)
-        total_exp_90d = abs(get_normalized_sum(cursor, "type = 'Expense' AND date >= ? AND is_ignored = 0 AND status = 'SETTLED'", (cut_date,)))
+        total_exp_90d = abs(get_normalized_sum(cursor, "amount < 0 AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED'", (cut_date,)))
         avg_monthly_exp = total_exp_90d / 3.0
         annual_exp = avg_monthly_exp * 12.0
         

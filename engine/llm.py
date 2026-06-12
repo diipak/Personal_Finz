@@ -41,7 +41,7 @@ Respond with ONLY the exact category name from the list, and nothing else. Do no
                 "stream": False,
                 "options": {
                     "temperature": 0.0,
-                    "num_predict": 15
+                    "num_predict": 512
                 }
             },
             timeout=30
@@ -49,10 +49,16 @@ Respond with ONLY the exact category name from the list, and nothing else. Do no
         response.raise_for_status()
         result = response.json().get("response", "").strip()
         
+        # Strip Ollama reasoning/thinking block if present
+        if "<think>" in result:
+            parts = result.split("</think>")
+            if len(parts) > 1:
+                result = parts[-1].strip()
+        
         # Validate that the LLM response is in the allowed list (case-insensitive check)
         matched_category = "Other"
         for cat in ALLOWED_CATEGORIES:
-            if cat.lower() == result.lower():
+            if cat.lower() == result.lower() or result.lower().startswith(cat.lower()) or result.lower().endswith(cat.lower()):
                 matched_category = cat
                 break
                 

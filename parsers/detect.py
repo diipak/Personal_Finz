@@ -71,7 +71,10 @@ def parse_file(file_path: str, bank_type: str = None) -> pd.DataFrame:
     ext = Path(file_path).suffix.lower()
     
     if bank_type == "HDFC":
-        return hdfc.parse(file_path)
+        if ext == ".pdf":
+            return pdf.parse_hdfc(file_path)
+        else:
+            return hdfc.parse(file_path)
     elif bank_type == "Commerzbank":
         if ext == ".pdf":
             return pdf.parse_commerzbank(file_path)

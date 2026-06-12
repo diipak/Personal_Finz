@@ -14,7 +14,7 @@ def match_rule(description: str, amount: float) -> dict:
     """
     Checks the description and amount against SQLite rules.
     Returns a dict of metadata to apply, or None if no match is found.
-    Metadata dict keys: ['category', 'display_name', 'flexibility', 'tags']
+    Metadata dict keys: ['category', 'display_name', 'flexibility']
     """
     desc = str(description).strip()
     abs_amount = abs(amount)
@@ -23,11 +23,11 @@ def match_rule(description: str, amount: float) -> dict:
     cursor = conn.cursor()
     try:
         # Sort by priority desc so higher priority rules run first
-        cursor.execute("SELECT * FROM rules ORDER BY priority DESC, id ASC")
+        cursor.execute("SELECT * FROM regex_rules ORDER BY priority DESC, rule_id ASC")
         rules = cursor.fetchall()
         
         for r in rules:
-            pattern = r["pattern"]
+            pattern = r["pattern_string"]
             match_type = r["match_type"] or "substring"
             
             matched = False
@@ -52,8 +52,8 @@ def match_rule(description: str, amount: float) -> dict:
                     continue
                 
                 # Retrieve default flexibility based on category if not explicitly set
-                category = r["category"]
-                flexibility = r["flexibility"]
+                category = r["target_category"]
+                flexibility = r["flexibility_tier"]
                 if not flexibility:
                     if category in ["Rent", "Utilities", "Telephone Bill", "Internet Bill", "Insurance", "Tax"]:
                         flexibility = "Fixed"
@@ -65,8 +65,7 @@ def match_rule(description: str, amount: float) -> dict:
                 return {
                     "category": category,
                     "display_name": r["display_name"],
-                    "flexibility": flexibility,
-                    "tags": r["tags"]
+                    "flexibility": flexibility
                 }
     except Exception as e:
         logger.error(f"Error matching rules: {e}")
@@ -85,7 +84,7 @@ def apply_rules_to_unpinned_transactions() -> int:
     updated_count = 0
     try:
         # Select all unpinned transactions
-        cursor.execute("SELECT id, description, amount, display_name FROM transactions WHERE is_pinned = 0")
+        cursor.execute("SELECT transaction_id as id, description, amount, display_name FROM transactions WHERE is_pinned = 0")
         txns = cursor.fetchall()
         
         for t in txns:
@@ -100,16 +99,14 @@ def apply_rules_to_unpinned_transactions() -> int:
                     UPDATE transactions SET
                         category = ?,
                         display_name = ?,
-                        flexibility = ?,
-                        tags = ?,
+                        flexibility_tier = ?,
                         is_guess = 0
-                    WHERE id = ?
+                    WHERE transaction_id = ?
                     """,
                     (
                         match["category"],
                         match["display_name"] or t["description"],
                         match["flexibility"],
-                        match["tags"],
                         t["id"]
                     )
                 )

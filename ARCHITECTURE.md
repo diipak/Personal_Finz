@@ -32,7 +32,7 @@ graph TD
 
 ## 1. Storage & Database Schema (Local Sovereignty)
 
-All state is persisted locally in `~/.personalfinz/data.db`. The database consists of three primary tables:
+All state is persisted locally in `~/.personalfinz/personal_finz.db`. The database consists of three primary tables:
 - **`transactions`**: The master ledger containing normalized transactions. Key flags include:
   - `is_guess` (Boolean): Identifies if the category was guessed by the local LLM.
   - `is_pinned` (Boolean): Set to `1` when the user reviews and locks the categorization, protecting it from overwrite.
@@ -65,7 +65,7 @@ Supports manual file drops of statements that do not have API connections (e.g. 
 The system follows a strict **Rules > LLM** hierarchy to maintain precision and minimize local compute.
 
 1. **Exact, Substring, and Regex Matchers**: The transaction description is normalized and compared against the SQLite `rules` table, filtered by priority and amount thresholds.
-2. **Ollama Fallback**: If no rules match, the transaction description and amount are forwarded to a local Ollama client (`qwen3.5:4b`). The LLM returns a category and the row is saved with `is_guess = 1`.
+2. **Ollama Fallback**: If no rules match, the transaction description and amount are forwarded to a local Ollama client (`gemma4:12b`). The LLM returns a category and the row is saved with `is_guess = 1`.
 3. **Three-tiered Spending Flexibility**: In order to calculate financial health metrics, categories are mapped into three distinct layers:
    - **`Fixed`**: Essential survival costs (Rent, Utilities, Telephone, Internet, Insurance, Tax).
    - **`Flexible`**: Dynamic needs that can be trimmed (Food, Drink, Clothing, Transit, Travel).

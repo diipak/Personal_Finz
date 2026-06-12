@@ -51,7 +51,7 @@ def process_manual_file(file_path: str, account_name: str, bank_type: str = None
                 category = rule_result["category"]
                 display_name = rule_result["display_name"] or desc_val
                 flexibility = rule_result["flexibility"]
-                tags = rule_result["tags"]
+                tags = rule_result.get("tags")
                 is_guess = 0
             else:
                 # LLM Fallback
@@ -126,7 +126,7 @@ def process_enable_banking_sync(account_id: str, account_name: str) -> int:
                 category = rule_result["category"]
                 display_name = rule_result["display_name"] or desc_val
                 flexibility = rule_result["flexibility"]
-                tags = rule_result["tags"]
+                tags = rule_result.get("tags")
                 is_guess = 0
             else:
                 # LLM Fallback

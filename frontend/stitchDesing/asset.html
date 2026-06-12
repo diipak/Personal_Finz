@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Personal_Finz | Assets Management</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary": "#1800a7",
+                        "on-secondary-container": "#b7b4b7",
+                        "on-primary-fixed-variant": "#332dbc",
+                        "inverse-primary": "#4d4ad5",
+                        "on-secondary-fixed-variant": "#474649",
+                        "on-tertiary-fixed": "#311300",
+                        "on-secondary-fixed": "#1c1b1d",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "text-muted": "#a1a1aa",
+                        "surface-container-high": "#2a2932",
+                        "surface-base": "#09090b",
+                        "inverse-on-surface": "#302f38",
+                        "success": "#30d158",
+                        "surface-glass": "rgba(255, 255, 255, 0.03)",
+                        "surface": "#13131b",
+                        "inverse-surface": "#e4e1ed",
+                        "on-background": "#e4e1ed",
+                        "surface-variant": "#34343d",
+                        "on-primary-container": "#f4f1ff",
+                        "secondary-fixed-dim": "#c8c6c8",
+                        "error-container": "#93000a",
+                        "surface-bright": "#393841",
+                        "warning": "#ffd60a",
+                        "on-secondary": "#313032",
+                        "tertiary-container": "#ae5600",
+                        "on-primary-fixed": "#0c006b",
+                        "surface-tint": "#c2c1ff",
+                        "surface-container-highest": "#34343d",
+                        "tertiary": "#ffb786",
+                        "on-tertiary": "#502400",
+                        "primary-fixed": "#e2dfff",
+                        "outline-variant": "#464554",
+                        "on-surface-variant": "#c7c4d7",
+                        "border-subtle": "rgba(255, 255, 255, 0.06)",
+                        "surface-dim": "#13131b",
+                        "on-surface": "#e4e1ed",
+                        "background": "#13131b",
+                        "surface-container-low": "#1b1b23",
+                        "secondary-fixed": "#e5e1e4",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#ffdcc6",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "outline": "#918fa0",
+                        "primary-container": "#5e5ce6",
+                        "error": "#ff453a",
+                        "surface-container": "#1f1f27",
+                        "primary": "#c2c1ff",
+                        "on-tertiary-container": "#ffefe7",
+                        "secondary-container": "#474649",
+                        "secondary": "#c8c6c8",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#0e0d15"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "view-padding": "2rem",
+                        "section-margin": "2.5rem",
+                        "panel-gap": "1rem",
+                        "element-stack": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "data-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-base": ["Inter"],
+                        "data-md": ["JetBrains Mono"],
+                        "data-lg": ["JetBrains Mono"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "data-sm": ["12px", { "lineHeight": "1.1", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-base": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "data-md": ["14px", { "lineHeight": "1.2", "fontWeight": "400" }],
+                        "data-lg": ["20px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "label-sm": ["13px", { "lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            background-color: #09090b;
+            color: #e4e1ed;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+        }
+
+        .scroll-zone {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        .scroll-zone::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .scroll-zone::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        @keyframes subtle-pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: subtle-pulse 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen w-screen selection:bg-primary-container selection:text-white">
+    <!-- Sidebar Navigation -->
+    <aside
+        class="docked full-height left-0 w-[280px] bg-surface dark:bg-surface-base bg-surface-glass backdrop-blur-xl border-r border-border-subtle flex flex-col h-screen py-6 z-50">
+        <div class="px-6 mb-10 flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary-container rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-white"
+                    style="font-variation-settings: 'FILL' 1;">account_balance</span>
+            </div>
+            <div>
+                <h1
+                    class="text-headline-md font-headline-md font-bold text-on-surface dark:text-on-surface leading-none">
+                    <span
+                        style="color: rgb(76, 215, 246); font-size: 32px; letter-spacing: -1.6px; background-color: rgba(24, 24, 27, 0.4);">FinSync
+                        Pro</span></h1>
+                <p class="text-label-sm font-label-sm text-text-muted mt-1">Premium OS</p>
+            </div>
+        </div>
+        <nav class="flex-1 space-y-1">
+            <!-- Navigation Items Mapping -->
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span class="text-label-sm font-label-sm">Overview</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">payments</span>
+                <span class="text-label-sm font-label-sm">Transactions</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">account_balance_wallet</span>
+                <span class="text-label-sm font-label-sm">Budgets</span>
+            </a>
+            <!-- Active State for Assets -->
+            <a class="flex items-center gap-3 bg-primary-container text-on-primary-container rounded-lg px-4 py-2 mx-2 scale-[0.98] transition-transform"
+                href="#">
+                <span class="material-symbols-outlined"
+                    style="font-variation-settings: 'FILL' 1;">account_balance</span>
+                <span class="text-label-sm font-label-sm">Assets</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">trending_up</span>
+                <span class="text-label-sm font-label-sm">Investments</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">insights</span>
+                <span class="text-label-sm font-label-sm">Insights</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">robot_2</span>
+                <span class="text-label-sm font-label-sm">Automation</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">analytics</span>
+                <span class="text-label-sm font-label-sm">Reports</span>
+            </a>
+            <a class="flex items-center gap-3 text-on-surface-variant hover:text-on-surface px-4 py-2 mx-2 hover:bg-surface-variant/50 transition-colors duration-200 rounded-lg"
+                href="#">
+                <span class="material-symbols-outlined">settings</span>
+                <span class="text-label-sm font-label-sm">Settings</span>
+            </a>
+        </nav>
+        <div class="px-4 mt-auto">
+            <button
+                class="w-full flex items-center justify-center gap-2 bg-surface-variant/30 border border-border-subtle py-3 rounded-xl hover:bg-surface-variant/50 transition-all active:scale-95">
+                <span class="material-symbols-outlined text-warning"
+                    style="font-variation-settings: 'FILL' 1;">lock</span>
+                <span class="text-label-sm font-label-sm font-medium">Secure Vault</span>
+            </button>
+        </div>
+    </aside>
+    <!-- Main Workspace -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <!-- Top App Bar -->
+        <header
+            class="fixed top-0 right-0 left-[280px] z-40 h-16 bg-surface/80 dark:bg-surface-base/80 backdrop-blur-md border-b border-border-subtle flex justify-between items-center px-view-padding">
+            <div class="flex items-center gap-6">
+                <div class="relative flex items-center">
+                    <span class="material-symbols-outlined absolute left-3 text-outline">search</span>
+                    <input
+                        class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-1.5 w-64 text-body-base focus:ring-1 focus:ring-primary transition-all"
+                        placeholder="Search assets, accounts..." type="text">
+                </div>
+                <div class="flex gap-4">
+                    <span class="text-primary font-bold text-label-sm">EUR/INR</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <button
+                    class="flex items-center gap-2 bg-primary-container text-on-primary-container px-4 py-2 rounded-lg font-label-sm text-label-sm hover:opacity-90 active:opacity-80 transition-all">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                    New Transaction
+                </button>
+                <div class="flex items-center gap-4">
+                    <button class="text-on-surface-variant hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">notifications</span>
+                    </button>
+                    <img alt="User Avatar" class="w-8 h-8 rounded-full border border-border-subtle object-cover"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkqVeQlfMolhMl0usUb1E2e7H1fscKTE9ywvCCcSMNEw-4IlKzjqA7FKFG3FVsCaLip2xyxOFwU0LTnzwIJVe4iP_gL3QCYYmJTagAML0lEaUgdRIGPAB5sNUdmHTYUeLdUdsLklt2b425nH-FoULrGLB51u6VPNIY-3dsqEtXegc5PSciqu_2ixcMSBEPRjv_mfCaEEjJo_Ny-mrGTB9OAzUIJdIxloCK5Llpl7qPU3WBsYLTSWCREao_NJSgXR55KzeoDiy_BTaZ">
+                </div>
+            </div>
+        </header>
+        <!-- Content Canvas -->
+        <div class="mt-16 p-view-padding flex-1 overflow-y-auto scroll-zone">
+            <header class="mb-section-margin">
+                <h2 class="font-headline-md text-headline-md text-on-surface">Assets</h2>
+                <p class="text-body-base text-text-muted mt-1">Track and manage everything you own.</p>
+                <!-- Sub-nav tabs -->
+                <div class="flex gap-8 mt-6 border-b border-border-subtle">
+                    <button
+                        class="pb-3 border-b-2 border-primary text-primary font-medium text-label-sm">Overview</button>
+                    <button
+                        class="pb-3 text-text-muted hover:text-on-surface transition-colors font-medium text-label-sm">Accounts</button>
+                    <button
+                        class="pb-3 text-text-muted hover:text-on-surface transition-colors font-medium text-label-sm">Liabilities</button>
+                    <button
+                        class="pb-3 text-text-muted hover:text-on-surface transition-colors font-medium text-label-sm">Allocation</button>
+                </div>
+            </header>
+            <!-- Bento Grid - Assets Layout -->
+            <div class="grid grid-cols-12 gap-panel-gap">
+                <!-- Net Worth Summary Card -->
+                <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-wider">Total Net
+                                Worth</h3>
+                            <span class="material-symbols-outlined text-primary">analytics</span>
+                        </div>
+                        <div class="mt-4">
+                            <span class="text-display-lg font-display-lg text-on-surface mono">€184,200</span>
+                            <div class="flex items-center gap-2 mt-2 text-success">
+                                <span class="material-symbols-outlined text-[16px]">trending_up</span>
+                                <span class="text-label-sm font-label-sm font-bold">+9.2% vs last month</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8 space-y-4">
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-low/50">
+                            <span class="text-label-sm text-text-muted">Total Liabilities</span>
+                            <span class="mono text-error font-medium text-body-base">€41,700</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-xl bg-surface-container-low/50">
+                            <span class="text-label-sm text-text-muted">Liquid Assets</span>
+                            <span class="mono text-success font-medium text-body-base">€8,200</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Asset Allocation Donut Chart -->
+                <div class="col-span-12 lg:col-span-4 glass-card p-6">
+                    <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-wider mb-6">Asset
+                        Allocation</h3>
+                    <div class="flex items-center justify-between">
+                        <div class="relative w-40 h-40">
+                            <!-- Circular Progress Simulation -->
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle class="text-surface-variant/20" cx="80" cy="80" fill="transparent" r="70"
+                                    stroke="currentColor" stroke-width="12"></circle>
+                                <circle class="text-primary" cx="80" cy="80" fill="transparent" r="70"
+                                    stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="150"
+                                    stroke-width="12"></circle>
+                                <circle class="text-tertiary" cx="80" cy="80" fill="transparent" r="70"
+                                    stroke="currentColor" stroke-dasharray="440" stroke-dashoffset="380"
+                                    stroke-width="12"></circle>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span class="text-label-sm text-text-muted">Managed</span>
+                                <span class="text-headline-md font-bold mono">82%</span>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-2 h-2 rounded-full bg-primary"></div>
+                                <div>
+                                    <p class="text-label-sm font-label-sm text-on-surface">Investments</p>
+                                    <p class="text-data-sm text-text-muted">45.2%</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-2 h-2 rounded-full bg-tertiary"></div>
+                                <div>
+                                    <p class="text-label-sm font-label-sm text-on-surface">Cash &amp; Bank</p>
+                                    <p class="text-data-sm text-text-muted">30.4%</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-2 h-2 rounded-full bg-surface-variant"></div>
+                                <div>
+                                    <p class="text-label-sm font-label-sm text-on-surface">Real Estate</p>
+                                    <p class="text-data-sm text-text-muted">24.4%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Account Summary -->
+                <div class="col-span-12 lg:col-span-4 glass-card p-6 overflow-hidden flex flex-col">
+                    <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-wider mb-6">Account
+                        Summary</h3>
+                    <div class="space-y-3 overflow-y-auto pr-2 scroll-zone flex-1">
+                        <!-- Account Row 1 -->
+                        <div
+                            class="group flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-border-subtle">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-surface-variant/30 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-primary text-[20px]">wallet</span>
+                                </div>
+                                <div>
+                                    <p class="text-label-sm font-semibold text-on-surface">Checking Account</p>
+                                    <p class="text-data-sm text-text-muted">Bank of Germany</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="mono text-body-base font-medium">€5,240.50</p>
+                                <div class="flex items-center justify-end gap-1">
+                                    <div class="status-dot bg-success"></div>
+                                    <span class="text-data-sm text-success">Healthy</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Account Row 2 -->
+                        <div
+                            class="group flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-border-subtle">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-surface-variant/30 flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-tertiary text-[20px]">savings</span>
+                                </div>
+                                <div>
+                                    <p class="text-label-sm font-semibold text-on-surface">Savings Account</p>
+                                    <p class="text-data-sm text-text-muted">Digital Republic</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="mono text-body-base font-medium">€2,959.40</p>
+                                <div class="flex items-center justify-end gap-1">
+                                    <div class="status-dot bg-success"></div>
+                                    <span class="text-data-sm text-success">Healthy</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Account Row 3 -->
+                        <div
+                            class="group flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-border-subtle">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-surface-variant/30 flex items-center justify-center">
+                                    <span
+                                        class="material-symbols-outlined text-primary text-[20px]">bar_chart_4_bars</span>
+                                </div>
+                                <div>
+                                    <p class="text-label-sm font-semibold text-on-surface">Investment Portfolio</p>
+                                    <p class="text-data-sm text-text-muted">ETF Portfolio</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="mono text-body-base font-medium">€83,200.00</p>
+                                <div class="flex items-center justify-end gap-1">
+                                    <div class="status-dot bg-warning"></div>
+                                    <span class="text-data-sm text-warning">Review</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="mt-4 text-center w-full py-2 text-label-sm text-primary hover:underline">View all
+                        accounts →</button>
+                </div>
+                <!-- Recent Asset Activity (List) -->
+                <div class="col-span-12 lg:col-span-7 glass-card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-wider">Recent Asset
+                            Activity</h3>
+                        <button class="text-primary text-label-sm font-medium">View all activity</button>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-12 gap-4 py-3 border-b border-border-subtle items-center">
+                            <div class="col-span-1 flex justify-center">
+                                <span class="material-symbols-outlined text-success">arrow_upward</span>
+                            </div>
+                            <div class="col-span-5">
+                                <p class="text-body-base font-medium">ETF Purchase</p>
+                                <p class="text-data-sm text-text-muted">Vanguard S&amp;P 500</p>
+                            </div>
+                            <div class="col-span-3 text-data-sm text-text-muted">Investment Portfolio</div>
+                            <div class="col-span-3 text-right mono font-medium">€1,200.00</div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-4 py-3 border-b border-border-subtle items-center">
+                            <div class="col-span-1 flex justify-center">
+                                <span class="material-symbols-outlined text-success">add_circle</span>
+                            </div>
+                            <div class="col-span-5">
+                                <p class="text-body-base font-medium">Salary Deposit</p>
+                                <p class="text-data-sm text-text-muted">Checking Account</p>
+                            </div>
+                            <div class="col-span-3 text-data-sm text-text-muted">Bank of Germany</div>
+                            <div class="col-span-3 text-right mono font-medium text-success">+€3,500.00</div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-4 py-3 border-b border-border-subtle items-center">
+                            <div class="col-span-1 flex justify-center">
+                                <span class="material-symbols-outlined text-primary">receipt_long</span>
+                            </div>
+                            <div class="col-span-5">
+                                <p class="text-body-base font-medium">Dividend Received</p>
+                                <p class="text-data-sm text-text-muted">Investment Portfolio</p>
+                            </div>
+                            <div class="col-span-3 text-data-sm text-text-muted">Bank of Germany</div>
+                            <div class="col-span-3 text-right mono font-medium text-success">+€126.50</div>
+                        </div>
+                        <div class="grid grid-cols-12 gap-4 py-3 items-center">
+                            <div class="col-span-1 flex justify-center">
+                                <span class="material-symbols-outlined text-warning">sync</span>
+                            </div>
+                            <div class="col-span-5">
+                                <p class="text-body-base font-medium">Internal Transfer</p>
+                                <p class="text-data-sm text-text-muted">Savings -&gt; Checking</p>
+                            </div>
+                            <div class="col-span-3 text-data-sm text-text-muted">Digital Republic</div>
+                            <div class="col-span-3 text-right mono font-medium">€500.00</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Liabilities Overview -->
+                <div class="col-span-12 lg:col-span-5 glass-card p-6 flex flex-col">
+                    <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-wider mb-6">Liabilities
+                        Overview</h3>
+                    <div class="flex-1 space-y-4">
+                        <div class="p-4 rounded-2xl bg-surface-container-high/40 border border-border-subtle">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex gap-3 items-center">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-error-container/20 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-error">home_work</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-body-base font-semibold">Mortgage</h4>
+                                        <p class="text-data-sm text-text-muted">Main Property</p>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-data-sm font-bold text-on-surface bg-surface-container rounded px-2 py-0.5">2.1%
+                                    APR</span>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-data-sm text-text-muted">Remaining Balance</p>
+                                    <p class="text-headline-md font-bold mono">€38,200.00</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-data-sm text-text-muted">Payoff in 4y 2m</p>
+                                    <div class="w-24 h-1.5 bg-surface-variant rounded-full mt-2 overflow-hidden">
+                                        <div class="h-full bg-error rounded-full" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-4 rounded-2xl bg-surface-container-high/40 border border-border-subtle">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex gap-3 items-center">
+                                    <div
+                                        class="w-10 h-10 rounded-full bg-error-container/20 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-error">directions_car</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-body-base font-semibold">Car Loan</h4>
+                                        <p class="text-data-sm text-text-muted">Auto Finance</p>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-data-sm font-bold text-on-surface bg-surface-container rounded px-2 py-0.5">1.3%
+                                    APR</span>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <p class="text-data-sm text-text-muted">Remaining Balance</p>
+                                    <p class="text-headline-md font-bold mono">€3,500.00</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-data-sm text-text-muted">Payoff in 8m</p>
+                                    <div class="w-24 h-1.5 bg-surface-variant rounded-full mt-2 overflow-hidden">
+                                        <div class="h-full bg-error rounded-full" style="width: 25%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="mt-6 text-center w-full py-2 text-label-sm text-primary hover:underline">View all
+                        liabilities →</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Side Panel / Quick Action Sheet Overlay (Hidden by default, triggered by JS) -->
+    <div class="fixed inset-y-0 right-0 w-[420px] bg-surface-container-highest border-l border-border-subtle shadow-2xl transform translate-x-full transition-transform duration-500 ease-in-out z-[100] backdrop-blur-3xl overflow-y-auto"
+        id="account-sheet">
+        <div class="p-8">
+            <div class="flex justify-between items-center mb-10">
+                <h3 class="text-headline-md font-bold">Account Details</h3>
+                <button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10"
+                    onclick="toggleSheet()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="mb-10 text-center p-6 rounded-3xl bg-surface-container/50 border border-border-subtle">
+                <img alt="Asset Detail Image" class="w-24 h-24 mx-auto rounded-3xl object-cover mb-4"
+                    data-alt="A sophisticated macro shot of a black metallic credit card with gold embossed lettering resting on a sleek, dark polished marble surface. The lighting is low and cinematic, with soft blue and purple reflections dancing across the card's surface. The overall aesthetic is ultra-premium, minimalist, and masculine, echoing a modern digital finance OS design system."
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFqxZcIdtWjz30e9B8Qq3TcIqhagmTTDSZt3qOk-Qp38YdMoui2zXbsam3xRn1SDB8W8e4asHieDMrMbadUFoK6BNrKZWZOU4Wa3YHx0APDe-DHdoZPBS4eimrINchoMeo6FsByUzT5MbXlNbIst1rZW1CSRlFE68FKBoVjA9878yXjqf5YnxeV6kOo9DpF2IAeA6wrZYeub4HARpGhyu2aeIwa56hj25SXutYbRwUjT-PV9pt4C5S8GL2DGoho51g27FDlN1wHnB7">
+                <h4 class="text-label-sm text-text-muted uppercase tracking-tighter">Bank of Germany</h4>
+                <p class="text-display-lg font-bold mono">€5,240.50</p>
+                <p class="text-data-sm text-success mt-2">Checking Account ending in **4522</p>
+            </div>
+            <div class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-label-sm text-text-muted">Account Health</label>
+                    <div
+                        class="flex items-center justify-between p-4 rounded-2xl bg-success/10 border border-success/20">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-success">verified_user</span>
+                            <span class="text-body-base font-semibold text-success">Optimized</span>
+                        </div>
+                        <span class="text-data-sm text-success">98/100</span>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h5 class="text-label-sm font-bold uppercase text-text-muted">Actions</h5>
+                    <button
+                        class="w-full py-4 px-6 rounded-2xl border border-border-subtle flex items-center justify-between hover:bg-white/5 transition-colors">
+                        <div class="flex items-center gap-4">
+                            <span class="material-symbols-outlined">account_balance_wallet</span>
+                            <span class="text-body-base">Transfer Funds</span>
+                        </div>
+                        <span class="material-symbols-outlined text-text-muted">chevron_right</span>
+                    </button>
+                    <button
+                        class="w-full py-4 px-6 rounded-2xl border border-border-subtle flex items-center justify-between hover:bg-white/5 transition-colors">
+                        <div class="flex items-center gap-4">
+                            <span class="material-symbols-outlined">description</span>
+                            <span class="text-body-base">Download Statements</span>
+                        </div>
+                        <span class="material-symbols-outlined text-text-muted">chevron_right</span>
+                    </button>
+                    <button
+                        class="w-full py-4 px-6 rounded-2xl border border-error/20 flex items-center justify-between hover:bg-error/5 transition-colors text-error">
+                        <div class="flex items-center gap-4">
+                            <span class="material-symbols-outlined">link_off</span>
+                            <span class="text-body-base">Unlink Account</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Sheet Trigger JS -->
+    <script>
+        function toggleSheet() {
+            const sheet = document.getElementById('account-sheet');
+            sheet.classList.toggle('translate-x-full');
+        }
+
+        // Add event listeners to account cards for demo
+        document.querySelectorAll('.group.flex.items-center.justify-between.p-3').forEach(card => {
+            card.addEventListener('click', toggleSheet);
+        });
+    </script>
+
+
+</body>
+
+</html>

@@ -27,12 +27,26 @@ class TestPersonalFinzCore(unittest.TestCase):
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("DELETE FROM transactions")
-        cursor.execute("DELETE FROM rules")
+        cursor.execute("DELETE FROM regex_rules")
         cursor.execute("DELETE FROM sync_logs")
         cursor.execute("DELETE FROM sync_history")
-        cursor.execute("DELETE FROM linked_accounts")
+        cursor.execute("DELETE FROM accounts")
         cursor.execute("DELETE FROM settings")
         cursor.execute("INSERT INTO settings (key, value) VALUES ('auto_sync_enabled', 'true')")
+        
+        # Seed test accounts to prevent foreign key errors
+        cursor.execute(
+            """
+            INSERT OR IGNORE INTO accounts (account_id, account_name, account_type, current_balance, native_currency, last_synchronized)
+            VALUES 
+            ('Revolut A', 'Revolut A', 'Automated (PSD2)', 0.0, 'EUR', '2026-06-10 00:00:00'),
+            ('Revolut B', 'Revolut B', 'Automated (PSD2)', 0.0, 'EUR', '2026-06-10 00:00:00'),
+            ('HDFC', 'HDFC', 'Manual Fallback', 0.0, 'INR', '2026-06-10 00:00:00'),
+            ('Revolut Main', 'Revolut Main', 'Automated (PSD2)', 0.0, 'EUR', '2026-06-10 00:00:00'),
+            ('HDFC Account', 'HDFC Account', 'Manual Fallback', 0.0, 'INR', '2026-06-10 00:00:00'),
+            ('Mock Bank Account', 'Mock Bank Account', 'Automated (PSD2)', 0.0, 'EUR', '2026-06-10 00:00:00')
+            """
+        )
         conn.commit()
         conn.close()
 
@@ -85,7 +99,7 @@ class TestPersonalFinzCore(unittest.TestCase):
         clear_pending_transactions(conn, "Revolut A")
         
         cursor = conn.cursor()
-        cursor.execute("SELECT id, status, account FROM transactions")
+        cursor.execute("SELECT transaction_id as id, status, account_id as account FROM transactions")
         rows = cursor.fetchall()
         
         self.assertEqual(len(rows), 2)
@@ -121,7 +135,7 @@ class TestPersonalFinzCore(unittest.TestCase):
         self.assertTrue(upsert_api_transaction(conn, txn))
         
         cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) as cnt FROM transactions WHERE external_sync_id = ?", (expected_hash,))
+        cursor.execute("SELECT COUNT(*) as cnt FROM transactions WHERE transaction_id = ?", (expected_hash,))
         self.assertEqual(cursor.fetchone()["cnt"], 1)
         conn.close()
 
@@ -253,7 +267,7 @@ class TestPersonalFinzCore(unittest.TestCase):
         # 3. Create a matching rule for Amazon -> Shopping/Flexible
         cursor.execute(
             """
-            INSERT INTO rules (pattern, match_type, category, display_name, flexibility)
+            INSERT INTO regex_rules (pattern_string, match_type, target_category, display_name, flexibility_tier)
             VALUES (?, ?, ?, ?, ?)
             """,
             ("amazon", "substring", "Shopping", "Amazon UK", "Flexible")
@@ -268,7 +282,7 @@ class TestPersonalFinzCore(unittest.TestCase):
         # 5. Verify results
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT description, category, display_name, is_guess, is_pinned FROM transactions ORDER BY date ASC")
+        cursor.execute("SELECT description, category, display_name, is_guess, is_pinned FROM transactions ORDER BY booking_date ASC")
         rows = cursor.fetchall()
         
         # Row 1 (unpinned) should be updated to Shopping
@@ -366,44 +380,81 @@ class TestPersonalFinzCore(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json(), {"enabled": False})
 
+    def test_ledger_endpoint(self):
+        """Verify that GET /api/ledger returns all non-ignored transactions with account display names."""
+        from fastapi.testclient import TestClient
+        from api.main import app
+
+        conn = get_db()
+        upsert_manual_transaction(conn, {
+            "date": "2026-06-05",
+            "description": "Amazon Purchase",
+            "amount": -45.50,
+            "currency": "EUR",
+            "account": "Revolut Main",
+            "type": "Expense",
+            "category": "Shopping",
+            "flexibility": "Flexible",
+            "hash": "tx-ledger-test-1"
+        })
+        conn.close()
+
+        client = TestClient(app)
+        resp = client.get("/api/ledger")
+        self.assertEqual(resp.status_code, 200)
+        data = resp.json()
+        self.assertTrue(len(data) >= 1)
+        
+        tx = next((item for item in data if item["id"] == "tx-ledger-test-1"), None)
+        self.assertIsNotNone(tx)
+        self.assertEqual(tx["date"], "2026-06-05")
+        self.assertEqual(tx["account_name"], "Revolut Main")
+        self.assertEqual(tx["description"], "Amazon Purchase")
+        self.assertEqual(tx["flexibility"], "Flexible")
+        self.assertEqual(tx["category"], "Shopping")
+        self.assertEqual(tx["amount"], -45.50)
+        self.assertEqual(tx["currency"], "EUR")
+
     def test_auto_sync_due_accounts_selection(self):
         """Verify that the background scheduler query correctly identifies accounts due for auto-sync."""
         conn = get_db()
         cursor = conn.cursor()
+        cursor.execute("DELETE FROM accounts")
 
         # Insert bank accounts with different sync times
-        # 1. Never synced (last_synced_at IS NULL) -> should be due
+        # 1. Never synced (last_synchronized = '1970-01-01 00:00:00') -> should be due
         cursor.execute(
-            "INSERT INTO linked_accounts (resource_id, institution_id, display_name, currency) VALUES (?, ?, ?, ?)",
-            ("acc-never", "MockBank", "Never Synced Account", "EUR")
+            "INSERT INTO accounts (account_id, account_name, account_type, current_balance, native_currency, last_synchronized) VALUES (?, ?, ?, ?, ?, ?)",
+            ("acc-never", "Never Synced Account", "Automated (PSD2)", 0.0, "EUR", "1970-01-01 00:00:00")
         )
         # 2. Synced 25 hours ago -> should be due
         cursor.execute(
             """
-            INSERT INTO linked_accounts (resource_id, institution_id, display_name, currency, last_synced_at) 
-            VALUES (?, ?, ?, ?, datetime('now', '-25 hours'))
+            INSERT INTO accounts (account_id, account_name, account_type, current_balance, native_currency, last_synchronized) 
+            VALUES (?, ?, ?, ?, ?, datetime('now', '-25 hours'))
             """,
-            ("acc-due", "MockBank", "Due Account", "EUR")
+            ("acc-due", "Due Account", "Automated (PSD2)", 0.0, "EUR")
         )
         # 3. Synced 2 hours ago -> should NOT be due
         cursor.execute(
             """
-            INSERT INTO linked_accounts (resource_id, institution_id, display_name, currency, last_synced_at) 
-            VALUES (?, ?, ?, ?, datetime('now', '-2 hours'))
+            INSERT INTO accounts (account_id, account_name, account_type, current_balance, native_currency, last_synchronized) 
+            VALUES (?, ?, ?, ?, ?, datetime('now', '-2 hours'))
             """,
-            ("acc-fresh", "MockBank", "Fresh Account", "EUR")
+            ("acc-fresh", "Fresh Account", "Automated (PSD2)", 0.0, "EUR")
         )
         conn.commit()
 
         # Run query used in scheduler loop
         cursor.execute(
             """
-            SELECT resource_id FROM linked_accounts 
-            WHERE last_synced_at IS NULL 
-               OR datetime(last_synced_at) <= datetime('now', '-24 hours')
+            SELECT account_id FROM accounts 
+            WHERE (last_synchronized = '1970-01-01 00:00:00' 
+               OR datetime(last_synchronized) <= datetime('now', '-24 hours'))
+               AND account_type = 'Automated (PSD2)'
             """
         )
-        due_ids = [row["resource_id"] for row in cursor.fetchall()]
+        due_ids = [row["account_id"] for row in cursor.fetchall()]
         conn.close()
 
         self.assertIn("acc-never", due_ids)

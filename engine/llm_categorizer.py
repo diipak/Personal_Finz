@@ -1,10 +1,13 @@
 import requests
+import sys
+import os
 
-OLLAMA_URL = "http://100.103.104.90:11434/api/generate"
-MODEL = "qwen2.5:7b"
+# Add project root to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from config import OLLAMA_URL, LLM_MODEL
 
 def categorize_with_llm(description, allowed):
-
     prompt = f"""
 Categorize the following transaction:
 
@@ -17,12 +20,25 @@ Only return the category name.
 """
 
     response = requests.post(
-        OLLAMA_URL,
+        f"{OLLAMA_URL}/api/generate",
         json={
-            "model": MODEL,
+            "model": LLM_MODEL,
             "prompt": prompt,
-            "stream": False
-        }
+            "stream": False,
+            "options": {
+                "temperature": 0.0,
+                "num_predict": 512
+            }
+        },
+        timeout=30
     )
+    response.raise_for_status()
+    result = response.json().get("response", "").strip()
 
-    return response.json()["response"].strip()
+    # Strip Ollama reasoning/thinking block if present
+    if "<think>" in result:
+        parts = result.split("</think>")
+        if len(parts) > 1:
+            result = parts[-1].strip()
+
+    return result

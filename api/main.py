@@ -62,11 +62,11 @@ async def auto_sync_scheduler_loop():
                 try:
                     cursor.execute(
                         """
-                        SELECT resource_id, display_name, last_synced_at 
-                        FROM linked_accounts 
-                        WHERE (last_synced_at IS NULL 
-                           OR datetime(last_synced_at) <= datetime('now', '-24 hours'))
-                           AND resource_id NOT LIKE '%-manual-id'
+                        SELECT account_id as resource_id, account_name as display_name, last_synchronized as last_synced_at 
+                        FROM accounts 
+                        WHERE (last_synchronized = '1970-01-01 00:00:00' 
+                           OR datetime(last_synchronized) <= datetime('now', '-24 hours'))
+                           AND account_type = 'Automated (PSD2)'
                         """
                     )
                     due_accounts = [dict(row) for row in cursor.fetchall()]
@@ -132,21 +132,49 @@ app.mount("/frontend", StaticFiles(directory=str(FRONTEND_DIR)), name="frontend"
 def dashboard():
     return FileResponse(FRONTEND_DIR / "dashboard.html")
 
+@app.get("/overview")
+def overview_ui():
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
+
+@app.get("/transactions")
+def transactions_ui():
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
+
+@app.get("/budgets")
+def budgets_ui():
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
+
+@app.get("/investments")
+def investments_ui():
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
+
+@app.get("/goals")
+def goals_ui():
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
+
+@app.get("/insights")
+def insights_ui():
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
+
+@app.get("/automation")
+def automation_ui():
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
+
 @app.get("/accounts")
 def accounts_ui():
-    return FileResponse(FRONTEND_DIR / "accounts.html")
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
 
 @app.get("/import-ui")
 def import_ui():
-    return FileResponse(FRONTEND_DIR / "import_statement.html")
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
 
 @app.get("/rules")
 def rules_ui():
-    return FileResponse(FRONTEND_DIR / "merchant_rule_manager.html")
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
 
 @app.get("/review")
 def review_ui():
-    return FileResponse(FRONTEND_DIR / "unknown_merchant_review.html")
+    return FileResponse(FRONTEND_DIR / "dashboard.html")
 
 # Rules API Endpoint: Retrieve rules from SQLite
 @app.get("/api/rules")
@@ -154,7 +182,22 @@ def get_rules():
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT * FROM rules ORDER BY priority DESC, id ASC")
+        cursor.execute(
+            """
+            SELECT 
+                rule_id as id, 
+                pattern_string as pattern, 
+                match_type, 
+                target_category as category, 
+                display_name, 
+                flexibility_tier as flexibility, 
+                amount_min, 
+                amount_max, 
+                priority 
+            FROM regex_rules 
+            ORDER BY priority DESC, rule_id ASC
+            """
+        )
         rows = cursor.fetchall()
         return [dict(row) for row in rows]
     except Exception as e:
@@ -166,37 +209,46 @@ def get_rules():
 # Rules API Endpoint: Create or Update rule in SQLite
 @app.post("/api/rules")
 def save_rule(rule: dict = Body(...)):
-    rule.setdefault("tags", None)
+    mapped = {
+        "rule_id": rule.get("id"),
+        "pattern_string": rule.get("pattern"),
+        "match_type": rule.get("match_type") or "regex",
+        "target_category": rule.get("category"),
+        "display_name": rule.get("display_name"),
+        "flexibility_tier": rule.get("flexibility") or "Flexible",
+        "amount_min": rule.get("amount_min"),
+        "amount_max": rule.get("amount_max"),
+        "priority": rule.get("priority") or 0
+    }
     conn = get_db()
     cursor = conn.cursor()
     try:
-        if "id" in rule and rule["id"]:
+        if "rule_id" in mapped and mapped["rule_id"]:
             cursor.execute(
                 """
-                UPDATE rules SET 
-                    pattern = :pattern,
+                UPDATE regex_rules SET 
+                    pattern_string = :pattern_string,
                     match_type = :match_type,
-                    category = :category,
+                    target_category = :target_category,
                     display_name = :display_name,
-                    flexibility = :flexibility,
-                    tags = :tags,
+                    flexibility_tier = :flexibility_tier,
                     amount_min = :amount_min,
                     amount_max = :amount_max,
                     priority = :priority
-                WHERE id = :id
+                WHERE rule_id = :rule_id
                 """,
-                rule
+                mapped
             )
         else:
             cursor.execute(
                 """
-                INSERT INTO rules (
-                    pattern, match_type, category, display_name, flexibility, tags, amount_min, amount_max, priority
+                INSERT INTO regex_rules (
+                    pattern_string, match_type, target_category, display_name, flexibility_tier, amount_min, amount_max, priority
                 ) VALUES (
-                    :pattern, :match_type, :category, :display_name, :flexibility, :tags, :amount_min, :amount_max, :priority
+                    :pattern_string, :match_type, :target_category, :display_name, :flexibility_tier, :amount_min, :amount_max, :priority
                 )
                 """,
-                rule
+                mapped
             )
         conn.commit()
         
@@ -217,7 +269,7 @@ def delete_rule(rule_id: int):
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("DELETE FROM rules WHERE id = ?", (rule_id,))
+        cursor.execute("DELETE FROM regex_rules WHERE rule_id = ?", (rule_id,))
         conn.commit()
         return {"status": "success"}
     except Exception as e:
@@ -256,13 +308,18 @@ def import_file(
                 "options": ["Revolut", "Commerzbank", "Advanzia Bank credit card", "HDFC"]
             }
 
-    # Query linked_accounts for the detected bank to find matched display name
+    # Query accounts for the detected bank to find matched display name
     conn = get_db()
     cursor = conn.cursor()
     try:
         cursor.execute(
-            "SELECT display_name FROM linked_accounts WHERE LOWER(institution_id) = LOWER(?)",
-            (resolved_bank,)
+            """
+            SELECT account_name as display_name FROM accounts 
+            WHERE LOWER(account_name) = LOWER(?) 
+               OR LOWER(account_id) = LOWER(?)
+               OR LOWER(account_name) LIKE ?
+            """,
+            (resolved_bank, resolved_bank, f"%{resolved_bank.lower()}%")
         )
         row = cursor.fetchone()
     except Exception as db_err:
@@ -338,12 +395,124 @@ def import_file(
         if input_path.exists():
             os.remove(input_path)
 
+@app.get("/api/ledger")
+def get_ledger():
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT 
+                t.transaction_id as id,
+                t.booking_date as date,
+                a.account_name,
+                t.description,
+                t.display_name,
+                t.flexibility_tier as flexibility,
+                t.category,
+                t.amount,
+                t.currency
+            FROM transactions t
+            LEFT JOIN accounts a ON t.account_id = a.account_id
+            WHERE t.is_ignored = 0
+            ORDER BY t.booking_date DESC, t.transaction_id DESC
+            """
+        )
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"Error fetching ledger transactions: {e}")
+        raise HTTPException(status_code=500, detail="Database error fetching ledger")
+    finally:
+        conn.close()
+
+class TransactionCreateRequest(BaseModel):
+    transaction_id: Optional[str] = None
+    account_id: str
+    booking_date: str
+    description: str
+    display_name: Optional[str] = None
+    category: Optional[str] = "Unsorted"
+    flexibility_tier: Optional[str] = "Flexible"
+    amount: float
+    currency: str
+
+@app.post("/api/transactions")
+def create_transaction(req: TransactionCreateRequest):
+    conn = get_db()
+    try:
+        tx_id = req.transaction_id or f"manual-{uuid.uuid4()}"
+        txn = {
+            "transaction_id": tx_id,
+            "account_id": req.account_id,
+            "booking_date": req.booking_date,
+            "description": req.description,
+            "display_name": req.display_name or req.description,
+            "category": req.category or "Unsorted",
+            "flexibility_tier": req.flexibility_tier or "Flexible",
+            "amount": req.amount,
+            "currency": req.currency,
+            "status": "SETTLED",
+            "is_pinned": 1
+        }
+        from db.database import upsert_manual_transaction
+        success = upsert_manual_transaction(conn, txn)
+        if not success:
+            raise HTTPException(status_code=500, detail="Database insertion failed")
+            
+        # Try to sync to ezBookkeeping fallback if applicable
+        try:
+            from db.sync_ez import push_transaction_to_ez
+            push_transaction_to_ez(txn)
+        except Exception as sync_err:
+            logger.error(f"Failed to sync manual transaction to ezBookkeeping: {sync_err}")
+            
+        return {"status": "success", "transaction_id": tx_id}
+    except Exception as e:
+        logger.error(f"Error creating transaction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.delete("/api/transactions/{transaction_id}")
+def delete_transaction(transaction_id: str):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT * FROM transactions WHERE transaction_id = ?", (transaction_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        cursor.execute("DELETE FROM transactions WHERE transaction_id = ?", (transaction_id,))
+        conn.commit()
+        return {"status": "success"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting transaction: {e}")
+        conn.rollback()
+        raise HTTPException(status_code=500, detail="Database error deleting transaction")
+    finally:
+        conn.close()
+
 @app.get("/api/accounts")
 def get_linked_accounts():
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT * FROM linked_accounts ORDER BY last_synced_at DESC, display_name ASC")
+        cursor.execute(
+            """
+            SELECT 
+                account_id as resource_id,
+                account_name as display_name,
+                account_type,
+                current_balance,
+                native_currency as currency,
+                psd2_resource_hash,
+                last_synchronized as last_synced_at
+            FROM accounts 
+            ORDER BY last_synchronized DESC, account_name ASC
+            """
+        )
         rows = cursor.fetchall()
         return [dict(row) for row in rows]
     except Exception as e:
@@ -351,6 +520,129 @@ def get_linked_accounts():
         raise HTTPException(status_code=500, detail="Database error fetching linked accounts")
     finally:
         conn.close()
+
+class AccountCreateRequest(BaseModel):
+    account_id: str
+    account_name: str
+    account_type: str  # 'Automated (PSD2)', 'Manual Fallback', 'Manual Asset'
+    current_balance: float
+    native_currency: str  # 'EUR' or 'INR'
+
+@app.post("/api/accounts")
+def create_account(req: AccountCreateRequest):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO accounts (account_id, account_name, account_type, current_balance, native_currency, last_synchronized)
+            VALUES (?, ?, ?, ?, ?, '1970-01-01 00:00:00')
+            ON CONFLICT(account_id) DO UPDATE SET
+                account_name = excluded.account_name,
+                account_type = excluded.account_type,
+                current_balance = excluded.current_balance,
+                native_currency = excluded.native_currency
+            """,
+            (req.account_id, req.account_name, req.account_type, req.current_balance, req.native_currency)
+        )
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error creating account: {e}")
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        conn.close()
+
+@app.delete("/api/accounts/{account_id}")
+def delete_account(account_id: str):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM accounts WHERE account_id = ?", (account_id,))
+        cursor.execute("DELETE FROM transactions WHERE account_id = ?", (account_id,))
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error deleting account: {e}")
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        conn.close()
+
+class ExchangeRateRequest(BaseModel):
+    source_currency: str
+    target_currency: str
+    spot_rate: float
+
+@app.get("/api/exchange-rates")
+def get_exchange_rates():
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT * FROM exchange_rates")
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"Error fetching exchange rates: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.post("/api/exchange-rates")
+def save_exchange_rate(req: ExchangeRateRequest):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO exchange_rates (source_currency, target_currency, spot_rate, last_api_update)
+            VALUES (?, ?, ?, datetime('now'))
+            ON CONFLICT(source_currency, target_currency) DO UPDATE SET
+                spot_rate = excluded.spot_rate,
+                last_api_update = excluded.last_api_update
+            """,
+            (req.source_currency, req.target_currency, req.spot_rate)
+        )
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error saving exchange rate: {e}")
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        conn.close()
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from db.database import is_vault_locked, set_vault_lock, verify_vault_passcode, set_vault_passcode
+
+@app.middleware("http")
+async def vault_middleware(request: Request, call_next):
+    # Intercept all /api/* requests except status and unlock
+    if request.url.path.startswith("/api/") and not any(p in request.url.path for p in ["/vault/status", "/vault/unlock"]):
+        if is_vault_locked():
+            return JSONResponse(status_code=401, content={"detail": "Vault is locked"})
+    return await call_next(request)
+
+@app.get("/api/vault/status")
+def get_vault_status():
+    return {"locked": is_vault_locked()}
+
+class UnlockRequest(BaseModel):
+    passcode: str
+
+@app.post("/api/vault/unlock")
+def unlock_vault(req: UnlockRequest):
+    if verify_vault_passcode(req.passcode):
+        set_vault_lock(False)
+        return {"status": "success", "locked": False}
+    raise HTTPException(status_code=401, detail="Invalid passcode")
+
+@app.post("/api/vault/lock")
+def lock_vault():
+    set_vault_lock(True)
+    return {"status": "success", "locked": True}
 
 @app.get("/api/sync/history")
 def get_sync_history(limit: int = 20):
@@ -385,6 +677,9 @@ class LinkRequest(BaseModel):
 
 class SettingsRequest(BaseModel):
     enabled: bool
+
+class GenericSettingRequest(BaseModel):
+    value: str
 
 # Enable Banking Link Endpoint
 @app.post("/api/sync/link")
@@ -433,14 +728,14 @@ def auth_callback(code: str, state: str = None):
                 
                 cursor.execute(
                     """
-                    INSERT INTO linked_accounts (resource_id, institution_id, display_name, currency)
-                    VALUES (?, ?, ?, ?)
-                    ON CONFLICT(resource_id) DO UPDATE SET
-                        institution_id = excluded.institution_id,
-                        display_name = COALESCE(excluded.display_name, display_name),
-                        currency = COALESCE(excluded.currency, currency)
+                    INSERT INTO accounts (account_id, account_name, account_type, current_balance, native_currency, psd2_resource_hash, last_synchronized)
+                    VALUES (?, ?, 'Automated (PSD2)', 0.0, ?, ?, '1970-01-01 00:00:00')
+                    ON CONFLICT(account_id) DO UPDATE SET
+                        account_name = COALESCE(excluded.account_name, account_name),
+                        native_currency = COALESCE(excluded.native_currency, native_currency),
+                        psd2_resource_hash = COALESCE(excluded.psd2_resource_hash, psd2_resource_hash)
                     """,
-                    (resource_id, institution_id, display_name, currency)
+                    (resource_id, display_name, currency, resource_id)
                 )
             conn.commit()
         finally:
@@ -457,19 +752,19 @@ def run_sync_for_account(account_id: str, account_name: Optional[str] = None, in
     if not ENABLE_BANKING_APP_ID:
         return {"status": "FAILED", "error": "Enable Banking APP ID not set in environment."}
 
-    # Try to resolve display name and institution from linked_accounts
+    # Try to resolve display name and institution from accounts
     resolved_name = account_name
     institution_id = "Unknown Bank"
     
     conn = get_db()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT display_name, institution_id FROM linked_accounts WHERE resource_id = ?", (account_id,))
+        cursor.execute("SELECT account_name FROM accounts WHERE account_id = ?", (account_id,))
         row = cursor.fetchone()
         if row:
             if not resolved_name:
-                resolved_name = row["display_name"]
-            institution_id = row["institution_id"]
+                resolved_name = row["account_name"]
+            institution_id = row["account_name"]
     except Exception as db_err:
         logger.error(f"Failed to look up account info: {db_err}")
     finally:
@@ -543,12 +838,12 @@ def run_sync_for_account(account_id: str, account_name: Optional[str] = None, in
             """,
             (institution_id, inserted)
         )
-        # Update last_synced_at in linked_accounts
+        # Update last_synchronized in accounts
         cursor.execute(
             """
-            UPDATE linked_accounts 
-            SET last_synced_at = CURRENT_TIMESTAMP 
-            WHERE resource_id = ?
+            UPDATE accounts 
+            SET last_synchronized = CURRENT_TIMESTAMP 
+            WHERE account_id = ?
             """,
             (account_id,)
         )
@@ -625,9 +920,43 @@ def set_auto_sync_setting(req: SettingsRequest):
         conn.commit()
         return {"status": "success", "enabled": req.enabled}
     except Exception as e:
-        logger.error(f"Error updating auto-sync setting: {e}")
-        conn.rollback()
-        raise HTTPException(status_code=500, detail="Database error updating setting")
+        logger.error(f"Error setting auto-sync: {e}")
+        raise HTTPException(status_code=500, detail="Database error setting auto-sync")
+    finally:
+        conn.close()
+
+@app.get("/api/settings/{key}")
+def get_generic_setting(key: str):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT value FROM settings WHERE key = ?", (key,))
+        row = cursor.fetchone()
+        val = row["value"] if row else None
+        return {"key": key, "value": val}
+    except Exception as e:
+        logger.error(f"Error fetching setting {key}: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error fetching setting {key}")
+    finally:
+        conn.close()
+
+@app.post("/api/settings/{key}")
+def set_generic_setting(key: str, req: GenericSettingRequest):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            INSERT INTO settings (key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """,
+            (key, req.value)
+        )
+        conn.commit()
+        return {"status": "success", "key": key, "value": req.value}
+    except Exception as e:
+        logger.error(f"Error setting {key}: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error setting {key}")
     finally:
         conn.close()
 
@@ -712,11 +1041,25 @@ def get_unknown_transactions():
         # Fetch transactions that are guesses or uncategorized, not pinned, and not ignored
         cursor.execute(
             """
-            SELECT * FROM transactions
-            WHERE (is_guess = 1 OR category IS NULL OR category = '' OR category = 'Uncategorized')
+            SELECT 
+                transaction_id as id, 
+                account_id as account, 
+                booking_date as date, 
+                description, 
+                display_name, 
+                category, 
+                flexibility_tier as flexibility, 
+                amount, 
+                currency, 
+                is_guess, 
+                is_pinned, 
+                is_ignored, 
+                status 
+            FROM transactions
+            WHERE (is_guess = 1 OR category IS NULL OR category = '' OR category = 'Uncategorized' OR category = 'Unsorted')
               AND is_pinned = 0
               AND is_ignored = 0
-            ORDER BY date DESC, id DESC
+            ORDER BY booking_date DESC, transaction_id DESC
             """
         )
         rows = cursor.fetchall()
@@ -756,12 +1099,12 @@ def resolve_unknown_transactions(payload: dict = Body(...)):
                 """
                 UPDATE transactions SET
                     category = ?,
-                    flexibility = ?,
+                    flexibility_tier = ?,
                     display_name = ?,
                     is_guess = 0,
                     is_pinned = 1,
                     is_ignored = ?
-                WHERE id = ?
+                WHERE transaction_id = ?
                 """,
                 (category, flexibility, display_name, 1 if is_ignored else 0, tx_id)
             )
@@ -773,15 +1116,15 @@ def resolve_unknown_transactions(payload: dict = Body(...)):
                 if pattern:
                     # Check if matching rule already exists to prevent duplicates
                     cursor.execute(
-                        "SELECT id FROM rules WHERE pattern = ? AND match_type = ?",
+                        "SELECT rule_id FROM regex_rules WHERE pattern_string = ? AND match_type = ?",
                         (pattern, rule_data.get("match_type", "substring"))
                     )
                     if not cursor.fetchone():
                         cursor.execute(
                             """
-                            INSERT INTO rules (
-                                pattern, match_type, category, display_name, flexibility, tags, amount_min, amount_max, priority
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            INSERT INTO regex_rules (
+                                pattern_string, match_type, target_category, display_name, flexibility_tier, amount_min, amount_max, priority
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                             """,
                             (
                                 pattern,
@@ -789,7 +1132,6 @@ def resolve_unknown_transactions(payload: dict = Body(...)):
                                 rule_data.get("category", category),
                                 rule_data.get("display_name", display_name),
                                 rule_data.get("flexibility", flexibility),
-                                rule_data.get("tags"),
                                 rule_data.get("amount_min"),
                                 rule_data.get("amount_max"),
                                 rule_data.get("priority", 0)

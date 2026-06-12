@@ -1,70 +1,72 @@
 <!DOCTYPE html>
-
-<html class="light" lang="en">
-
+<html class="dark" lang="en">
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>FinSync Pro - Dashboard Overview</title>
+    <title>FinSync Pro - Premium OS</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&amp;display=swap"
-        rel="stylesheet" />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     "colors": {
-                        "surface-tint": "#4d44e3",
-                        "on-secondary-fixed": "#001e2f",
-                        "on-error-container": "#93000a",
-                        "surface-dim": "#cbdbf5",
-                        "on-secondary-fixed-variant": "#004c6e",
-                        "error": "#ba1a1a",
-                        "tertiary-fixed": "#ffdbcc",
-                        "surface-bright": "#f8f9ff",
-                        "secondary": "#006591",
-                        "surface-container-lowest": "#ffffff",
-                        "on-tertiary-container": "#ffd2be",
-                        "on-primary-fixed": "#0f0069",
-                        "on-secondary": "#ffffff",
-                        "on-surface-variant": "#464555",
-                        "on-primary-fixed-variant": "#3323cc",
-                        "surface": "#f8f9ff",
-                        "primary-fixed-dim": "#c3c0ff",
-                        "on-secondary-container": "#004666",
-                        "on-tertiary-fixed": "#351000",
-                        "inverse-surface": "#213145",
+                        "on-primary": "#1800a7",
+                        "on-secondary-container": "#b7b4b7",
+                        "on-primary-fixed-variant": "#332dbc",
+                        "inverse-primary": "#4d4ad5",
+                        "on-secondary-fixed-variant": "#474649",
+                        "on-tertiary-fixed": "#311300",
+                        "on-secondary-fixed": "#1c1b1d",
+                        "primary-fixed-dim": "#c2c1ff",
+                        "text-muted": "#a1a1aa",
+                        "surface-container-high": "#2a2932",
+                        "surface-base": "#09090b",
+                        "inverse-on-surface": "#302f38",
+                        "success": "#30d158",
+                        "surface-glass": "rgba(255, 255, 255, 0.03)",
+                        "surface": "#13131b",
+                        "inverse-surface": "#e4e1ed",
+                        "on-background": "#e4e1ed",
+                        "surface-variant": "#34343d",
+                        "on-primary-container": "#f4f1ff",
+                        "secondary-fixed-dim": "#c8c6c8",
+                        "error-container": "#93000a",
+                        "surface-bright": "#393841",
+                        "warning": "#ffd60a",
+                        "on-secondary": "#313032",
+                        "tertiary-container": "#ae5600",
+                        "on-primary-fixed": "#0c006b",
+                        "surface-tint": "#c2c1ff",
+                        "surface-container-highest": "#34343d",
+                        "tertiary": "#ffb786",
+                        "on-tertiary": "#502400",
                         "primary-fixed": "#e2dfff",
-                        "surface-container-low": "#eff4ff",
-                        "outline": "#777587",
-                        "on-primary": "#ffffff",
-                        "surface-container": "#e5eeff",
-                        "primary": "#3525cd",
-                        "on-tertiary": "#ffffff",
-                        "inverse-primary": "#c3c0ff",
-                        "secondary-container": "#39b8fd",
-                        "primary-container": "#4f46e5",
-                        "tertiary-fixed-dim": "#ffb695",
-                        "on-surface": "#0b1c30",
-                        "tertiary-container": "#a44100",
-                        "on-tertiary-fixed-variant": "#7b2f00",
-                        "secondary-fixed": "#c9e6ff",
-                        "background": "#f8f9ff",
-                        "secondary-fixed-dim": "#89ceff",
-                        "on-background": "#0b1c30",
-                        "inverse-on-surface": "#eaf1ff",
-                        "on-primary-container": "#dad7ff",
-                        "surface-variant": "#d3e4fe",
-                        "surface-container-highest": "#d3e4fe",
-                        "surface-container-high": "#dce9ff",
-                        "tertiary": "#7e3000",
-                        "on-error": "#ffffff",
-                        "error-container": "#ffdad6",
-                        "outline-variant": "#c7c4d8"
+                        "outline-variant": "#464554",
+                        "on-surface-variant": "#c7c4d7",
+                        "border-subtle": "rgba(255, 255, 255, 0.06)",
+                        "surface-dim": "#13131b",
+                        "on-surface": "#e4e1ed",
+                        "background": "#13131b",
+                        "surface-container-low": "#1b1b23",
+                        "secondary-fixed": "#e5e1e4",
+                        "on-error": "#690005",
+                        "tertiary-fixed": "#ffdcc6",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "outline": "#918fa0",
+                        "primary-container": "#5e5ce6",
+                        "error": "#ff453a",
+                        "surface-container": "#1f1f27",
+                        "primary": "#c2c1ff",
+                        "accent": "#c2c1ff",
+                        "on-tertiary-container": "#ffefe7",
+                        "secondary-container": "#474649",
+                        "secondary": "#c8c6c8",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#0e0d15"
                     },
                     "borderRadius": {
                         "DEFAULT": "0.25rem",
@@ -73,36 +75,28 @@
                         "full": "9999px"
                     },
                     "spacing": {
-                        "stack-md": "16px",
-                        "unit": "4px",
-                        "margin-desktop": "32px",
-                        "stack-sm": "8px",
-                        "margin-mobile": "16px",
-                        "stack-lg": "24px",
-                        "gutter": "24px",
-                        "container-max-width": "1440px"
+                        "view-padding": "2rem",
+                        "section-margin": "2.5rem",
+                        "panel-gap": "1rem",
+                        "element-stack": "0.75rem"
                     },
                     "fontFamily": {
-                        "headline-sm": ["Inter"],
-                        "headline-lg-mobile": ["Inter"],
-                        "body-md": ["Inter"],
-                        "label-md": ["Inter"],
-                        "headline-lg": ["Inter"],
-                        "body-sm": ["Inter"],
                         "display-lg": ["Inter"],
-                        "body-lg": ["Inter"],
-                        "headline-md": ["Inter"]
+                        "data-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-base": ["Inter"],
+                        "data-md": ["JetBrains Mono"],
+                        "data-lg": ["JetBrains Mono"],
+                        "label-sm": ["Inter"]
                     },
                     "fontSize": {
-                        "headline-sm": ["20px", { "lineHeight": "1.4", "fontWeight": "600" }],
-                        "headline-lg-mobile": ["28px", { "lineHeight": "1.2", "fontWeight": "700" }],
-                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
-                        "label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
-                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
-                        "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
-                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
-                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
-                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }]
+                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "data-sm": ["12px", { "lineHeight": "1.1", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-base": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "data-md": ["14px", { "lineHeight": "1.2", "fontWeight": "400" }],
+                        "data-lg": ["20px", { "lineHeight": "1.2", "fontWeight": "500" }],
+                        "label-sm": ["13px", { "lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "500" }]
                     }
                 },
             },
@@ -110,611 +104,1669 @@
     </script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            background-color: #09090b;
+            color: #e4e1ed;
+            overflow: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* compatibility mapping for old code referencing glass-panel */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .glass-panel-interactive:hover {
+            transform: translateY(-2px) scale(1.005);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .glass-panel-modal {
+            background: rgba(15, 15, 20, 0.9);
+            backdrop-filter: blur(45px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 40px 70px -20px rgba(0, 0, 0, 0.7);
+        }
+
+        .glass-panel-accent {
+            background: rgba(94, 92, 230, 0.04);
+            backdrop-filter: blur(30px);
+            border-radius: 24px;
+            border: 1px solid rgba(94, 92, 230, 0.12);
+        }
+
+        .scroll-zone {
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        .scroll-zone::-webkit-scrollbar {
+            display: none;
         }
 
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
 
-        .card-ambient {
-            background-color: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
+        .active-nav-glow {
+            box-shadow: 0 0 20px rgba(94, 92, 230, 0.15);
         }
 
-        /* Custom scrollbar for tables */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+        .custom-progress {
             height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
+        .custom-progress-bar {
+            height: 100%;
+            border-radius: 3px;
+            background: #5e5ce6;
         }
 
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
+        .slide-over {
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: 24px 0 0 24px;
+        }
+
+        .slide-over.active {
+            transform: translateX(0);
+        }
+
+        .ledger-row {
+            transition: all 0.2s ease;
+        }
+
+        .ledger-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .calendar-cell {
+            min-height: 85px;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-cell:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .calendar-cell.today {
+            border-color: rgba(94, 92, 230, 0.4);
+            background: rgba(94, 92, 230, 0.02);
+        }
+
+        .gauge-ring {
+            stroke-dasharray: 251.32;
+            stroke-dashoffset: 251.32;
+            transition: stroke-dashoffset 1s ease-out;
+        }
+        
+        .line-chart-gradient {
+            fill: url(#chart-gradient);
         }
     </style>
 </head>
+<body class="text-on-surface font-body-base text-body-base antialiased overflow-hidden selection:bg-primary/20 selection:text-primary">
+    <!-- Ambient Radial Gradients Background -->
+    <div class="fixed inset-0 -z-10 pointer-events-none" style="background: radial-gradient(circle at 15% 15%, rgba(94, 92, 230, 0.05) 0%, transparent 40%), radial-gradient(circle at 85% 85%, rgba(94, 92, 230, 0.04) 0%, transparent 45%), #09090b;"></div>
 
-<body class="bg-background text-on-background">
-    <div class="h-screen w-screen overflow-hidden flex">
-        <!-- SideNavBar -->
-        <aside
-            class="hidden md:flex flex-col h-screen overflow-y-auto w-64 border-r border-outline-variant bg-surface-container-low py-stack-lg px-stack-md shrink-0">
-            <div class="flex items-center gap-3 mb-8 px-2">
-                <div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
-                    <span class="material-symbols-outlined text-on-primary-container">account_balance_wallet</span>
-                </div>
-                <div>
-                    <h2 class="font-headline-sm text-headline-sm text-primary">FinSync Pro</h2>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant opacity-60">Financial
-                        Management</p>
-                </div>
+    <!-- Main Layout -->
+    <div class="flex h-screen w-full relative">
+        <!-- Sidebar Navigation -->
+        <aside class="flex flex-col h-screen py-6 bg-surface-glass backdrop-blur-xl border-r border-border-subtle shrink-0 w-[280px] z-20">
+            <div class="px-6 mb-10">
+                <h1 class="text-headline-md font-headline-md font-bold text-on-surface tracking-tight">
+                    <span style="color: rgb(76, 215, 246); font-size: 32px; letter-spacing: -1.6px; background-color: rgba(24, 24, 27, 0.4);">FinSync Pro</span>
+                </h1>
+                <p class="text-label-sm font-label-sm text-on-surface-variant/60">Premium OS</p>
             </div>
-            <nav class="flex-grow flex flex-col gap-2">
-                <a class="flex items-center gap-3 p-3 bg-primary-container text-on-primary-container rounded-lg font-bold scale-98 transition-transform"
-                    href="/">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span class="font-body-md text-body-md">Dashboard</span>
-                </a>
-                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
-                    href="/accounts">
-                    <span class="material-symbols-outlined">account_balance</span>
-                    <span class="font-body-md text-body-md">Accounts</span>
-                </a>
-                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
-                    href="/import-ui">
-                    <span class="material-symbols-outlined">upload_file</span>
-                    <span class="font-body-md text-body-md">Import Statement</span>
-                </a>
-                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
-                    href="/rules">
-                    <span class="material-symbols-outlined">gavel</span>
-                    <span class="font-body-md text-body-md">Rules Engine</span>
-                </a>
-                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
-                    href="/review">
-                    <span class="material-symbols-outlined">rate_review</span>
-                    <span class="font-body-md text-body-md">Review Queue</span>
-                </a>
+            
+            <nav class="flex-1 space-y-1" id="sidebar-nav">
+                <!-- Nav items styled as buttons with consistent look -->
+                <button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center gap-3 bg-primary-container text-on-primary-container rounded-lg px-4 py-2.5 mx-2 active-nav-glow scale-[0.98] transition-transform text-left font-semibold">
+                    <span class="material-symbols-outlined text-[20px]">dashboard</span>
+                    <span class="text-label-sm font-label-sm">Overview</span>
+                </button>
+                <button onclick="switchTab('transactions')" id="nav-transactions" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium">
+                    <span class="material-symbols-outlined text-[20px]">payments</span>
+                    <span class="text-label-sm font-label-sm">Transactions</span>
+                </button>
+                <button onclick="switchTab('budgets')" id="nav-budgets" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium">
+                    <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
+                    <span class="text-label-sm font-label-sm">Budgets</span>
+                </button>
+                <button onclick="switchTab('investments')" id="nav-investments" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium">
+                    <span class="material-symbols-outlined text-[20px]">account_balance</span>
+                    <span class="text-label-sm font-label-sm">Investments</span>
+                </button>
+                <button onclick="switchTab('goals')" id="nav-goals" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium">
+                    <span class="material-symbols-outlined text-[20px]">flag</span>
+                    <span class="text-label-sm font-label-sm">Goals</span>
+                </button>
+                <button onclick="switchTab('insights')" id="nav-insights" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium">
+                    <span class="material-symbols-outlined text-[20px]">insights</span>
+                    <span class="text-label-sm font-label-sm">Insights</span>
+                </button>
+                <button onclick="switchTab('automation')" id="nav-automation" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium relative">
+                    <span class="material-symbols-outlined text-[20px]">robot_2</span>
+                    <span class="text-label-sm font-label-sm">Automation</span>
+                    <span id="review-badge" class="hidden absolute right-6 top-1/2 -translate-y-1/2 bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
+                </button>
             </nav>
-            <div class="mt-auto flex flex-col gap-2">
-                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
-                    href="#">
-                    <span class="material-symbols-outlined">settings</span>
-                    <span class="font-body-md text-body-md">Settings</span>
-                </a>
-                <a class="flex items-center gap-3 p-3 text-on-surface-variant hover:bg-surface-variant rounded-lg transition-all"
-                    href="#">
-                    <span class="material-symbols-outlined">logout</span>
-                    <span class="font-body-md text-body-md">Logout</span>
-                </a>
+
+            <div class="px-4 mt-auto space-y-4">
+                <!-- Cryptographic Secure Vault button -->
+                <div class="p-4 rounded-xl glass-panel-accent">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="material-symbols-outlined text-primary text-sm">lock</span>
+                            <span class="font-mono text-[10px] text-primary uppercase font-bold tracking-wider">Passcode Vault</span>
+                        </div>
+                        <span id="vault-status-indicator" class="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+                    </div>
+                    <button onclick="lockVault()" class="w-full py-2 bg-surface-container-high hover:bg-surface-variant text-on-surface text-xs font-bold rounded-lg border border-border-subtle uppercase tracking-wider transition-all">Lock Console</button>
+                </div>
+                
+                <div class="flex items-center justify-between px-2 text-on-surface-variant text-[11px] font-mono">
+                    <div class="flex items-center space-x-1.5">
+                        <span class="w-2 h-2 rounded-full bg-success"></span>
+                        <span>API Sync</span>
+                    </div>
+                    <span id="uptime-display">Uptime 99.98%</span>
+                </div>
             </div>
         </aside>
 
-        <!-- Workspace Area -->
-        <div class="flex-1 h-screen flex flex-col min-w-0">
-            <!-- TopNavBar -->
-            <header class="bg-surface border-b border-outline-variant w-full shrink-0 z-10 shadow-sm h-20">
-                <div
-                    class="flex justify-between items-center px-margin-desktop h-full w-full max-w-container-max-width mx-auto">
-                    <div class="flex items-center gap-8">
-                        <span class="font-headline-md text-headline-md font-bold text-primary">FinSync Pro</span>
+        <!-- Main Workspace -->
+        <main class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+            <!-- Top Sticky Navigation Bar -->
+            <header class="h-16 w-full flex-shrink-0 flex items-center justify-between px-view-padding bg-surface/80 backdrop-blur-md border-b border-border-subtle z-10">
+                <div class="flex items-center gap-6">
+                    <!-- Base Currency Switcher -->
+                    <div class="flex items-center space-x-3 bg-surface-container-low border border-border-subtle p-0.5 rounded-lg">
+                        <button onclick="setBaseCurrency('EUR')" id="currency-eur" class="px-3 py-1 text-xs font-bold rounded-md bg-primary text-black transition-all">EUR</button>
+                        <button onclick="setBaseCurrency('INR')" id="currency-inr" class="px-3 py-1 text-xs font-medium rounded-md text-on-surface hover:text-white transition-all">INR</button>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <button onclick="triggerBankSync()" class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/20 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20 transition-all">
-                            <span class="material-symbols-outlined text-sm">sync</span>
-                            Link New Bank
-                        </button>
-                        <div class="flex items-center gap-3">
-                            <button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-all">
-                                <span class="material-symbols-outlined">notifications</span>
-                            </button>
-                            <button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-all">
-                                <span class="material-symbols-outlined">settings</span>
-                            </button>
-                            <div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center overflow-hidden border border-primary">
-                                <img alt="User profile avatar" class="w-full h-full object-cover"
-                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCf0ikCNZJnR6wQQJ0d6A8jVhVVoh6CTE03_Fh7XJrUMvwrZgYgzvttYtD0tzFm2WoavPUgWmyDm0xfnAMU13_in3WR4XuFezJOXiMNh1kQPRiyaUanIXmUcWf10xd_eARVEiN2LQKMMyOY2nZ4xQxVdwGdNUd4xVHIJk3jABDmu7NJXPT2hoCDGfz0DjGQXQ4pZD0rXOhGU_nKhk2J38LqTCEzzpRxJkCBkNYl5zMlfVP3QFUesw0IMqHrdHGm59E0LKtoKnpGjta6" />
-                            </div>
+
+                    <!-- Spot Rate Simulation Slider -->
+                    <div class="flex items-center space-x-4 border-l border-border-subtle pl-6">
+                        <span class="text-on-surface-variant text-[11px] font-semibold uppercase tracking-wider">Spot Rate</span>
+                        <input oninput="updateSpotRate(this.value)" id="spot-rate-slider" class="w-32 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary" max="95" min="85" step="0.05" type="range" value="90.00" />
+                        <span id="spot-rate-value" class="font-mono text-xs text-primary font-bold">90.00 EUR/INR</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- Link Bank Institution CTA -->
+                    <button onclick="triggerLinkBank()" class="inline-flex items-center space-x-2 bg-primary text-black px-4 py-1.5 rounded-lg text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-sm font-bold">link</span>
+                        <span>Link Institution</span>
+                    </button>
+
+                    <button class="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/30 transition-colors text-on-surface-variant">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-surface-base"></span>
+                    </button>
+
+                    <!-- Profile Info -->
+                    <div class="flex items-center space-x-3 border-l border-border-subtle pl-4">
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs font-bold text-white">Deepak Batham</span>
+                            <span class="text-[9px] font-mono text-on-surface-variant uppercase tracking-wider">Console Owner</span>
+                        </div>
+                        <div class="w-8 h-8 rounded-full border border-border-subtle overflow-hidden shadow-inner cursor-pointer hover:opacity-85 transition-opacity">
+                            <img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7dAjtMgf2YzduEUDyh_uPDYIz3eOQ2lfPLEwBZrR22C7sHwfhtVxqhj7O7WCPDevDgK0RkPjMfOmaPhvkfwJigWelRXSQDBIOY0X4uaweTa7ns51m3ACqvUc1lWx53ptGsNkBAhW2jX1XTRxGaUbHjvaQHLo2l5DLb6bFSNiRTZ_bIbN6aYLejMIEBL_biq8DERSGQe9ZOqNQwTOiY2GLECAEbPK0ReCegrDsu0INPFwpiBSmDM0aALQqWvIoQzPBKJFa6ETA1UTn" />
                         </div>
                     </div>
                 </div>
             </header>
-            
-            <!-- Main Content -->
-            <main class="flex-1 overflow-y-auto px-margin-mobile md:px-margin-desktop py-stack-lg pb-12">
-        <div class="max-w-container-max-width mx-auto">
-            <!-- Header Section -->
-            <div class="flex flex-col md:flex-row md:items-end justify-between mb-stack-lg gap-4">
-                <div>
-                    <h1 class="font-headline-lg text-headline-lg text-on-background">Overview</h1>
-                    <p class="font-body-md text-body-md text-on-surface-variant mt-1">Automated multi-currency financial
-                        tracking &amp; health intelligence.</p>
-                </div>
-                <a href="/import-ui"
-                    class="bg-primary text-white flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
-                    <span class="material-symbols-outlined">upload_file</span>
-                    <span>Import File</span>
-                </a>
-            </div>
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
-                <div class="card-ambient p-stack-lg flex flex-col justify-between min-h-[160px]">
-                    <div class="flex justify-between items-start">
-                        <span class="font-label-md text-label-md text-on-surface-variant">Net Worth / Reserves</span>
-                        <div class="bg-primary-container/10 p-2 rounded-lg text-primary">
-                            <span class="material-symbols-outlined">account_balance</span>
-                        </div>
-                    </div>
-                    <div>
-                        <h2 class="font-headline-md text-headline-md text-on-background" id="reserves-val">0.00 EUR</h2>
-                        <p class="font-label-md text-label-md text-on-surface-variant/70 mt-1">Converted from EUR/INR
-                            holdings</p>
-                    </div>
-                </div>
-                <div class="card-ambient p-stack-lg flex flex-col justify-between min-h-[160px]">
-                    <div class="flex justify-between items-start">
-                        <span class="font-label-md text-label-md text-on-surface-variant">Liquidity Runway</span>
-                        <div class="bg-tertiary-fixed-dim/20 p-2 rounded-lg text-tertiary">
-                            <span class="material-symbols-outlined">hourglass_empty</span>
-                        </div>
-                    </div>
-                    <div>
-                        <h2 class="font-headline-md text-headline-md text-on-background" id="runway-val">999 months</h2>
-                        <p class="font-label-md text-label-md text-on-surface-variant/70 mt-1">Survivable on essential
-                            bills</p>
-                    </div>
-                </div>
-                <div class="card-ambient p-stack-lg flex flex-col justify-between min-h-[160px]">
-                    <div class="flex justify-between items-start">
-                        <span class="font-label-md text-label-md text-on-surface-variant">Savings Rate (90d)</span>
-                        <div class="bg-secondary-container/10 p-2 rounded-lg text-secondary">
-                            <span class="material-symbols-outlined">trending_up</span>
-                        </div>
-                    </div>
-                    <div>
-                        <h2 class="font-headline-md text-headline-md text-on-background" id="savings-rate-val">100%</h2>
-                        <p class="font-label-md text-label-md text-on-surface-variant/70 mt-1">Income retained after
-                            expenses</p>
-                    </div>
-                </div>
-                <div class="card-ambient p-stack-lg flex flex-col justify-between min-h-[160px]">
-                    <div class="flex justify-between items-start">
-                        <span class="font-label-md text-label-md text-on-surface-variant">FIRE Progress</span>
-                        <div class="bg-error-container/20 p-2 rounded-lg text-error">
-                            <span class="material-symbols-outlined">local_fire_department</span>
-                        </div>
-                    </div>
-                    <div>
-                        <h2 class="font-headline-md text-headline-md text-on-background" id="fire-val">0%</h2>
-                        <p class="font-label-md text-label-md text-on-surface-variant/70 mt-1" id="fire-target-label">Target: 0 EUR</p>
-                    </div>
-                </div>
-            </div>
-            <!-- Middle Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
-                <!-- Left Column: Spending & Activity -->
-                <div class="lg:col-span-2 flex flex-col gap-gutter">
-                    <!-- Spending Flexibility -->
-                    <section class="card-ambient p-stack-lg">
-                        <div class="flex items-center gap-2 mb-stack-md">
-                            <span class="material-symbols-outlined text-primary">pie_chart</span>
-                            <h3 class="font-headline-sm text-headline-sm text-on-background">Spending Flexibility
-                                Profiles</h3>
-                        </div>
-                        <div class="space-y-6">
+
+            <!-- Active tab Panel Content Canvas (Viewport-Locked Base) -->
+            <div class="flex-1 overflow-hidden relative flex flex-col">
+                
+                <!-- 1. OVERVIEW PANEL -->
+                <div id="panel-overview" class="h-full overflow-y-auto p-view-padding scroll-zone space-y-8">
+                    <!-- Welcome Header -->
+                    <div class="mb-section-margin">
+                        <div class="flex justify-between items-end">
                             <div>
-                                <div class="flex justify-between mb-2">
-                                    <span class="font-body-sm text-body-sm text-on-background font-semibold">Fixed <span
-                                            class="text-on-surface-variant font-normal">(Needs - Rent, utilities,
-                                            baseline bills)</span></span>
-                                    <span class="font-body-sm text-body-sm text-on-background" id="flex-fixed-label">0 EUR</span>
-                                </div>
-                                <div class="h-3 bg-surface-variant rounded-full overflow-hidden">
-                                    <div class="h-full bg-primary w-[0%] rounded-full" id="flex-fixed-bar"></div>
+                                <h2 class="text-display-lg font-display-lg text-on-surface">Good morning, Deepak 👋</h2>
+                                <p class="text-body-base font-body-base text-on-surface-variant mt-2">Here's your financial overview for today.</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                <select class="bg-surface-container border border-border-subtle rounded-lg px-3 py-1 text-label-sm font-label-sm text-on-surface focus:outline-none cursor-pointer">
+                                    <option>This Month</option>
+                                </select>
+                                <span class="text-on-surface-variant text-[11px]">vs May 2024</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bento Grid Layout -->
+                    <div class="grid grid-cols-12 gap-panel-gap">
+                        <!-- Card 1: Net Worth -->
+                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-6 flex items-center justify-between">
+                            <div>
+                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Net Worth</span>
+                                <h2 id="reserves-display" class="text-headline-md font-headline-md font-bold text-white">€ 0.00</h2>
+                                <div class="flex items-center gap-1 mt-1.5">
+                                    <span id="reserves-trend-arrow" class="material-symbols-outlined text-[14px] text-success">arrow_upward</span>
+                                    <span id="reserves-change-display" class="text-data-sm font-data-sm text-success">+0.0% vs last month</span>
                                 </div>
                             </div>
+                            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                <span class="material-symbols-outlined text-xl">account_balance_wallet</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 2: Cash Available -->
+                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-6 flex items-center justify-between">
                             <div>
-                                <div class="flex justify-between mb-2">
-                                    <span class="font-body-sm text-body-sm text-on-background font-semibold">Flexible
-                                        <span class="text-on-surface-variant font-normal">(Necessary but adjustable -
-                                            Groceries, transit)</span></span>
-                                    <span class="font-body-sm text-body-sm text-on-background" id="flex-flexible-label">0 EUR</span>
-                                </div>
-                                <div class="h-3 bg-surface-variant rounded-full overflow-hidden">
-                                    <div class="h-full bg-secondary w-[0%] rounded-full" id="flex-flexible-bar"></div>
+                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Cash Available</span>
+                                <h2 id="reserves-cash-display" class="text-headline-md font-headline-md font-bold text-white">€ 0.00</h2>
+                                <div class="flex items-center gap-1 mt-1.5">
+                                    <span id="reserves-cash-trend-arrow" class="material-symbols-outlined text-[14px] text-success">arrow_upward</span>
+                                    <span id="reserves-cash-change-display" class="text-data-sm font-data-sm text-success">+0.0% vs last month</span>
                                 </div>
                             </div>
+                            <div class="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400 shrink-0">
+                                <span class="material-symbols-outlined text-xl">payments</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Savings Rate -->
+                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-6 flex items-center justify-between">
                             <div>
-                                <div class="flex justify-between mb-2">
-                                    <span
-                                        class="font-body-sm text-body-sm text-on-background font-semibold">Discretionary
-                                        <span class="text-on-surface-variant font-normal">(Wants - Subscriptions,
-                                            dining, travel)</span></span>
-                                    <span class="font-body-sm text-body-sm text-on-background" id="flex-discretionary-label">0 EUR</span>
+                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Savings Rate</span>
+                                <h2 id="savings-rate-display" class="text-headline-md font-headline-md font-bold text-white">0%</h2>
+                                <div class="flex items-center gap-1 mt-1.5">
+                                    <span id="savings-rate-trend-arrow" class="material-symbols-outlined text-[14px] text-success">arrow_upward</span>
+                                    <span id="savings-rate-change-display" class="text-data-sm font-data-sm text-success">+0.0% vs last month</span>
                                 </div>
-                                <div class="h-3 bg-surface-variant rounded-full overflow-hidden">
-                                    <div class="h-full bg-tertiary-container w-[0%] rounded-full" id="flex-discretionary-bar"></div>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
+                                <span class="material-symbols-outlined text-xl">savings</span>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: FIRE Progress -->
+                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-6 flex items-center justify-between">
+                            <div>
+                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">FIRE Progress</span>
+                                <h2 id="fire-display" class="text-headline-md font-headline-md font-bold text-white">0%</h2>
+                                <div class="flex items-center gap-1 mt-1.5">
+                                    <span id="fire-target-display" class="text-data-sm font-data-sm text-on-surface-variant">of €420,000 goal</span>
                                 </div>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
+                                <span class="material-symbols-outlined text-xl">track_changes</span>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Net Worth Trend, Top Spending Categories, AI Financial Briefing -->
+                        <!-- Net Worth Trend Chart (col-span-5) -->
+                        <div class="col-span-12 lg:col-span-5 glass-card p-6 flex flex-col justify-between min-h-[360px]">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant">Net Worth Trend</h3>
+                                    <div class="mt-2 flex items-baseline gap-2">
+                                        <span id="trend-large-networth" class="text-headline-md font-bold text-white">€0.00</span>
+                                        <span id="trend-large-change" class="text-success text-xs font-semibold">↑ €0.00 (0.0%)</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex bg-surface-container border border-border-subtle p-0.5 rounded-lg text-[10px] font-bold uppercase">
+                                        <button onclick="setTrendChartType('line')" id="chart-btn-line" class="px-2.5 py-1 rounded bg-surface-variant text-primary transition-all">Line</button>
+                                        <button onclick="setTrendChartType('bar')" id="chart-btn-bar" class="px-2.5 py-1 rounded text-on-surface-variant hover:text-white transition-all font-medium">Bar</button>
+                                    </div>
+                                    <select id="trend-period-select" onchange="updateTrendChart()" class="bg-surface-container border border-border-subtle rounded-lg px-2.5 py-1 text-xs text-on-surface-variant font-mono focus:ring-0 cursor-pointer">
+                                        <option value="12">This Year</option>
+                                        <option value="6">Last 6 Months</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex-1 w-full relative min-h-0">
+                                <div id="chart-container" class="absolute inset-0 w-full h-full">
+                                    <svg id="trajectory-svg" class="w-full h-full overflow-visible"></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Spending Categories (col-span-4) -->
+                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between min-h-[360px]">
+                            <div>
+                                <div class="flex justify-between items-center mb-5">
+                                    <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant">Top Spending Categories</h3>
+                                    <select class="bg-transparent border-none text-data-sm text-on-surface-variant font-mono focus:ring-0 cursor-pointer">
+                                        <option>This Month</option>
+                                    </select>
+                                </div>
+                                <div id="top-spending-list" class="space-y-3.5">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-border-subtle flex justify-center">
+                                <button onclick="switchTab('budgets')" class="text-primary text-label-sm font-bold hover:underline flex items-center gap-1">
+                                    <span>View all categories</span>
+                                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- AI Financial Briefing (col-span-3) -->
+                        <div class="col-span-12 lg:col-span-3 glass-card p-6 flex flex-col justify-between min-h-[360px]">
+                            <div>
+                                <div class="flex items-center gap-2 mb-5 text-primary">
+                                    <span class="material-symbols-outlined">auto_awesome</span>
+                                    <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant">AI Financial Briefing</h3>
+                                </div>
+                                <div id="insights-bullet-list" class="space-y-3">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-border-subtle flex justify-center">
+                                <button onclick="switchTab('insights')" class="text-primary text-label-sm font-bold hover:underline flex items-center gap-1">
+                                    <span>View all insights</span>
+                                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Recent Transactions, Budget Overview, Recommended Actions -->
+                        <!-- Recent Transactions (col-span-5) -->
+                        <div class="col-span-12 lg:col-span-5 glass-card p-6 flex flex-col justify-between min-h-[380px]">
+                            <div>
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-headline-md font-headline-md font-bold text-on-surface">Recent Transactions</h3>
+                                    <button onclick="switchTab('transactions')" class="px-3 py-1 border border-border-subtle bg-surface-variant/30 hover:bg-surface-variant/50 text-white text-xs font-bold rounded-lg transition-all">View All</button>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr class="border-b border-border-subtle text-on-surface-variant text-[10px] uppercase tracking-wider font-bold">
+                                                <th class="pb-3 text-label-sm font-label-sm w-24">Date</th>
+                                                <th class="pb-3 text-label-sm font-label-sm">Merchant</th>
+                                                <th class="pb-3 text-label-sm font-label-sm w-32">Category</th>
+                                                <th class="pb-3 text-label-sm font-label-sm text-right w-28">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-border-subtle text-xs" id="overview-recent-tx-body">
+                                            <!-- Populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Budget Overview Widget (col-span-4) -->
+                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between min-h-[380px]">
+                            <div>
+                                <div class="flex justify-between items-center mb-4">
+                                    <span class="text-label-sm font-label-sm text-on-surface-variant">Budget Overview</span>
+                                    <select class="bg-transparent border-none text-data-sm text-on-surface-variant font-mono focus:ring-0 cursor-pointer">
+                                        <option>This Month</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center justify-between gap-6 mt-4">
+                                    <div class="relative w-40 h-40 flex items-center justify-center shrink-0">
+                                        <svg class="w-full h-full transform -rotate-90">
+                                            <defs>
+                                                <linearGradient id="budgetRingGradient" x1="0" y1="0" x2="1" y2="1">
+                                                    <stop offset="0%" stop-color="#30d158"/>
+                                                    <stop offset="50%" stop-color="#0a84ff"/>
+                                                    <stop offset="100%" stop-color="#bf5af2"/>
+                                                </linearGradient>
+                                            </defs>
+                                            <circle class="text-surface-variant/20" cx="80" cy="80" fill="transparent" r="66" stroke="currentColor" stroke-width="10"></circle>
+                                            <circle class="gauge-ring" id="overview-budget-gauge-ring" cx="80" cy="80" fill="transparent" r="66" stroke="url(#budgetRingGradient)" stroke-width="10" stroke-linecap="round" style="stroke-dasharray: 414.69; stroke-dashoffset: 414.69; transition: stroke-dashoffset 0.8s ease-out;"></circle>
+                                        </svg>
+                                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                            <span id="overview-budget-gauge-pct" class="text-headline-md font-bold text-white leading-none">0%</span>
+                                            <span class="text-[9px] text-on-surface-variant uppercase tracking-wider font-semibold mt-1.5">used</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 space-y-4 text-xs">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-[#bf5af2] shrink-0"></div>
+                                            <div>
+                                                <p id="overview-budget-spent" class="font-bold text-white font-mono">€0.00</p>
+                                                <p class="text-[10px] text-on-surface-variant">Spent</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-[#30d158] shrink-0"></div>
+                                            <div>
+                                                <p id="overview-budget-remaining" class="font-bold text-success font-mono">€0.00</p>
+                                                <p class="text-[10px] text-on-surface-variant">Remaining</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-surface-variant shrink-0"></div>
+                                            <div>
+                                                <p id="overview-budget-total" class="font-bold text-white font-mono">€0.00</p>
+                                                <p class="text-[10px] text-on-surface-variant">Total Budget</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-border-subtle flex justify-center">
+                                <button onclick="switchTab('budgets')" class="text-primary text-label-sm font-bold hover:underline flex items-center gap-1">
+                                    <span>View budget details</span>
+                                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Recommended Actions Widget (col-span-3) -->
+                        <div class="col-span-12 lg:col-span-3 glass-card p-6 flex flex-col justify-between min-h-[380px]">
+                            <div>
+                                <h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-4">Recommended Actions</h3>
+                                <div class="space-y-3" id="overview-actions-list">
+                                    <div class="flex items-center gap-3 bg-surface-variant/25 p-3 rounded-xl border border-border-subtle hover:bg-surface-variant/40 transition-all cursor-pointer group">
+                                        <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                            <span class="material-symbols-outlined text-base">savings</span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-label-sm font-bold text-white truncate">Move €420 to High-Yield Savings</p>
+                                            <p class="text-[10px] text-on-surface-variant truncate">Idle cash detected in checking account</p>
+                                        </div>
+                                        <span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-0.5 transition-transform text-sm shrink-0">chevron_right</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 bg-surface-variant/25 p-3 rounded-xl border border-border-subtle hover:bg-surface-variant/40 transition-all cursor-pointer group">
+                                        <div class="w-9 h-9 rounded-full bg-warning/10 flex items-center justify-center text-warning shrink-0">
+                                            <span class="material-symbols-outlined text-base">receipt_long</span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-label-sm font-bold text-white truncate">Review Utility Bills</p>
+                                            <p class="text-[10px] text-on-surface-variant truncate">Spending 45% higher than average</p>
+                                        </div>
+                                        <span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-0.5 transition-transform text-sm shrink-0">chevron_right</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 bg-surface-variant/25 p-3 rounded-xl border border-border-subtle hover:bg-surface-variant/40 transition-all cursor-pointer group">
+                                        <div class="w-9 h-9 rounded-full bg-error/10 flex items-center justify-center text-error shrink-0">
+                                            <span class="material-symbols-outlined text-base">cancel</span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-label-sm font-bold text-white truncate">Cancel Unused Subscriptions</p>
+                                            <p class="text-[10px] text-on-surface-variant truncate">Save €42/month</p>
+                                        </div>
+                                        <span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-0.5 transition-transform text-sm shrink-0">chevron_right</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-border-subtle flex justify-center">
+                                <button onclick="switchTab('insights')" class="text-primary text-label-sm font-bold hover:underline flex items-center gap-1">
+                                    <span>View all actions</span>
+                                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. TRANSACTIONS PANEL -->
+                <div id="panel-transactions" class="hidden h-full flex flex-col p-view-padding overflow-hidden space-y-8">
+                    <!-- Context Summary (4 metrics cards) -->
+                    <div class="grid grid-cols-4 gap-6">
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Total Inflow</span>
+                            <h2 id="tx-summary-inflow" class="text-headline-md font-bold text-success">+€ 0.00</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">For selected interval</p>
+                        </div>
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Total Outflow</span>
+                            <h2 id="tx-summary-outflow" class="text-headline-md font-bold text-error">-€ 0.00</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">For selected interval</p>
+                        </div>
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Net Cash Flow</span>
+                            <h2 id="tx-summary-net" class="text-headline-md font-bold text-white">€ 0.00</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">Inflow minus outflow</p>
+                        </div>
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Interval savings</span>
+                            <h2 id="tx-summary-savings" class="text-headline-md font-bold text-primary">0%</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">Income retained ratio</p>
+                        </div>
+                    </div>
+
+                    <!-- Split-pane Primary Workspace (Dynamic Height) -->
+                    <div class="flex-1 glass-card rounded-[24px] overflow-hidden flex flex-row min-h-0 w-full mb-8">
+                        <!-- Left Date Filtering Sidebar -->
+                        <div class="w-60 border-r border-border-subtle bg-surface-container-low/10 p-4 flex flex-col space-y-4 flex-shrink-0">
+                            <div class="space-y-1">
+                                <span class="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Date Navigation</span>
+                            </div>
+                            <div class="flex-1 overflow-y-auto scroll-zone space-y-1" id="ledger-months-list">
+                                <!-- Dynamic month feeds -->
+                            </div>
+                            <div class="pt-3 border-t border-border-subtle space-y-3">
+                                <span class="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block">Custom Interval</span>
+                                <div class="space-y-2">
+                                    <input type="date" id="custom-start-date" onchange="setCustomDateRange()" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-2.5 py-1.5 text-data-sm text-on-surface font-mono" />
+                                    <input type="date" id="custom-end-date" onchange="setCustomDateRange()" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-2.5 py-1.5 text-data-sm text-on-surface font-mono" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Ledger Workspace -->
+                        <div class="flex-1 flex flex-col h-full overflow-hidden">
+                            <!-- Ledger Header Controls -->
+                            <div class="p-4 border-b border-border-subtle bg-white/[0.01] flex flex-wrap items-center justify-between gap-4">
+                                <div class="flex items-center space-x-3 flex-1 min-w-[280px]">
+                                    <!-- Search -->
+                                    <div class="relative flex-1 max-w-xs">
+                                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                                        <input oninput="filterLedger(this.value)" id="ledger-search-input" class="w-full bg-surface-container-low border border-border-subtle rounded-lg pl-9 pr-3 py-1.5 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-all font-mono text-on-surface" placeholder="Search transactions..." type="text" />
+                                    </div>
+                                    <!-- Account filter badge -->
+                                    <div id="ledger-account-filter-badge" class="hidden items-center space-x-1.5 bg-primary/15 border border-primary/20 text-primary px-2.5 py-1 rounded-lg text-xs font-mono">
+                                        <span id="ledger-filter-account-name">Revolut</span>
+                                        <button onclick="clearAccountFilter()" class="hover:text-white inline-flex items-center"><span class="material-symbols-outlined text-xs">close</span></button>
+                                    </div>
+                                    <!-- Category select -->
+                                    <select onchange="filterCategory(this.value)" id="ledger-category-select" class="bg-surface-container-low border border-border-subtle rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary font-mono appearance-none pr-8 text-on-surface">
+                                        <option value="ALL">All Categories</option>
+                                    </select>
+                                    <!-- Limit select -->
+                                    <select onchange="changePageSize(this.value)" id="ledger-pagesize-select" class="bg-surface-container-low border border-border-subtle rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-primary font-mono text-on-surface">
+                                        <option value="15">15 Per Page</option>
+                                        <option value="25">25 Per Page</option>
+                                        <option value="50">50 Per Page</option>
+                                        <option value="100">100 Per Page</option>
+                                        <option value="ALL">All Transactions</option>
+                                    </select>
+                                </div>
+                                <!-- View Toggle and Add CTAs -->
+                                <div class="flex items-center space-x-4">
+                                    <div class="flex bg-surface-container border border-border-subtle p-0.5 rounded-lg text-[10px] font-bold uppercase">
+                                        <button onclick="setLedgerView('list')" id="view-btn-list" class="px-3 py-1.5 rounded bg-surface-variant text-primary transition-all">List View</button>
+                                        <button onclick="setLedgerView('calendar')" id="view-btn-calendar" class="px-3 py-1.5 rounded text-on-surface-variant hover:text-white transition-all">Calendar</button>
+                                    </div>
+                                    <button onclick="openAddTransactionModal()" class="bg-primary text-black px-3 py-1.5 rounded-lg text-xs font-bold hover:brightness-110 flex items-center space-x-1 btn-interactive transition-all shadow-lg shadow-primary/20">
+                                        <span class="material-symbols-outlined text-sm font-bold">add</span>
+                                        <span>Add Tx</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- List View Body -->
+                            <div id="ledger-list-container" class="flex-1 flex flex-col overflow-hidden">
+                                <div class="flex-1 overflow-auto scroll-zone">
+                                    <table class="w-full text-left border-collapse">
+                                        <thead>
+                                             <tr class="border-b border-border-subtle bg-surface-container-low/20 text-[10px] font-mono uppercase tracking-widest text-on-surface-variant font-bold sticky top-0 z-10">
+                                                 <th class="px-6 py-3">Date</th>
+                                                 <th class="px-6 py-3">Category</th>
+                                                 <th class="px-6 py-3 text-right">Amount</th>
+                                                 <th class="px-6 py-3">Account</th>
+                                                 <th class="px-6 py-3">Tags</th>
+                                                 <th class="px-6 py-3">Merchant / Description</th>
+                                                 <th class="px-6 py-3 text-center">Action</th>
+                                             </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-border-subtle text-data-sm text-on-surface" id="ledger-body">
+                                            <!-- Ledger populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Pagination Footer -->
+                                <div class="p-3 bg-surface-container-low/20 border-t border-border-subtle flex justify-between items-center text-xs font-mono">
+                                    <button id="prev-page-btn" onclick="prevLedgerPage()" class="px-3 py-1 border border-border-subtle rounded hover:bg-surface-variant/40 text-on-surface transition-all disabled:opacity-30 disabled:pointer-events-none">Prev</button>
+                                    <span id="page-indicator-text" class="text-on-surface-variant">Page 1</span>
+                                    <button id="next-page-btn" onclick="nextLedgerPage()" class="px-3 py-1 border border-border-subtle rounded hover:bg-surface-variant/40 text-on-surface transition-all disabled:opacity-30 disabled:pointer-events-none">Next</button>
+                                </div>
+                            </div>
+
+                            <!-- Calendar View Body -->
+                            <div id="ledger-calendar-container" class="flex-1 overflow-auto scroll-zone p-4 hidden">
+                                <div class="grid grid-cols-7 gap-1 text-center font-mono text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">
+                                    <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1 bg-white/[0.01]" id="calendar-days-grid">
+                                    <!-- Generated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. BUDGETS PANEL -->
+                <div id="panel-budgets" class="hidden h-full overflow-y-auto p-view-padding scroll-zone space-y-8">
+                    <!-- Gauge and Metrics Grid -->
+                    <div class="grid grid-cols-12 gap-panel-gap">
+                        <div class="col-span-12 lg:col-span-8 glass-card p-6 flex flex-col md:flex-row gap-8 items-center">
+                            <div class="relative w-48 h-48 flex items-center justify-center shrink-0">
+                                <svg class="w-full h-full transform -rotate-90">
+                                    <circle class="text-surface-container-highest" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="12"></circle>
+                                    <circle class="text-primary gauge-ring" id="budget-progress-gauge" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="12" style="stroke-dasharray: 251.32; stroke-dashoffset: 251.32;"></circle>
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span class="text-display-lg font-display-lg text-on-surface" id="budget-gauge-pct">0%</span>
+                                    <span class="text-label-sm font-label-sm text-on-surface-variant">of budget used</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 grid grid-cols-3 gap-6 w-full">
+                                <div class="space-y-1">
+                                    <p class="text-label-sm font-label-sm text-on-surface-variant">Total Budget</p>
+                                    <p class="text-data-lg font-data-lg text-on-surface" id="budget-summary-limit">€0.00</p>
+                                    <p class="text-data-sm font-data-sm text-text-muted">Monthly limit</p>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-label-sm font-label-sm text-on-surface-variant">Spent</p>
+                                    <p class="text-data-lg font-data-lg text-on-surface" id="budget-summary-spent">€0.00</p>
+                                    <div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden mt-1">
+                                        <div class="h-full bg-primary" id="budget-spent-progress-bar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-label-sm font-label-sm text-on-surface-variant">Remaining</p>
+                                    <p class="text-data-lg font-data-lg text-success" id="budget-summary-remaining">€0.00</p>
+                                    <p class="text-data-sm font-data-sm text-success" id="budget-days-indicator">YTD Summary</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-center">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center text-error border border-error/20">
+                                    <span class="material-symbols-outlined text-[28px]">warning</span>
+                                </div>
+                                <div>
+                                    <p class="text-data-lg font-data-lg text-on-surface" id="budget-summary-overage">0 Categories</p>
+                                    <p class="text-label-sm font-label-sm text-on-surface-variant">Over Limit YTD</p>
+                                </div>
+                            </div>
+                            <p class="text-body-base font-body-base text-on-surface-variant leading-relaxed">
+                                Review your categorizations and adjust limit alerts to protect your baseline savings rate.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-panel-gap">
+                        <!-- Budgets List -->
+                        <div class="col-span-12 lg:col-span-8 glass-card p-6 min-h-[450px] flex flex-col">
+                            <h3 class="text-headline-md font-headline-md text-on-surface mb-4">Category Budgets and Limits</h3>
+                            <div id="category-budgets-list" class="space-y-6 pr-2 max-h-[380px] overflow-y-auto scroll-zone flex-1">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Side controls -->
+                        <div class="col-span-12 lg:col-span-4 flex flex-col gap-panel-gap">
+                            <div class="glass-card p-6 flex-1">
+                                <h3 class="text-label-sm font-label-sm text-on-surface-variant font-bold uppercase tracking-widest mb-3 flex items-center">
+                                    <span class="material-symbols-outlined text-primary mr-2">analytics</span>AI Adjustments
+                                </h3>
+                                <p class="text-xs text-on-surface-variant leading-relaxed mb-4">AI recommendation based on last 90 days of burn rate:</p>
+                                <div id="budget-ai-suggestions" class="space-y-3 font-mono text-[11px]">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                            
+                            <div class="glass-card p-6">
+                                <h3 class="text-label-sm font-label-sm text-on-surface-variant font-bold uppercase tracking-widest mb-4">Quick Adjust Limit</h3>
+                                <div class="space-y-3 text-xs">
+                                    <div class="space-y-1">
+                                        <label class="font-mono text-[9px] text-on-surface-variant uppercase font-bold">Category</label>
+                                        <select id="budget-adjust-category" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary font-mono">
+                                            <!-- Mapped options -->
+                                        </select>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="font-mono text-[9px] text-on-surface-variant uppercase font-bold">Limit Amount</label>
+                                        <input id="budget-adjust-amount" type="number" step="10" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary font-mono" placeholder="e.g. 500" />
+                                    </div>
+                                    <button onclick="saveCategoryBudgetLimit()" class="w-full py-2 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all text-xs shadow-lg shadow-primary/20">
+                                        Apply New Limit
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spending Trend -->
+                    <div class="col-span-12 glass-card p-8 h-80 relative overflow-hidden group">
+                        <div class="relative z-10 h-full flex flex-col">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-headline-md font-headline-md text-on-surface">Monthly Spending Trend</h3>
+                                <div class="flex items-center gap-4 text-label-sm font-label-sm text-on-surface-variant">
+                                    <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-primary"></span> Budget</span>
+                                    <span class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-surface-variant"></span> Spent</span>
+                                </div>
+                            </div>
+                            <div class="flex-1 flex items-end justify-between gap-4">
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full max-w-[40px] bg-primary/20 rounded-t-lg h-[80%] relative group">
+                                        <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-surface p-2 rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-data-sm">€2.8k</div>
+                                    </div>
+                                    <span class="text-data-sm text-on-surface-variant font-mono">Jan</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full max-w-[40px] bg-primary/20 rounded-t-lg h-[95%] relative"></div>
+                                    <span class="text-data-sm text-on-surface-variant font-mono">Feb</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full max-w-[40px] bg-primary/20 rounded-t-lg h-[75%] relative"></div>
+                                    <span class="text-data-sm text-on-surface-variant font-mono">Mar</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full max-w-[40px] bg-primary/20 rounded-t-lg h-[85%] relative"></div>
+                                    <span class="text-data-sm text-on-surface-variant font-mono">Apr</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2">
+                                    <div class="w-full max-w-[40px] bg-primary rounded-t-lg h-[72%] relative border-2 border-white/20 active-nav-glow"></div>
+                                    <span class="text-data-sm text-on-surface font-mono font-bold">May</span>
+                                </div>
+                                <div class="flex-1 flex flex-col items-center gap-2 opacity-30">
+                                    <div class="w-full max-w-[40px] bg-surface-variant rounded-t-lg h-[60%] relative"></div>
+                                    <span class="text-data-sm text-on-surface-variant font-mono">Jun</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. INVESTMENTS PANEL -->
+                <div id="panel-investments" class="hidden h-full overflow-y-auto p-view-padding scroll-zone space-y-8">
+                    <!-- Sub-navigation at the top of the Investments panel -->
+                    <div class="flex justify-between items-center">
+                        <div class="flex bg-surface-container-lowest border border-border-subtle rounded-lg p-1">
+                            <button onclick="toggleInvestmentsSubView('assets')" id="btn-subview-assets" class="px-4 py-1.5 rounded-md text-label-sm font-label-sm font-semibold transition-all bg-surface-variant text-on-surface">Assets Overview</button>
+                            <button onclick="toggleInvestmentsSubView('portfolio')" id="btn-subview-portfolio" class="px-4 py-1.5 rounded-md text-label-sm font-label-sm transition-all text-on-surface-variant hover:text-on-surface">Portfolio Growth</button>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3">
+                            <button onclick="toggleBalanceMasking()" class="text-on-surface-variant hover:text-white transition-colors" title="Toggle balance masking">
+                                <span id="mask-icon-investments" class="material-symbols-outlined text-sm align-middle">visibility</span>
+                            </button>
+                            <button onclick="openAddAssetSheet()" class="bg-primary text-black px-4 py-2 rounded-lg text-label-sm font-label-sm font-semibold hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-primary/20 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">add_circle</span>
+                                <span>Initialize Asset</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SUB-VIEW 1: ASSETS OVERVIEW -->
+                    <div id="sub-panel-investments-assets" class="space-y-8">
+                        <!-- Context Summary -->
+                        <div class="grid grid-cols-4 gap-6">
+                            <div class="glass-card p-6 relative overflow-hidden group">
+                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Total Assets Pool</span>
+                                <h2 id="asset-summary-total" class="text-headline-md font-bold text-white">€ 0.00</h2>
+                                <p class="text-data-sm text-on-surface-variant mt-1">EUR/INR aggregate balance</p>
+                            </div>
+                            <div class="glass-card p-6 relative overflow-hidden group">
+                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Live Bank Sync</span>
+                                <h2 id="asset-summary-live" class="text-headline-md font-bold text-primary">€ 0.00</h2>
+                                <p class="text-data-sm text-on-surface-variant mt-1">PSD2 feeds (Revolut, Commerz)</p>
+                            </div>
+                            <div class="glass-card p-6 relative overflow-hidden group">
+                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Offline Reserves</span>
+                                <h2 id="asset-summary-offline" class="text-headline-md font-bold text-secondary">€ 0.00</h2>
+                                <p class="text-data-sm text-on-surface-variant mt-1">Real estate, stocks, cash</p>
+                            </div>
+                            <div class="glass-card p-6 relative overflow-hidden group">
+                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Exchange rate</span>
+                                <h2 id="asset-summary-rate" class="text-headline-md font-bold text-success">90.00</h2>
+                                <p class="text-data-sm text-on-surface-variant mt-1">Live EUR/INR spot rate</p>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic multiplier simulation -->
+                        <div class="glass-card p-4 flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <span class="material-symbols-outlined text-primary text-2xl">calculate</span>
+                                <div>
+                                    <h4 class="text-xs font-bold text-white">Dynamic Asset Multiplier</h4>
+                                    <p class="text-[10px] text-on-surface-variant">Simulate net worth shifts by scaling balances dynamically in memory.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <input oninput="updateBalanceMultiplier(this.value)" id="balance-multiplier-slider" class="w-48 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary" max="2.00" min="0.50" step="0.05" type="range" value="1.00" />
+                                <span id="balance-multiplier-value" class="font-mono text-xs text-primary font-bold">1.00x multiplier</span>
+                            </div>
+                        </div>
+
+                        <!-- Accounts list bento grids -->
+                        <div class="grid grid-cols-12 gap-panel-gap">
+                            <!-- Accounts Grid -->
+                            <div class="col-span-12 lg:col-span-8 flex flex-col gap-6">
+                                <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant">Linked Accounts</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="accounts-grid">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Assets Allocation Donut -->
+                            <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between">
+                                <h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-6">Asset Allocation</h3>
+                                <div class="flex items-center justify-between">
+                                    <div class="relative w-36 h-36">
+                                        <svg class="w-full h-full transform -rotate-90">
+                                            <circle class="text-surface-variant/20" cx="72" cy="72" fill="transparent" r="62" stroke="currentColor" stroke-width="10"></circle>
+                                            <circle class="text-primary" cx="72" cy="72" fill="transparent" r="62" stroke="currentColor" stroke-dasharray="390" stroke-dashoffset="120" stroke-width="10"></circle>
+                                            <circle class="text-success" cx="72" cy="72" fill="transparent" r="62" stroke="currentColor" stroke-dasharray="390" stroke-dashoffset="310" stroke-width="10"></circle>
+                                        </svg>
+                                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                            <span class="text-[10px] text-on-surface-variant">Managed</span>
+                                            <span class="text-headline-md font-bold font-mono">82%</span>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3 text-xs">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+                                            <div>
+                                                <p class="font-semibold text-on-surface">Investments</p>
+                                                <p class="text-[10px] text-on-surface-variant font-mono">45.2%</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-success"></div>
+                                            <div>
+                                                <p class="font-semibold text-on-surface">Cash &amp; Bank</p>
+                                                <p class="text-[10px] text-on-surface-variant font-mono">30.4%</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Asset logs and liabilities -->
+                        <div class="grid grid-cols-12 gap-panel-gap">
+                            <!-- Recent activity -->
+                            <div class="col-span-12 lg:col-span-7 glass-card p-6">
+                                <h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-4">Recent Asset Activity</h3>
+                                <div class="space-y-2 text-xs font-mono">
+                                    <div class="grid grid-cols-12 gap-4 py-3 border-b border-border-subtle items-center">
+                                        <div class="col-span-1 flex justify-center text-success"><span class="material-symbols-outlined text-sm">arrow_upward</span></div>
+                                        <div class="col-span-5"><p class="font-bold text-on-surface">ETF Purchase</p><p class="text-[10px] text-on-surface-variant">Vanguard S&P 500</p></div>
+                                        <div class="col-span-3 text-on-surface-variant">Portfolio</div>
+                                        <div class="col-span-3 text-right text-white font-bold">€1,200.00</div>
+                                    </div>
+                                    <div class="grid grid-cols-12 gap-4 py-3 border-b border-border-subtle items-center">
+                                        <div class="col-span-1 flex justify-center text-success"><span class="material-symbols-outlined text-sm">add_circle</span></div>
+                                        <div class="col-span-5"><p class="font-bold text-on-surface">Salary Deposit</p><p class="text-[10px] text-on-surface-variant">Checking Account</p></div>
+                                        <div class="col-span-3 text-on-surface-variant">Bank Giro</div>
+                                        <div class="col-span-3 text-right text-success font-bold">+€3,500.00</div>
+                                    </div>
+                                    <div class="grid grid-cols-12 gap-4 py-3 items-center">
+                                        <div class="col-span-1 flex justify-center text-primary"><span class="material-symbols-outlined text-sm">receipt_long</span></div>
+                                        <div class="col-span-5"><p class="font-bold text-on-surface">Dividend Received</p><p class="text-[10px] text-on-surface-variant">Investment Portfolio</p></div>
+                                        <div class="col-span-3 text-on-surface-variant">Portfolio</div>
+                                        <div class="col-span-3 text-right text-success font-bold">+€126.50</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Liabilities card -->
+                            <div class="col-span-12 lg:col-span-5 glass-card p-6 flex flex-col justify-between">
+                                <h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-4">Liabilities Overview</h3>
+                                <div class="space-y-4">
+                                    <div class="p-3 rounded-xl bg-surface-container-low border border-border-subtle flex justify-between items-center">
+                                        <div>
+                                            <p class="text-xs font-bold text-white">Student Loan</p>
+                                            <p class="text-[10px] text-on-surface-variant">2.4% Fixed Rate</p>
+                                        </div>
+                                        <span class="font-mono text-error font-bold text-sm">€24,500</span>
+                                    </div>
+                                    <div class="p-3 rounded-xl bg-surface-container-low border border-border-subtle flex justify-between items-center">
+                                        <div>
+                                            <p class="text-xs font-bold text-white">Credit Card Balance</p>
+                                            <p class="text-[10px] text-on-surface-variant">Rolling interest</p>
+                                        </div>
+                                        <span class="font-mono text-error font-bold text-sm">€17,200</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SUB-VIEW 2: PORTFOLIO GROWTH -->
+                    <div id="sub-panel-investments-portfolio" class="space-y-8 hidden">
+                        <!-- KPI Cards -->
+                        <div class="grid grid-cols-4 gap-6">
+                            <div class="glass-card p-6 flex flex-col justify-between">
+                                <span class="text-label-sm font-label-sm text-on-surface-variant">Total Portfolio Value</span>
+                                <h2 class="text-headline-md font-bold text-white font-mono mt-2">€83,200 <span class="text-success text-xs font-bold font-sans">↑ 11.2%</span></h2>
+                                <p class="text-[10px] text-on-surface-variant/60 mt-1">vs last month</p>
+                            </div>
+                            <div class="glass-card p-6 flex flex-col justify-between">
+                                <span class="text-label-sm font-label-sm text-on-surface-variant">Total Gain/Loss</span>
+                                <h2 class="text-headline-md font-bold text-white font-mono mt-2">€8,450 <span class="text-success text-xs font-bold font-sans">↑ 11.3%</span></h2>
+                                <p class="text-[10px] text-on-surface-variant/60 mt-1">All-time realized & unrealized</p>
+                            </div>
+                            <div class="glass-card p-6 flex flex-col justify-between">
+                                <span class="text-label-sm font-label-sm text-on-surface-variant">Today's Change</span>
+                                <h2 class="text-headline-md font-bold text-white font-mono mt-2">€324.50 <span class="text-success text-xs font-bold font-sans">↑ 0.38%</span></h2>
+                                <p class="text-[10px] text-on-surface-variant/60 mt-1">Markets open</p>
+                            </div>
+                            <div class="glass-card p-6 flex flex-col justify-between">
+                                <span class="text-label-sm font-label-sm text-on-surface-variant">Annual Return</span>
+                                <h2 class="text-headline-md font-bold text-white font-mono mt-2">12.4%</h2>
+                                <p class="text-[10px] text-on-surface-variant/60 mt-1">Year to Date performance</p>
+                            </div>
+                        </div>
+
+                        <!-- Spline Performance Chart -->
+                        <div class="grid grid-cols-12 gap-panel-gap">
+                            <div class="col-span-8 glass-card p-8 min-h-[350px] flex flex-col justify-between relative overflow-hidden">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 class="text-label-sm font-label-sm font-bold text-on-surface-variant uppercase tracking-wider">Portfolio Performance</h3>
+                                        <p class="text-headline-md font-headline-md mt-1">Growth Index</p>
+                                    </div>
+                                    <span class="text-data-sm text-on-surface-variant">YTD</span>
+                                </div>
+                                <div class="flex-1 w-full relative h-48">
+                                    <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 240">
+                                        <path class="line-chart-gradient" d="M0,200 Q100,180 200,160 T400,120 T600,60 T800,20 V240 H0 Z" fill="url(#chart-gradient)"></path>
+                                        <path d="M0,200 Q100,180 200,160 T400,120 T600,60 T800,20" fill="none" stroke="#5e5ce6" stroke-linecap="round" stroke-width="3"></path>
+                                    </svg>
+                                    <div class="absolute bottom-0 left-0 right-0 flex justify-between px-2 pt-4 border-t border-border-subtle text-data-sm text-on-surface-variant/60 font-mono">
+                                        <span>Jan '24</span>
+                                        <span>Feb '24</span>
+                                        <span>Mar '24</span>
+                                        <span>Apr '24</span>
+                                        <span>May '24</span>
+                                        <span>Jun '24</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-span-4 glass-card p-6 flex flex-col justify-between">
+                                <h3 class="text-label-sm font-label-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4">Allocation Details</h3>
+                                <div class="space-y-3 text-xs">
+                                    <div class="flex justify-between items-center">
+                                        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-primary"></span> ETF</span>
+                                        <span class="font-bold text-white font-mono">65.2%</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-secondary"></span> Stocks</span>
+                                        <span class="font-bold text-white font-mono">20.1%</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-success"></span> Bonds</span>
+                                        <span class="font-bold text-white font-mono">10.3%</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-surface-variant"></span> Cash</span>
+                                        <span class="font-bold text-white font-mono">4.4%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Holdings list and rebalancing recommendations -->
+                        <div class="grid grid-cols-12 gap-panel-gap">
+                            <!-- Holdings Table -->
+                            <div class="col-span-8 glass-card overflow-hidden">
+                                <div class="p-6 flex justify-between items-center border-b border-border-subtle">
+                                    <h3 class="text-headline-md font-headline-md">Top Holdings</h3>
+                                    <button class="text-label-sm text-primary">View all holdings</button>
+                                </div>
+                                <table class="w-full border-collapse text-left">
+                                    <thead>
+                                        <tr class="bg-surface-variant/10 text-label-sm font-label-sm text-on-surface-variant">
+                                            <th class="px-6 py-4 font-bold">Asset</th>
+                                            <th class="px-6 py-4 font-bold">Type</th>
+                                            <th class="px-6 py-4 font-bold">Value</th>
+                                            <th class="px-6 py-4 font-bold">Change</th>
+                                            <th class="px-6 py-4 font-bold">Allocation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-data-md font-data-md text-on-surface divide-y divide-border-subtle">
+                                        <tr>
+                                            <td class="px-6 py-4 font-semibold">Vanguard S&P 500 ETF</td>
+                                            <td class="px-6 py-4 text-on-surface-variant">ETF</td>
+                                            <td class="px-6 py-4 font-bold">€46,250</td>
+                                            <td class="px-6 py-4 text-success">+8.2%</td>
+                                            <td class="px-6 py-4">55.6%</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 font-semibold">MSCI World ETF</td>
+                                            <td class="px-6 py-4 text-on-surface-variant">ETF</td>
+                                            <td class="px-6 py-4 font-bold">€18,750</td>
+                                            <td class="px-6 py-4 text-success">+12.1%</td>
+                                            <td class="px-6 py-4">22.5%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-span-4 space-y-4">
+                                <div class="glass-card p-4 border-l-4 border-l-success flex gap-3">
+                                    <span class="material-symbols-outlined text-success">auto_awesome</span>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-white">Portfolio Health</h4>
+                                        <p class="text-[11px] text-on-surface-variant">Your portfolio is well diversified across 4 asset classes.</p>
+                                    </div>
+                                </div>
+                                <div class="glass-card p-4 border-l-4 border-l-primary flex gap-3">
+                                    <span class="material-symbols-outlined text-primary">trending_up</span>
+                                    <div>
+                                        <h4 class="text-xs font-bold text-white">Opportunity Detected</h4>
+                                        <p class="text-[11px] text-on-surface-variant">Tech stocks are currently undervalued. Consider increasing weight by 5%.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. GOALS PANEL -->
+                <div id="panel-goals" class="hidden h-full overflow-y-auto p-view-padding scroll-zone space-y-8">
+                    <!-- Context Summary (4 metrics cards) -->
+                    <div class="grid grid-cols-4 gap-6">
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Target Wealth Goal</span>
+                            <h2 id="goal-summary-target" class="text-headline-md font-bold text-white">€ 500,000</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">Combined milestone target</p>
+                        </div>
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Current Capital</span>
+                            <h2 id="goal-summary-current" class="text-headline-md font-bold text-primary">€ 0.00</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">Reserves matching target</p>
+                        </div>
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Emergency reserves</span>
+                            <h2 id="goal-summary-emergency" class="text-headline-md font-bold text-secondary">6.0 Months</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">Secured buffer pool</p>
+                        </div>
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">SWR Ratio (4%)</span>
+                            <h2 id="goal-summary-swr" class="text-headline-md font-bold text-success">€ 0.00 / yr</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">Est. passive cash flow</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-panel-gap">
+                        <!-- Primary Workspace: Goals meter list -->
+                        <div class="col-span-12 lg:col-span-8 glass-card p-6 min-h-[400px] flex flex-col">
+                            <h3 class="text-headline-md font-headline-md text-white mb-4">Milestones &amp; Safe Withdrawal Indexes</h3>
+                            <div id="goals-progress-list" class="space-y-6 pr-2 max-h-[330px] overflow-y-auto scroll-zone flex-1">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Action Area: Add/Update Goal -->
+                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Create Milestone</h3>
+                                <div class="space-y-4 text-xs">
+                                    <div class="space-y-1">
+                                        <label class="font-mono text-[9px] text-on-surface-variant uppercase font-bold">Goal Name</label>
+                                        <input id="goal-create-name" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary" placeholder="e.g. FIRE Fund, Emergency" type="text" />
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="font-mono text-[9px] text-on-surface-variant uppercase font-bold">Target Capital</label>
+                                        <input id="goal-create-target" type="number" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary font-mono" placeholder="e.g. 250000" />
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="font-mono text-[9px] text-on-surface-variant uppercase font-bold">Current Allocation</label>
+                                        <input id="goal-create-current" type="number" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-on-surface focus:outline-none focus:border-primary font-mono" placeholder="Leave empty to link automatic reserves" />
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="createNewMilestoneGoal()" class="w-full py-2.5 bg-primary text-black font-bold rounded-lg hover:brightness-110 transition-all text-xs shadow-lg shadow-primary/20 mt-4">
+                                Save Milestone
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. INSIGHTS PANEL -->
+                <div id="panel-insights" class="hidden h-full overflow-y-auto p-view-padding scroll-zone space-y-8">
+                    <!-- Dashboard Header -->
+                    <div class="flex justify-between items-end mb-6">
+                        <div>
+                            <h2 class="text-display-lg font-display-lg text-on-surface">Decision Center</h2>
+                            <p id="insights-date-subtitle" class="text-body-base text-text-muted mt-2">AI-powered insights based on your spending patterns.</p>
+                        </div>
+                        <div class="flex gap-2 p-1 bg-surface-container rounded-xl border border-border-subtle">
+                            <button id="btn-insight-briefing" onclick="setInsightsTab('briefing')" class="px-4 py-1.5 rounded-lg text-label-sm font-medium bg-primary-container text-on-primary-container transition-all">Briefing</button>
+                            <button id="btn-insight-analysis" onclick="setInsightsTab('analysis')" class="px-4 py-1.5 rounded-lg text-label-sm font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-all">Analysis</button>
+                            <button id="btn-insight-opps" onclick="setInsightsTab('opportunities')" class="px-4 py-1.5 rounded-lg text-label-sm font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-all">Opportunities</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-panel-gap mb-8">
+                        <!-- AI Executive Briefing (Left) -->
+                        <div class="col-span-12 lg:col-span-8 glass-card p-8 relative overflow-hidden group">
+                            <!-- Background Glow Effect -->
+                            <div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-[80px] group-hover:bg-primary/20 transition-all duration-700"></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-3 mb-6">
+                                    <div class="p-2 bg-primary/20 rounded-lg text-primary">
+                                        <span class="material-symbols-outlined text-lg">auto_awesome</span>
+                                    </div>
+                                    <h3 class="text-headline-md font-headline-md text-on-surface">Executive Financial Briefing</h3>
+                                </div>
+                                <div class="prose prose-invert max-w-none mb-8">
+                                    <p id="insights-briefing-text" class="text-body-base leading-relaxed text-on-surface/90">
+                                        Calculating your latest financial intelligence briefing...
+                                    </p>
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                    <div class="p-4 rounded-xl bg-surface-container-low border border-border-subtle flex flex-col gap-1">
+                                        <span class="text-success material-symbols-outlined text-xl">trending_up</span>
+                                        <span class="text-label-sm text-text-muted">Net Worth</span>
+                                        <span id="insights-net-worth-val" class="text-data-md font-data-md text-on-surface">+0.0%</span>
+                                    </div>
+                                    <div class="p-4 rounded-xl bg-surface-container-low border border-border-subtle flex flex-col gap-1">
+                                        <span class="text-warning material-symbols-outlined text-xl">warning</span>
+                                        <span class="text-label-sm text-text-muted">Over Budget</span>
+                                        <span id="insights-over-budget-val" class="text-data-md font-data-md text-on-surface">0 Categories</span>
+                                    </div>
+                                    <div class="p-4 rounded-xl bg-surface-container-low border border-border-subtle flex flex-col gap-1">
+                                        <span class="text-primary material-symbols-outlined text-xl">savings</span>
+                                        <span class="text-label-sm text-text-muted">Savings Buffer</span>
+                                        <span id="insights-savings-found-val" class="text-data-md font-data-md text-on-surface">€0 Found</span>
+                                    </div>
+                                    <div class="p-4 rounded-xl bg-surface-container-low border border-border-subtle flex flex-col gap-1">
+                                        <span class="text-success material-symbols-outlined text-xl">check_circle</span>
+                                        <span class="text-label-sm text-text-muted">FIRE Goal</span>
+                                        <span id="insights-fire-status-val" class="text-data-md font-data-md text-on-surface">On Track</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Score Radial (Right) -->
+                        <div class="col-span-12 lg:col-span-4 glass-card p-8 flex flex-col items-center justify-center text-center">
+                            <div class="relative w-48 h-48 mb-6">
+                                <svg class="w-full h-full transform -rotate-90">
+                                    <circle class="text-surface-container-highest" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-width="8"></circle>
+                                    <circle id="insights-score-ring" class="text-success" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-dasharray="552.9" stroke-dashoffset="552.9" stroke-width="8" style="transition: stroke-dashoffset 0.8s ease-out;"></circle>
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span id="insights-score-value" class="text-display-lg font-display-lg">100</span>
+                                    <span class="text-label-sm text-text-muted">/100</span>
+                                </div>
+                            </div>
+                            <h4 id="insights-score-label" class="text-headline-md font-headline-md text-on-surface mb-2">Nominal</h4>
+                            <p class="text-label-sm text-text-muted">Dynamically computed based on savings, budget overheads and emergency buffers.</p>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Analysis Row -->
+                    <div class="grid grid-cols-12 gap-panel-gap mb-8">
+                        <!-- What Changed & Why (Left) -->
+                        <div class="col-span-12 lg:col-span-8 flex flex-col gap-panel-gap overflow-hidden">
+                            <div class="glass-card p-6 flex flex-col overflow-hidden min-h-[260px]">
+                                <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-widest mb-6">Key Insights</h3>
+                                <div id="insights-key-list" class="flex-1 overflow-y-auto scroll-hide space-y-4 pr-2 max-h-[200px]">
+                                    <!-- Dynamic Insights populated from ledger -->
+                                </div>
+                            </div>
+                            
+                            <!-- Spending Distribution Visual -->
+                            <div class="glass-card p-6 flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-widest">Spending Analysis</h3>
+                                    <span class="text-primary text-label-sm font-semibold uppercase tracking-wider font-mono">50/30/20 Rule</span>
+                                </div>
+                                <div class="flex flex-col md:flex-row items-center gap-12">
+                                    <div class="relative w-32 h-32 shrink-0">
+                                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                            <circle cx="18" cy="18" fill="transparent" r="16" stroke="#1f1f27" stroke-width="4"></circle>
+                                            <circle id="circle-needs" cx="18" cy="18" fill="transparent" r="16" stroke="#5e5ce6" stroke-dasharray="0, 100" stroke-dashoffset="0" stroke-width="4" style="transition: stroke-dasharray 0.5s ease-out, stroke-dashoffset 0.5s ease-out;"></circle>
+                                            <circle id="circle-wants" cx="18" cy="18" fill="transparent" r="16" stroke="#ffd60a" stroke-dasharray="0, 100" stroke-dashoffset="0" stroke-width="4" style="transition: stroke-dasharray 0.5s ease-out, stroke-dashoffset 0.5s ease-out;"></circle>
+                                            <circle id="circle-savings" cx="18" cy="18" fill="transparent" r="16" stroke="#30d158" stroke-dasharray="0, 100" stroke-dashoffset="0" stroke-width="4" style="transition: stroke-dasharray 0.5s ease-out, stroke-dashoffset 0.5s ease-out;"></circle>
+                                        </svg>
+                                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                            <span id="insights-spending-total" class="font-mono text-xs font-bold text-white">€0.00</span>
+                                            <span class="text-[8px] font-mono uppercase text-on-surface-variant tracking-wider">Total</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-3 h-3 rounded-full bg-[#5e5ce6]"></div>
+                                            <div class="flex-1">
+                                                <span class="text-label-sm text-on-surface block font-bold">Needs</span>
+                                                <span id="insights-needs-breakdown" class="text-[11px] text-text-muted font-mono">0% · €0.00</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-3 h-3 rounded-full bg-[#ffd60a]"></div>
+                                            <div class="flex-1">
+                                                <span class="text-label-sm text-on-surface block font-bold">Wants</span>
+                                                <span id="insights-wants-breakdown" class="text-[11px] text-text-muted font-mono">0% · €0.00</span>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-3 h-3 rounded-full bg-[#30d158]"></div>
+                                            <div class="flex-1">
+                                                <span class="text-label-sm text-on-surface block font-bold">Savings</span>
+                                                <span id="insights-savings-breakdown" class="text-[11px] text-text-muted font-mono">0% · €0.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recommended Actions (Right) -->
+                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col overflow-hidden min-h-[350px]">
+                            <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-widest mb-6">Top Recommendations</h3>
+                            <div id="insights-recommendations-list" class="flex-1 overflow-y-auto scroll-hide space-y-4 pr-2">
+                                <!-- Dynamic recommendation cards -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trends Footer -->
+                    <section class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-panel-gap pb-8">
+                        <div class="glass-card p-6">
+                            <p class="text-label-sm text-text-muted mb-1">Net Worth</p>
+                            <div class="flex items-end justify-between">
+                                <span id="trends-footer-net-worth-val" class="text-data-lg font-data-lg text-on-surface">€0.00</span>
+                                <span id="trends-footer-net-worth-change" class="text-success text-xs font-bold">↑ 0.0%</span>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6">
+                            <p class="text-label-sm text-text-muted mb-1">Cash Flow</p>
+                            <div class="flex items-end justify-between">
+                                <span id="trends-footer-cash-flow-val" class="text-data-lg font-data-lg text-on-surface">€0.00</span>
+                                <span id="trends-footer-cash-flow-change" class="text-success text-xs font-bold">↑ 0.0%</span>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6">
+                            <p class="text-label-sm text-text-muted mb-1">Savings Rate</p>
+                            <div class="flex items-end justify-between">
+                                <span id="trends-footer-savings-rate-val" class="text-data-lg font-data-lg text-on-surface">0%</span>
+                                <span id="trends-footer-savings-rate-change" class="text-success text-xs font-bold">↑ 0.0%</span>
+                            </div>
+                        </div>
+                        <div class="glass-card p-6">
+                            <p class="text-label-sm text-text-muted mb-1">Monthly Spend</p>
+                            <div class="flex items-end justify-between">
+                                <span id="trends-footer-monthly-spend-val" class="text-data-lg font-data-lg text-on-surface">€0.00</span>
+                                <span id="trends-footer-monthly-spend-change" class="text-error text-xs font-bold">↑ 0.0%</span>
                             </div>
                         </div>
                     </section>
-                    <!-- Recent Statement Imports -->
-                    <section class="card-ambient overflow-hidden">
-                        <div
-                            class="px-stack-lg py-stack-md border-b border-outline-variant flex justify-between items-center">
-                            <h3 class="font-headline-sm text-headline-sm text-on-background">Recent Statement Imports
-                            </h3>
-                            <a href="/accounts" class="text-primary font-label-md text-label-md hover:underline">View All</a>
+                </div>
+
+                <!-- 7. AUTOMATION PANEL -->
+                <div id="panel-automation" class="hidden h-full flex flex-col p-view-padding overflow-hidden space-y-8">
+                    <!-- Context Summary (4 metrics cards) -->
+                    <div class="grid grid-cols-4 gap-6">
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Pending Review</span>
+                            <h2 id="auto-summary-review" class="text-headline-md font-bold text-error">0 Tx</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">Requires display names/category check</p>
                         </div>
-                        <div class="max-h-[300px] overflow-y-auto overflow-x-auto custom-scrollbar">
-                            <table class="w-full text-left border-collapse min-w-[600px]">
-                                <thead
-                                    class="bg-surface-container-low font-label-md text-label-md text-on-surface-variant uppercase tracking-wider sticky top-0 z-10 bg-white/95 backdrop-blur-md">
-                                    <tr class="border-b border-outline-variant">
-                                        <th class="px-stack-lg py-4">Date</th>
-                                        <th class="px-stack-lg py-4">Account</th>
-                                        <th class="px-stack-lg py-4 text-right">Transactions</th>
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Active Rules</span>
+                            <h2 id="auto-summary-rules" class="text-headline-md font-bold text-white">0 Rules</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">Auto-classification regex rules</p>
+                        </div>
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Sync history size</span>
+                            <h2 id="auto-summary-history" class="text-headline-md font-bold text-primary">0 Feeds</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">Statement and live synchronizations</p>
+                        </div>
+                        <div class="glass-card p-6 relative overflow-hidden group">
+                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Auto-sync status</span>
+                            <h2 id="auto-summary-status" class="text-headline-md font-bold text-success">Active</h2>
+                            <p class="text-data-sm text-on-surface-variant mt-1">Daily PSD2 sweeps</p>
+                        </div>
+                    </div>
+
+                    <!-- Automation Navigation Pills -->
+                    <div class="flex space-x-2 bg-surface-container-lowest border border-border-subtle p-1 rounded-xl w-fit text-xs font-bold">
+                        <button onclick="setAutomationSubTab('review')" id="btn-auto-review" class="px-4 py-2 rounded-lg bg-surface-variant text-primary transition-all">Review Queue</button>
+                        <button onclick="setAutomationSubTab('rules')" id="btn-auto-rules" class="px-4 py-2 rounded-lg text-on-surface-variant hover:text-white transition-all">Rules Manager</button>
+                        <button onclick="setAutomationSubTab('import')" id="btn-auto-import" class="px-4 py-2 rounded-lg text-on-surface-variant hover:text-white transition-all">Statement Uploader</button>
+                    </div>
+
+                    <!-- Sub-view 1: Review Queue (Dynamic Height) -->
+                    <div id="sub-panel-auto-review" class="flex-1 glass-card overflow-hidden flex flex-col min-h-0">
+                        <div class="overflow-y-auto scroll-zone flex-1">
+                            <table class="w-full text-left border-collapse text-xs font-mono">
+                                <thead class="sticky top-0 bg-[#13131b] z-10">
+                                    <tr class="border-b border-border-subtle bg-surface-container-low/20 text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">
+                                        <th class="px-6 py-3.5">Date</th>
+                                        <th class="px-6 py-3.5">Raw Description</th>
+                                        <th class="px-6 py-3.5">Display name</th>
+                                        <th class="px-6 py-3.5">Category</th>
+                                        <th class="px-6 py-3.5">Flexibility</th>
+                                        <th class="px-6 py-3.5 text-right">Amount</th>
+                                        <th class="px-6 py-3.5 text-center">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-outline-variant" id="imports-table-body">
+                                <tbody class="divide-y divide-border-subtle" id="review-queue-body">
                                     <!-- Populated dynamically -->
                                 </tbody>
                             </table>
                         </div>
-                    </section>
-                </div>
-                <!-- Right Column: AI, Status & Sync -->
-                <div class="flex flex-col gap-gutter">
-                    <!-- System Diagnostics Card -->
-                    <section class="card-ambient p-stack-lg border-2 border-primary/10 relative overflow-hidden">
-                        <div class="flex items-center gap-3 mb-4">
-                            <span class="material-symbols-outlined text-primary">fact_check</span>
-                            <h3 class="font-headline-sm text-headline-sm text-on-background">System Diagnostics</h3>
+                        <div class="p-6 bg-white/[0.01] border-t border-border-subtle flex justify-between items-center">
+                            <p class="text-xs text-on-surface-variant font-mono" id="review-queue-summary">0 transactions pending review</p>
+                            <button onclick="submitReviewQueue()" class="bg-primary text-black px-6 py-2.5 rounded-xl text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20">Submit Resolved Transactions</button>
                         </div>
-                        <div class="space-y-3" id="diagnostics-list">
-                            <div class="flex items-center justify-between text-body-sm">
-                                <span class="text-on-surface-variant font-medium">Database</span>
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-on-surface-variant animate-pulse">Checking...</span>
-                            </div>
-                            <div class="flex items-center justify-between text-body-sm">
-                                <span class="text-on-surface-variant font-medium">Ollama AI</span>
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-on-surface-variant animate-pulse">Checking...</span>
-                            </div>
-                            <div class="flex items-center justify-between text-body-sm">
-                                <span class="text-on-surface-variant font-medium">ezBookkeeping</span>
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-on-surface-variant animate-pulse">Checking...</span>
-                            </div>
-                            <div class="flex items-center justify-between text-body-sm">
-                                <span class="text-on-surface-variant font-medium">API Key</span>
-                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-surface-container text-on-surface-variant animate-pulse">Checking...</span>
-                            </div>
-                        </div>
-                    </section>
+                    </div>
 
-                    <!-- Automated Bank Sync -->
-                    <section class="card-ambient p-stack-lg bg-surface-container-low/50">
-                        <h3 class="font-headline-sm text-headline-sm text-on-background mb-1">Automated Bank Sync</h3>
-                        <p class="font-label-md text-label-md text-on-surface-variant mb-6 leading-relaxed">Pull PSD2
-                            API feeds directly. Rate limited to 4 requests per 24 hours.</p>
-                        <div class="space-y-4">
+                    <!-- Sub-view 2: Rules Manager (Viewport-Locked) -->
+                    <div id="sub-panel-auto-rules" class="hidden flex-1 grid grid-cols-12 gap-8 min-h-0 overflow-hidden">
+                        <div class="col-span-5 glass-card p-6 space-y-5">
                             <div>
-                                <label class="font-label-md text-label-md text-on-surface-variant mb-2 block">Enable
-                                    Banking Account ID</label>
-                                <input id="sync-account-id"
-                                    class="w-full bg-white border border-outline-variant rounded-xl px-4 py-3 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none placeholder:opacity-50"
-                                    placeholder="e.g. 3806661759180210176" type="text" />
+                                <h3 class="text-sm font-bold text-white">Sandbox Simulator</h3>
+                                <p class="text-xs text-on-surface-variant">Test regular expressions against raw statement descriptions before saving.</p>
                             </div>
-                            <div>
-                                <label class="font-label-md text-label-md text-on-surface-variant mb-2 block">Account
-                                    Display Name</label>
-                                <input id="sync-account-name"
-                                    class="w-full bg-white border border-outline-variant rounded-xl px-4 py-3 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none placeholder:opacity-50"
-                                    placeholder="e.g. Revolut Main" type="text" />
+                            <div class="space-y-4 text-xs">
+                                <div class="space-y-1">
+                                    <label class="font-mono text-[9px] text-on-surface-variant uppercase font-bold">Raw Input Text</label>
+                                    <input id="sandbox-input" oninput="runSandboxTest()" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary font-mono text-on-surface" placeholder="e.g. ADVANZIA NETTO HAMBURG DE" type="text" />
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="font-mono text-[9px] text-on-surface-variant uppercase font-bold">Regex Pattern</label>
+                                    <input id="sandbox-pattern" oninput="runSandboxTest()" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary font-mono text-on-surface" placeholder="e.g. NETTO.*HAMBURG" type="text" />
+                                </div>
+                                <div class="p-4 rounded-lg bg-surface-container-lowest/30 border border-border-subtle space-y-2 font-mono">
+                                    <div class="flex justify-between">
+                                        <span class="text-on-surface-variant">Match Status:</span>
+                                        <span id="sandbox-match-status" class="text-error font-bold uppercase">No Match</span>
+                                    </div>
+                                </div>
                             </div>
-                            <button id="exec-sync-btn" onclick="executeGCSync()"
-                                class="w-full bg-primary text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
-                                <span class="material-symbols-outlined text-[20px]">sync</span>
-                                <span>Trigger API Fetch</span>
-                            </button>
-                            <p id="sync-feedback" class="text-xs text-center font-medium hidden"></p>
                         </div>
-                    </section>
-                    <!-- Local AI Advisor -->
-                    <section class="card-ambient p-stack-lg border-2 border-primary/10 relative overflow-hidden">
-                        <div class="absolute -top-12 -right-12 w-32 h-32 bg-primary/5 rounded-full"></div>
-                        <div class="flex items-center gap-3 mb-4">
-                            <span class="material-symbols-outlined text-primary"
-                                style="font-variation-settings: 'FILL' 1;">smart_toy</span>
-                            <h3 class="font-headline-sm text-headline-sm text-on-background">Local AI Advisor</h3>
+
+                        <div class="col-span-7 glass-card p-6 flex flex-col h-full min-h-0 overflow-hidden">
+                            <div class="flex justify-between items-center mb-4 shrink-0">
+                                <div>
+                                    <h3 class="text-sm font-bold text-white">Active Rule Definitions</h3>
+                                    <p class="text-xs text-on-surface-variant">Highest priority rules apply first.</p>
+                                </div>
+                                <button onclick="openCreateRuleModal()" class="bg-primary/15 text-primary border border-primary/20 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-primary/25 transition-all">New rule</button>
+                            </div>
+                            <div class="flex-1 overflow-y-auto scroll-zone space-y-3 pr-2" id="rules-list-container">
+                                <!-- Dynamic -->
+                            </div>
                         </div>
-                        <div id="chat-messages" class="bg-surface-container p-4 rounded-2xl mb-6 max-h-48 overflow-y-auto space-y-3">
-                            <p class="font-body-sm text-body-sm text-on-background italic">
-                                "Hello Deepak! Ask me anything about your budget, liquidity runway, or category spending. I query your local SQLite database to formulate an answer."
-                            </p>
+                    </div>
+
+                    <!-- Sub-view 3: Statement Uploader (Viewport-Locked) -->
+                    <div id="sub-panel-auto-import" class="hidden flex-1 flex flex-col min-h-0 overflow-hidden space-y-6">
+                        <div id="drop-zone" class="glass-card border-2 border-dashed border-border-subtle p-12 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/45 transition-all relative shrink-0">
+                            <span class="material-symbols-outlined text-primary text-5xl mb-4">upload_file</span>
+                            <h3 class="text-base font-bold text-white mb-2">Drag &amp; Drop statement file here</h3>
+                            <p class="text-xs text-on-surface-variant max-w-sm leading-relaxed mb-6">Supports Advanzia credit cards, Revolut, Commerzbank, HDFC statement PDF or CSV exports.</p>
+                            <button class="bg-white/5 border border-border-subtle text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-white/10 transition-all">Browse local files</button>
+                            <input type="file" id="file-uploader-input" class="hidden" />
                         </div>
-                        <div class="relative">
-                            <textarea id="chat-input" onkeydown="if(event.key === 'Enter') sendChatMessage()"
-                                class="w-full bg-white border border-outline-variant rounded-2xl px-4 py-3 text-body-sm focus:ring-2 focus:ring-primary focus:outline-none placeholder:opacity-50 resize-none"
-                                placeholder="How much can I spend on travel next month?" rows="3"></textarea>
-                            <button onclick="sendChatMessage()"
-                                class="absolute bottom-3 right-3 p-2 bg-primary text-white rounded-lg hover:scale-105 transition-transform">
-                                <span class="material-symbols-outlined text-[18px]">send</span>
-                            </button>
+
+                        <div class="glass-card p-6 space-y-4 flex-1 flex flex-col overflow-hidden min-h-0">
+                            <h3 class="text-sm font-bold text-white">Sync &amp; Import History Logs</h3>
+                            <div class="overflow-y-auto scroll-zone flex-1">
+                                <table class="w-full text-left text-xs font-mono">
+                                    <thead class="sticky top-0 bg-[#13131b] z-10">
+                                        <tr class="text-on-surface-variant border-b border-border-subtle pb-2 uppercase text-[9px] font-bold">
+                                            <th class="py-2">Date Execution</th>
+                                            <th class="py-2">Bank Feed / Institution</th>
+                                            <th class="py-2">Status</th>
+                                            <th class="py-2 text-right">Transactions Imported</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-border-subtle" id="history-logs-body">
+                                        <!-- Dynamic -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </section>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals & Sheets -->
+
+    <!-- Cryptographic Blurred Vault Lock Screen -->
+    <div id="vault-lock-screen" class="fixed inset-0 bg-background/55 backdrop-blur-3xl z-[100] flex items-center justify-center transition-opacity duration-300 hidden">
+        <div class="glass-panel-modal p-8 w-full max-w-xs space-y-6 flex flex-col items-center text-center shadow-2xl relative border-primary/20 bg-primary/5">
+            <span class="material-symbols-outlined text-primary text-5xl glow-cyan animate-pulse">lock</span>
+            <div>
+                <h2 class="text-lg font-bold text-white">Console Locked</h2>
+                <p class="text-xs text-on-surface-variant mt-1">Enter passcode credentials to unlock SQLCipher sovereign vault.</p>
+            </div>
+            <div class="w-full space-y-4">
+                <input id="vault-passcode-input" onkeydown="if(event.key === 'Enter') unlockVault()" class="w-full bg-zinc-950/60 border border-white/10 rounded-lg py-2.5 text-center text-lg focus:outline-none focus:border-primary font-mono tracking-widest text-on-surface" placeholder="••••" type="password" />
+                <button onclick="unlockVault()" class="w-full py-2.5 bg-primary text-black text-xs font-bold rounded-lg uppercase tracking-wider hover:brightness-110 transition-all shadow-lg shadow-primary/20">Unlock Console</button>
+                <p id="vault-error-message" class="text-xs text-error font-medium hidden">Passcode verification failed</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Frosted Slide-out Sheet for Manual Asset creation -->
+    <div id="add-asset-sheet" class="fixed inset-y-0 right-0 w-[400px] bg-zinc-950/90 backdrop-blur-3xl border-l border-border-subtle shadow-2xl z-50 slide-over">
+        <div class="h-full flex flex-col p-6">
+            <div class="flex items-center justify-between border-b border-border-subtle pb-4 mb-6">
+                <div>
+                    <h3 class="text-base font-bold text-white">Initialize Asset Feed</h3>
+                    <p class="text-xs text-on-surface-variant">Add a manual fallback account or asset.</p>
+                </div>
+                <button onclick="closeAddAssetSheet()" class="text-on-surface-variant hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="space-y-5 flex-1 overflow-y-auto scroll-zone pr-1">
+                <div class="space-y-1">
+                    <label class="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Asset ID / Key</label>
+                    <input id="new-asset-id" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-mono" placeholder="e.g. gold-bullion-id" type="text" />
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Display Name</label>
+                    <input id="new-asset-name" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary" placeholder="e.g. Gold Bullion holdings" type="text" />
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Asset Type</label>
+                    <select id="new-asset-type" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary appearance-none pr-8">
+                        <option value="Manual Asset">Manual Asset (Stocks, Real Estate, Gold)</option>
+                        <option value="Manual Fallback">Manual Fallback (Offline Bank Account)</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Settlement Value / Balance</label>
+                    <input id="new-asset-balance" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary font-mono" placeholder="e.g. 5000.00" type="number" step="0.01" />
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Currency</label>
+                    <select id="new-asset-currency" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 text-xs text-on-surface focus:outline-none focus:border-primary appearance-none pr-8">
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="INR">INR - Indian Rupee</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="border-t border-border-subtle pt-4 mt-6 flex gap-4">
+                <button onclick="closeAddAssetSheet()" class="flex-1 py-2.5 border border-border-subtle rounded-lg text-xs font-bold text-on-surface hover:bg-white/5 transition-all">Cancel</button>
+                <button onclick="submitAddAsset()" class="flex-1 py-2.5 bg-primary text-black rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">Create Asset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ambiguous Bank Upload Selector Modal -->
+    <div id="ambiguous-upload-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[120] flex items-center justify-center hidden">
+        <div class="glass-panel-modal p-6 w-full max-w-sm space-y-4 border border-border-subtle">
+            <h3 class="text-sm font-bold text-white">Ambiguous Statement File</h3>
+            <p class="text-xs text-on-surface-variant leading-relaxed">We could not identify the statement format automatically. Please select which institution this file belongs to:</p>
+            <div class="space-y-2" id="ambiguous-options-container">
+                <!-- Options populated dynamically -->
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button onclick="closeAmbiguousModal()" class="px-4 py-2 rounded-lg text-xs border border-border-subtle hover:bg-white/5 text-on-surface">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Rule Dialog Modal -->
+    <div id="create-rule-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[110] flex items-center justify-center hidden">
+        <div class="glass-panel-modal p-6 w-full max-w-md space-y-4 border border-border-subtle">
+            <h3 class="text-sm font-bold text-white">Create Classification Rule</h3>
+            <div class="space-y-4 text-xs">
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Rule Pattern (Substr or Regex)</label>
+                    <input id="rule-modal-pattern" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary font-mono text-on-surface" placeholder="e.g. NETTO.*HAMBURG" type="text" />
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Match Type</label>
+                    <select id="rule-modal-match-type" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary font-mono text-on-surface">
+                        <option value="regex">Regular Expression</option>
+                        <option value="substring">Substring Contains</option>
+                        <option value="exact">Exact Match</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Target Category</label>
+                    <select id="rule-modal-category" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary font-mono text-on-surface">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Clean Display Name</label>
+                    <input id="rule-modal-display-name" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary text-on-surface" placeholder="e.g. Netto Groceries" type="text" />
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Flexibility Profile</label>
+                    <select id="rule-modal-flexibility" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary font-mono text-on-surface">
+                        <option value="Fixed">Fixed Cost (Needs)</option>
+                        <option value="Flexible">Flexible Cost (Adjustable)</option>
+                        <option value="Discretionary">Discretionary Cost (Wants)</option>
+                        <option value="Income">Income (Revenue)</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Priority Weight</label>
+                    <input id="rule-modal-priority" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary font-mono text-on-surface" value="0" type="number" />
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button onclick="closeCreateRuleModal()" class="px-4 py-2 rounded-lg text-xs border border-border-subtle hover:bg-white/5 text-on-surface">Cancel</button>
+                <button onclick="submitCreateRule()" class="px-4 py-2 bg-primary text-black rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">Save Rule</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Transaction Creation Modal -->
+    <div id="add-transaction-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[110] flex items-center justify-center hidden">
+        <div class="glass-panel-modal p-6 w-full max-w-md space-y-4 border border-border-subtle">
+            <h3 class="text-sm font-bold text-white">Add Manual Transaction</h3>
+            <div class="space-y-4 text-xs">
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Account</label>
+                    <select id="tx-modal-account" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary text-on-surface">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Booking Date</label>
+                    <input id="tx-modal-date" type="date" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary font-mono text-on-surface" />
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Description Details</label>
+                    <input id="tx-modal-desc" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary text-on-surface" placeholder="e.g. Commerzbank Giro Cash Withdrawal" type="text" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Amount</label>
+                        <input id="tx-modal-amount" type="number" step="0.01" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary font-mono text-on-surface" placeholder="e.g. -50.00" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Currency</label>
+                        <select id="tx-modal-currency" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary text-on-surface">
+                            <option value="EUR">EUR</option>
+                            <option value="INR">INR</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Category</label>
+                    <select id="tx-modal-category" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary text-on-surface">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <label class="font-mono uppercase text-[9px] font-bold text-on-surface-variant">Flexibility Profile</label>
+                    <select id="tx-modal-flexibility" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-3 py-2 focus:outline-none focus:border-primary text-on-surface">
+                        <option value="Fixed">Fixed Cost (Needs)</option>
+                        <option value="Flexible">Flexible Cost (Adjustable)</option>
+                        <option value="Discretionary">Discretionary Cost (Wants)</option>
+                        <option value="Income">Income (Revenue)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-2">
+                <button onclick="closeAddTransactionModal()" class="px-4 py-2 rounded-lg text-xs border border-border-subtle hover:bg-white/5 text-on-surface">Cancel</button>
+                <button onclick="submitAddTransaction()" class="px-4 py-2 bg-primary text-black rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">Save Transaction</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Reconciliation Statement Modal -->
+    <div id="reconciliation-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[110] flex items-center justify-center hidden">
+        <div class="glass-panel-modal p-6 w-full max-w-md space-y-4 border border-border-subtle">
+            <div class="flex justify-between items-start border-b border-border-subtle pb-3">
+                <div>
+                    <h3 class="text-sm font-bold text-white">Reconciliation Statement</h3>
+                    <p id="recon-modal-account-name" class="text-[10px] font-mono text-primary uppercase mt-0.5 tracking-wider">Revolut</p>
+                </div>
+                <button onclick="closeReconciliationModal()" class="text-on-surface-variant hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+            </div>
+            
+            <div class="space-y-3 font-mono text-xs">
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-on-surface-variant">Actual Current Balance:</span>
+                    <span id="recon-actual-balance" class="text-white font-bold">€ 0.00</span>
+                </div>
+                <div class="flex justify-between items-center py-1 border-t border-border-subtle">
+                    <span class="text-on-surface-variant">Reconciliation Starting:</span>
+                    <div class="flex items-center space-x-1">
+                        <span class="text-on-surface-variant mr-1" id="recon-symbol-1">€</span>
+                        <input id="recon-starting-input" type="number" step="0.01" value="0.00" oninput="recalculateReconciliation()" class="bg-zinc-950/60 border border-border-subtle rounded px-2 py-0.5 text-xs text-right text-white font-mono w-24 focus:outline-none" />
+                    </div>
+                </div>
+                <div class="flex justify-between items-center py-1 border-t border-border-subtle">
+                    <span class="text-on-surface-variant">Sum of Inflows:</span>
+                    <span id="recon-inflows-sum" class="text-success font-bold">+€ 0.00</span>
+                </div>
+                <div class="flex justify-between items-center py-1 border-t border-border-subtle">
+                    <span class="text-on-surface-variant">Sum of Outflows:</span>
+                    <span id="recon-outflows-sum" class="text-error font-bold">-€ 0.00</span>
+                </div>
+                <div class="flex justify-between items-center py-1 border-t border-border-subtle">
+                    <span class="text-on-surface-variant font-bold">Expected Ending Balance:</span>
+                    <span id="recon-expected-balance" class="text-white font-bold">€ 0.00</span>
+                </div>
+                
+                <div class="p-3 rounded-lg border border-border-subtle text-center mt-3 bg-zinc-950/30">
+                    <div id="recon-status-badge" class="inline-block px-3 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
+                        DISCREPANCY
+                    </div>
+                    <p id="recon-status-desc" class="text-[10px] text-on-surface-variant mt-2 leading-relaxed">Adjust your starting balance or check ledger items to resolve.</p>
                 </div>
             </div>
         </div>
-    </main>
-        </div>
     </div>
-    <script>
-        // Micro-interaction for cards
-        document.querySelectorAll('.card-ambient').forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                card.style.transform = 'translateY(-2px)';
-                card.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.07)';
-            });
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'translateY(0)';
-                card.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
-            });
-        });
 
-        async function loadDashboardData() {
-            try {
-                // Fetch diagnostics checklist
-                try {
-                    const diagRes = await fetch('/api/diagnostics');
-                    const diag = await diagRes.json();
-                    const diagList = document.getElementById('diagnostics-list');
-                    diagList.innerHTML = '';
-                    
-                    const checkLabels = {
-                        "sqlite_database": "SQLite Database",
-                        "ollama_ai": "Ollama (Qwen)",
-                        "ezbookkeeping": "ezBookkeeping",
-                        "enable_banking_key": "Enable Banking Key"
-                    };
-                    
-                    for (const [key, check] of Object.entries(diag.checks)) {
-                        const label = checkLabels[key] || key;
-                        const status = check.status;
-                        const message = check.message;
-                        
-                        let badgeClass = 'bg-surface-container text-on-surface-variant';
-                        if (status === 'OK') {
-                            badgeClass = 'bg-emerald-50 text-emerald-700 border border-emerald-100';
-                        } else if (status === 'WARNING') {
-                            badgeClass = 'bg-amber-50 text-amber-700 border border-amber-100';
-                        } else if (status === 'CRITICAL') {
-                            badgeClass = 'bg-rose-50 text-rose-700 border border-rose-100';
-                        }
-                        
-                        const row = document.createElement('div');
-                        row.className = 'flex flex-col gap-0.5 text-body-sm';
-                        row.innerHTML = `
-                            <div class="flex items-center justify-between">
-                                <span class="text-on-surface font-medium">${label}</span>
-                                <span class="px-2 py-0.5 rounded-full font-bold text-[10px] ${badgeClass}">${status}</span>
-                            </div>
-                            <p class="text-[10px] text-on-surface-variant/70">${message}</p>
-                        `;
-                        diagList.appendChild(row);
-                    }
-                } catch (err) {
-                    console.error('Error fetching diagnostics:', err);
-                }
-
-                // Fetch analytics health metrics
-                const healthRes = await fetch('/api/analytics/health');
-                const health = await healthRes.json();
-                
-                document.getElementById('reserves-val').textContent = `${health.cash_reserves_eur.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} EUR`;
-                document.getElementById('runway-val').textContent = `${health.runway_months} months`;
-                document.getElementById('savings-rate-val').textContent = `${health.savings_rate_percent}%`;
-                document.getElementById('fire-val').textContent = `${health.fire_progress_percent}%`;
-                document.getElementById('fire-target-label').textContent = `Target: ${health.fire_target_eur.toLocaleString()} EUR`;
-
-                // Fetch overall summary and categories
-                const summaryRes = await fetch('/api/analytics/summary');
-                const summary = await summaryRes.json();
-
-                // Set Flexibility breakdown progress bars
-                const fixed = summary.flexibility_breakdown.Fixed || 0;
-                const flexible = summary.flexibility_breakdown.Flexible || 0;
-                const discretionary = summary.flexibility_breakdown.Discretionary || 0;
-                const totalFlex = fixed + flexible + discretionary;
-
-                document.getElementById('flex-fixed-label').textContent = `${fixed.toLocaleString(undefined, {maximumFractionDigits: 2})} EUR`;
-                document.getElementById('flex-flexible-label').textContent = `${flexible.toLocaleString(undefined, {maximumFractionDigits: 2})} EUR`;
-                document.getElementById('flex-discretionary-label').textContent = `${discretionary.toLocaleString(undefined, {maximumFractionDigits: 2})} EUR`;
-
-                if (totalFlex > 0) {
-                    document.getElementById('flex-fixed-bar').style.width = `${(fixed / totalFlex) * 100}%`;
-                    document.getElementById('flex-flexible-bar').style.width = `${(flexible / totalFlex) * 100}%`;
-                    document.getElementById('flex-discretionary-bar').style.width = `${(discretionary / totalFlex) * 100}%`;
-                }
-
-                // Load statement history table
-                const importsRes = await fetch('/api/recent-imports');
-                const imports = await importsRes.json();
-                const tableBody = document.getElementById('imports-table-body');
-                tableBody.innerHTML = '';
-                
-                if (imports.length === 0) {
-                    tableBody.innerHTML = `
-                        <tr>
-                            <td colspan="3" class="px-stack-lg py-8 text-center text-on-surface-variant text-body-sm">
-                                No recent statement imports.
-                            </td>
-                        </tr>
-                    `;
-                } else {
-                    imports.forEach(item => {
-                        const row = document.createElement('tr');
-                        row.className = 'hover:bg-surface-variant/30 transition-colors cursor-pointer';
-                        row.onclick = () => window.location.href = `/import-ui?file_id=${item.id}`;
-                        row.innerHTML = `
-                            <td class="px-stack-lg py-4 text-body-sm text-on-surface-variant">${item.date}</td>
-                            <td class="px-stack-lg py-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-[18px]">credit_card</span>
-                                    </div>
-                                    <span class="font-body-md text-body-md font-semibold text-on-surface">${item.account}</span>
-                                </div>
-                            </td>
-                            <td class="px-stack-lg py-4 text-right font-body-md text-body-md">${item.transactions} txns</td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                }
-
-            } catch (error) {
-                console.error('Error loading dashboard data:', error);
-            }
-        }
-
-        // Enable Banking Sync Action
-        async function executeGCSync() {
-            const accountId = document.getElementById('sync-account-id').value.trim();
-            const accountName = document.getElementById('sync-account-name').value.trim();
-            const feedback = document.getElementById('sync-feedback');
-            const syncBtn = document.getElementById('exec-sync-btn');
-
-            if (!accountId || !accountName) {
-                alert("Please provide both Account ID and Display Name.");
-                return;
-            }
-
-            feedback.classList.remove('hidden', 'text-red-500', 'text-emerald-500');
-            feedback.classList.add('text-on-surface-variant');
-            feedback.textContent = "Connecting to Enable Banking API...";
-            syncBtn.disabled = true;
-
-            try {
-                const res = await fetch('/api/sync/auto', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ account_id: accountId, account_name: accountName, initiated_by: "USER_BUTTON" })
-                });
-                const data = await res.json();
-
-                feedback.classList.remove('text-on-surface-variant');
-                if (data.status === 'SUCCESS') {
-                    feedback.classList.add('text-emerald-500');
-                    feedback.textContent = `Sync completed! Upserted ${data.inserted_count} transactions successfully.`;
-                    loadDashboardData();
-                } else if (data.status === 'SKIPPED') {
-                    feedback.classList.add('text-amber-500');
-                    feedback.textContent = data.message;
-                } else {
-                    feedback.classList.add('text-red-500');
-                    feedback.textContent = `Failed: ${data.error || "Unknown error"}`;
-                }
-            } catch (err) {
-                feedback.classList.remove('text-on-surface-variant');
-                feedback.classList.add('text-red-500');
-                feedback.textContent = `Error: ${err.message}`;
-            } finally {
-                syncBtn.disabled = false;
-            }
-        }
-
-        async function triggerBankSync() {
-            const institutionId = prompt("Enter the bank/institution name (e.g., 'Commerzbank (DE)', 'Advanzia Bank (DE)'):");
-            if (!institutionId || !institutionId.trim()) {
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/sync/link', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ institution_id: institutionId.trim() })
-                });
-                if (!res.ok) {
-                    const errData = await res.json();
-                    throw new Error(errData.detail || 'Failed to get authorization link');
-                }
-                const data = await res.json();
-                if (data.link) {
-                    window.location.href = data.link;
-                } else {
-                    alert("Authorization link not returned from server.");
-                }
-            } catch (err) {
-                alert(`Error linking bank: ${err.message}`);
-            }
-        }
-
-        // AI Advisor Conversational Chat
-        async function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const messages = document.getElementById('chat-messages');
-            const question = input.value.trim();
-
-            if (!question) return;
-
-            // Display user message
-            const userDiv = document.createElement('div');
-            userDiv.className = 'bg-primary/10 p-2.5 rounded-lg text-on-surface self-end text-right ml-8';
-            userDiv.textContent = question;
-            messages.appendChild(userDiv);
-            messages.scrollTop = messages.scrollHeight;
-            input.value = '';
-
-            // Display thinking indicator
-            const thinkingDiv = document.createElement('div');
-            thinkingDiv.className = 'bg-surface-container p-2.5 rounded-lg text-on-surface-variant italic animate-pulse mr-8';
-            thinkingDiv.textContent = "Thinking...";
-            messages.appendChild(thinkingDiv);
-            messages.scrollTop = messages.scrollHeight;
-
-            try {
-                const res = await fetch('/api/ask', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: question })
-                });
-                const data = await res.json();
-
-                messages.removeChild(thinkingDiv);
-
-                // Display AI response
-                const aiDiv = document.createElement('div');
-                aiDiv.className = 'bg-surface-container p-2.5 rounded-lg text-on-surface mr-8';
-                aiDiv.textContent = data.response;
-                messages.appendChild(aiDiv);
-                messages.scrollTop = messages.scrollHeight;
-            } catch (err) {
-                if (thinkingDiv.parentNode) {
-                    messages.removeChild(thinkingDiv);
-                }
-                const errDiv = document.createElement('div');
-                errDiv.className = 'bg-rose-50 text-red-500 p-2.5 rounded-lg mr-8 border border-rose-100';
-                errDiv.textContent = `Error: ${err.message}`;
-                messages.appendChild(errDiv);
-                messages.scrollTop = messages.scrollHeight;
-            }
-        }
-
-        // String helper compatibility
-        String.prototype.strip = function() {
-            return this.replace(/^\s+|\s+$/g, '');
-        };
-
-        document.addEventListener('DOMContentLoaded', loadDashboardData);
-    </script>
+    <!-- UI/UX Logic Script -->
+    <script src="/frontend/app.js"></script>
 </body>
-
 </html>
