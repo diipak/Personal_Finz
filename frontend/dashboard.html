@@ -791,7 +791,7 @@
                             <div class="relative w-48 h-48 flex items-center justify-center shrink-0">
                                 <svg class="w-full h-full transform -rotate-90">
                                     <circle class="text-surface-container-highest" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="12"></circle>
-                                    <circle class="text-primary gauge-ring" id="budget-progress-gauge" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="12" style="stroke-dasharray: 251.32; stroke-dashoffset: 251.32;"></circle>
+                                    <circle class="text-primary gauge-ring" id="budget-progress-gauge" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="12" style="stroke-dasharray: 502.65; stroke-dashoffset: 502.65; transition: stroke-dashoffset 0.8s ease-out;"></circle>
                                 </svg>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center">
                                     <span class="text-display-lg font-display-lg text-on-surface" id="budget-gauge-pct">0%</span>
@@ -990,34 +990,34 @@
                             </div>
 
                             <!-- Assets Allocation Donut -->
-                            <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between">
+                            <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col">
                                 <h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-6">Asset Allocation</h3>
-                                <div class="flex items-center justify-between">
-                                    <div class="relative w-36 h-36">
+                                <div class="flex-1 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
+                                    <div class="relative w-40 h-40 shrink-0">
                                         <svg class="w-full h-full transform -rotate-90">
-                                            <circle class="text-surface-variant/20" cx="72" cy="72" fill="transparent" r="62" stroke="currentColor" stroke-width="10"></circle>
-                                            <circle class="text-primary" cx="72" cy="72" fill="transparent" r="62" stroke="currentColor" stroke-dasharray="390" stroke-dashoffset="120" stroke-width="10"></circle>
-                                            <circle class="text-success" cx="72" cy="72" fill="transparent" r="62" stroke="currentColor" stroke-dasharray="390" stroke-dashoffset="310" stroke-width="10"></circle>
+                                            <circle class="text-surface-variant/20" cx="80" cy="80" fill="transparent" r="68" stroke="currentColor" stroke-width="12"></circle>
+                                            <circle id="asset-donut-investments" class="text-primary" cx="80" cy="80" fill="transparent" r="68" stroke="currentColor" stroke-dasharray="427.26" stroke-dashoffset="0" stroke-width="12"></circle>
+                                            <circle id="asset-donut-cashbank" class="text-success" cx="80" cy="80" fill="transparent" r="68" stroke="currentColor" stroke-dasharray="427.26" stroke-dashoffset="0" stroke-width="12"></circle>
                                         </svg>
-                                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span class="text-[10px] text-on-surface-variant">Managed</span>
-                                            <span class="text-headline-md font-bold font-mono">82%</span>
+                                        <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                                            <span class="text-[9px] text-on-surface-variant uppercase tracking-wider font-bold">Total</span>
+                                            <span id="asset-donut-center-amount" class="text-base font-bold font-mono text-white leading-tight">€ 0.00</span>
                                         </div>
                                     </div>
-                                    <div class="space-y-3 text-xs">
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
-                                            <div>
-                                                <p class="font-semibold text-on-surface">Investments</p>
-                                                <p class="text-[10px] text-on-surface-variant font-mono">45.2%</p>
+                                    <div class="w-full sm:w-auto sm:flex-1 max-w-[200px] space-y-4 text-xs">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+                                                <span class="font-semibold text-on-surface">Investments</span>
                                             </div>
+                                            <span id="asset-legend-investments-pct" class="text-on-surface-variant font-mono text-[10px]">0.0%</span>
                                         </div>
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-2.5 h-2.5 rounded-full bg-success"></div>
-                                            <div>
-                                                <p class="font-semibold text-on-surface">Cash &amp; Bank</p>
-                                                <p class="text-[10px] text-on-surface-variant font-mono">30.4%</p>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-2.5 h-2.5 rounded-full bg-success"></div>
+                                                <span class="font-semibold text-on-surface">Cash &amp; Bank</span>
                                             </div>
+                                            <span id="asset-legend-cashbank-pct" class="text-on-surface-variant font-mono text-[10px]">0.0%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1079,22 +1079,22 @@
                         <div class="grid grid-cols-4 gap-6">
                             <div class="glass-card p-6 flex flex-col justify-between">
                                 <span class="text-label-sm font-label-sm text-on-surface-variant">Total Portfolio Value</span>
-                                <h2 class="text-headline-md font-bold text-white font-mono mt-2">€83,200 <span class="text-success text-xs font-bold font-sans">↑ 11.2%</span></h2>
-                                <p class="text-[10px] text-on-surface-variant/60 mt-1">vs last month</p>
+                                <h2 id="portfolio-kpi-value" class="text-headline-md font-bold text-white font-mono mt-2">€0.00</h2>
+                                <p id="portfolio-kpi-trend" class="text-[10px] text-on-surface-variant/60 mt-1">vs last month</p>
                             </div>
                             <div class="glass-card p-6 flex flex-col justify-between">
                                 <span class="text-label-sm font-label-sm text-on-surface-variant">Total Gain/Loss</span>
-                                <h2 class="text-headline-md font-bold text-white font-mono mt-2">€8,450 <span class="text-success text-xs font-bold font-sans">↑ 11.3%</span></h2>
-                                <p class="text-[10px] text-on-surface-variant/60 mt-1">All-time realized & unrealized</p>
+                                <h2 id="portfolio-gain-value" class="text-headline-md font-bold text-white font-mono mt-2">€0.00</h2>
+                                <p id="portfolio-gain-trend" class="text-[10px] text-on-surface-variant/60 mt-1">All-time realized & unrealized</p>
                             </div>
                             <div class="glass-card p-6 flex flex-col justify-between">
                                 <span class="text-label-sm font-label-sm text-on-surface-variant">Today's Change</span>
-                                <h2 class="text-headline-md font-bold text-white font-mono mt-2">€324.50 <span class="text-success text-xs font-bold font-sans">↑ 0.38%</span></h2>
-                                <p class="text-[10px] text-on-surface-variant/60 mt-1">Markets open</p>
+                                <h2 id="portfolio-today-value" class="text-headline-md font-bold text-white font-mono mt-2">€0.00</h2>
+                                <p id="portfolio-today-trend" class="text-[10px] text-on-surface-variant/60 mt-1">Markets open</p>
                             </div>
                             <div class="glass-card p-6 flex flex-col justify-between">
                                 <span class="text-label-sm font-label-sm text-on-surface-variant">Annual Return</span>
-                                <h2 class="text-headline-md font-bold text-white font-mono mt-2">12.4%</h2>
+                                <h2 id="portfolio-annual-return" class="text-headline-md font-bold text-white font-mono mt-2">0.0%</h2>
                                 <p class="text-[10px] text-on-surface-variant/60 mt-1">Year to Date performance</p>
                             </div>
                         </div>
@@ -1110,40 +1110,19 @@
                                     <span class="text-data-sm text-on-surface-variant">YTD</span>
                                 </div>
                                 <div class="flex-1 w-full relative h-48">
-                                    <svg class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 240">
-                                        <path class="line-chart-gradient" d="M0,200 Q100,180 200,160 T400,120 T600,60 T800,20 V240 H0 Z" fill="url(#chart-gradient)"></path>
-                                        <path d="M0,200 Q100,180 200,160 T400,120 T600,60 T800,20" fill="none" stroke="#5e5ce6" stroke-linecap="round" stroke-width="3"></path>
+                                    <svg id="portfolio-performance-svg" class="w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 240">
+                                        <!-- Dynamic spline path -->
                                     </svg>
-                                    <div class="absolute bottom-0 left-0 right-0 flex justify-between px-2 pt-4 border-t border-border-subtle text-data-sm text-on-surface-variant/60 font-mono">
-                                        <span>Jan '24</span>
-                                        <span>Feb '24</span>
-                                        <span>Mar '24</span>
-                                        <span>Apr '24</span>
-                                        <span>May '24</span>
-                                        <span>Jun '24</span>
+                                    <div id="portfolio-performance-labels" class="absolute bottom-0 left-0 right-0 flex justify-between px-2 pt-4 border-t border-border-subtle text-data-sm text-on-surface-variant/60 font-mono">
+                                        <!-- Dynamic labels -->
                                     </div>
                                 </div>
                             </div>
 
                             <div class="col-span-4 glass-card p-6 flex flex-col justify-between">
                                 <h3 class="text-label-sm font-label-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4">Allocation Details</h3>
-                                <div class="space-y-3 text-xs">
-                                    <div class="flex justify-between items-center">
-                                        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-primary"></span> ETF</span>
-                                        <span class="font-bold text-white font-mono">65.2%</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-secondary"></span> Stocks</span>
-                                        <span class="font-bold text-white font-mono">20.1%</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-success"></span> Bonds</span>
-                                        <span class="font-bold text-white font-mono">10.3%</span>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-surface-variant"></span> Cash</span>
-                                        <span class="font-bold text-white font-mono">4.4%</span>
-                                    </div>
+                                <div id="portfolio-allocation-details" class="space-y-3 text-xs">
+                                    <!-- Dynamic list of allocations -->
                                 </div>
                             </div>
                         </div>
@@ -1166,21 +1145,8 @@
                                             <th class="px-6 py-4 font-bold">Allocation</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="text-data-md font-data-md text-on-surface divide-y divide-border-subtle">
-                                        <tr>
-                                            <td class="px-6 py-4 font-semibold">Vanguard S&P 500 ETF</td>
-                                            <td class="px-6 py-4 text-on-surface-variant">ETF</td>
-                                            <td class="px-6 py-4 font-bold">€46,250</td>
-                                            <td class="px-6 py-4 text-success">+8.2%</td>
-                                            <td class="px-6 py-4">55.6%</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="px-6 py-4 font-semibold">MSCI World ETF</td>
-                                            <td class="px-6 py-4 text-on-surface-variant">ETF</td>
-                                            <td class="px-6 py-4 font-bold">€18,750</td>
-                                            <td class="px-6 py-4 text-success">+12.1%</td>
-                                            <td class="px-6 py-4">22.5%</td>
-                                        </tr>
+                                    <tbody id="portfolio-holdings-list" class="text-data-md font-data-md text-on-surface divide-y divide-border-subtle">
+                                        <!-- Dynamic holdings rows -->
                                     </tbody>
                                 </table>
                             </div>
