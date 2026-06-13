@@ -621,27 +621,58 @@
 
                 <!-- 2. TRANSACTIONS PANEL -->
                 <div id="panel-transactions" class="hidden h-full flex flex-col p-view-padding overflow-hidden space-y-8">
-                    <!-- Context Summary (4 metrics cards) -->
-                    <div class="grid grid-cols-4 gap-6">
-                        <div class="glass-card p-6 relative overflow-hidden group">
-                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Total Inflow</span>
-                            <h2 id="tx-summary-inflow" class="text-headline-md font-bold text-success">+€ 0.00</h2>
-                            <p class="text-data-sm text-on-surface-variant mt-1">For selected interval</p>
+                    <!-- Top Charts Grid -->
+                    <div class="grid grid-cols-12 gap-6 h-[290px] flex-shrink-0">
+                        <!-- Chart 1: Transaction Type Breakdown -->
+                        <div class="col-span-12 lg:col-span-5 glass-card p-6 flex flex-col justify-between relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-label-sm font-label-sm text-on-surface font-semibold">Transaction Type Breakdown</span>
+                            </div>
+                            <div class="flex-1 flex items-center justify-between gap-6 min-h-0 relative">
+                                <!-- SVG Donut Container -->
+                                <div class="relative w-40 h-40 flex-shrink-0 flex items-center justify-center" id="tx-donut-container">
+                                    <svg id="tx-donut-svg" class="w-full h-full -rotate-90" viewBox="0 0 36 36"></svg>
+                                    <div class="absolute flex flex-col items-center justify-center text-center pointer-events-none">
+                                        <span id="tx-donut-center-amount" class="text-headline-md font-data-md text-white font-bold">€0.00</span>
+                                        <span class="text-[9px] uppercase tracking-wider text-on-surface-variant font-bold">Total Volume</span>
+                                    </div>
+                                </div>
+                                <!-- Legend list -->
+                                <div class="flex-1 overflow-y-auto scroll-zone space-y-1.5 pr-2 h-full text-xs font-mono" id="tx-type-legend">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
                         </div>
-                        <div class="glass-card p-6 relative overflow-hidden group">
-                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Total Outflow</span>
-                            <h2 id="tx-summary-outflow" class="text-headline-md font-bold text-error">-€ 0.00</h2>
-                            <p class="text-data-sm text-on-surface-variant mt-1">For selected interval</p>
-                        </div>
-                        <div class="glass-card p-6 relative overflow-hidden group">
-                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Net Cash Flow</span>
-                            <h2 id="tx-summary-net" class="text-headline-md font-bold text-white">€ 0.00</h2>
-                            <p class="text-data-sm text-on-surface-variant mt-1">Inflow minus outflow</p>
-                        </div>
-                        <div class="glass-card p-6 relative overflow-hidden group">
-                            <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Interval savings</span>
-                            <h2 id="tx-summary-savings" class="text-headline-md font-bold text-primary">0%</h2>
-                            <p class="text-data-sm text-on-surface-variant mt-1">Income retained ratio</p>
+
+                        <!-- Chart 2: Income vs Expenses -->
+                        <div class="col-span-12 lg:col-span-7 glass-card p-6 flex flex-col justify-between relative overflow-hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-label-sm font-label-sm text-on-surface font-semibold">Income vs Expenses</span>
+                                <select id="tx-period-select" onchange="drawIncomeExpensesBarChart()" class="bg-surface-container-low border border-border-subtle rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-primary font-mono text-on-surface cursor-pointer">
+                                    <option value="6">Monthly</option>
+                                    <option value="3">3 Months</option>
+                                    <option value="12">12 Months</option>
+                                </select>
+                            </div>
+                            <!-- Bar Chart SVG -->
+                            <div class="flex-1 min-h-0 w-full relative" id="tx-bar-chart-container">
+                                <svg id="tx-bar-chart-svg" class="w-full h-full"></svg>
+                            </div>
+                            <!-- Legend -->
+                            <div class="flex justify-center items-center gap-6 mt-2 text-[10px] font-mono text-on-surface-variant">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#30d158]"></span>
+                                    <span>Income</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#ff453a]"></span>
+                                    <span>Expenses</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-[#bf5af2]"></span>
+                                    <span>Net</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -658,8 +689,8 @@
                             <div class="pt-3 border-t border-border-subtle space-y-3">
                                 <span class="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block">Custom Interval</span>
                                 <div class="space-y-2">
-                                    <input type="date" id="custom-start-date" onchange="setCustomDateRange()" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-2.5 py-1.5 text-data-sm text-on-surface font-mono" />
-                                    <input type="date" id="custom-end-date" onchange="setCustomDateRange()" class="w-full bg-surface-container-low border border-border-subtle rounded-lg px-2.5 py-1.5 text-data-sm text-on-surface font-mono" />
+                                    <input type="date" id="custom-start-date" onchange="setCustomDateRange()" class="w-full bg-surface-container-low border border-border-subtle rounded-xl px-3 py-2 text-data-sm text-white focus:outline-none focus:border-primary transition-all font-mono" />
+                                    <input type="date" id="custom-end-date" onchange="setCustomDateRange()" class="w-full bg-surface-container-low border border-border-subtle rounded-xl px-3 py-2 text-data-sm text-white focus:outline-none focus:border-primary transition-all font-mono" />
                                 </div>
                             </div>
                         </div>
@@ -679,6 +710,10 @@
                                         <span id="ledger-filter-account-name">Revolut</span>
                                         <button onclick="clearAccountFilter()" class="hover:text-white inline-flex items-center"><span class="material-symbols-outlined text-xs">close</span></button>
                                     </div>
+                                    <!-- Account select -->
+                                    <select onchange="filterAccount(this.value)" id="ledger-account-select" class="bg-surface-container-low border border-border-subtle rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary font-mono appearance-none pr-8 text-on-surface">
+                                        <option value="ALL">All Accounts</option>
+                                    </select>
                                     <!-- Category select -->
                                     <select onchange="filterCategory(this.value)" id="ledger-category-select" class="bg-surface-container-low border border-border-subtle rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary font-mono appearance-none pr-8 text-on-surface">
                                         <option value="ALL">All Categories</option>
@@ -710,14 +745,16 @@
                                 <div class="flex-1 overflow-auto scroll-zone">
                                     <table class="w-full text-left border-collapse">
                                         <thead>
-                                             <tr class="border-b border-border-subtle bg-surface-container-low/20 text-[10px] font-mono uppercase tracking-widest text-on-surface-variant font-bold sticky top-0 z-10">
-                                                 <th class="px-6 py-3">Date</th>
-                                                 <th class="px-6 py-3">Category</th>
-                                                 <th class="px-6 py-3 text-right">Amount</th>
-                                                 <th class="px-6 py-3">Account</th>
-                                                 <th class="px-6 py-3">Tags</th>
-                                                 <th class="px-6 py-3">Merchant / Description</th>
-                                                 <th class="px-6 py-3 text-center">Action</th>
+                                             <tr class="border-b border-border-subtle text-[10px] font-mono uppercase tracking-widest text-on-surface-variant font-bold sticky top-0 z-10 bg-surface-container">
+                                                 <th class="px-4 py-3 w-12 text-center bg-surface-container sticky top-0 z-10"><input type="checkbox" id="ledger-select-all" class="rounded bg-surface border-border-subtle focus:ring-primary-container" onchange="toggleSelectAllTransactions(this)"></th>
+                                                 <th class="px-4 py-3 bg-surface-container sticky top-0 z-10">Date</th>
+                                                 <th class="px-6 py-3 bg-surface-container sticky top-0 z-10">Merchant / Description</th>
+                                                 <th class="px-4 py-3 bg-surface-container sticky top-0 z-10">Category</th>
+                                                 <th class="px-4 py-3 bg-surface-container sticky top-0 z-10">Account</th>
+                                                 <th class="px-4 py-3 bg-surface-container sticky top-0 z-10">Type</th>
+                                                 <th class="px-4 py-3 text-right bg-surface-container sticky top-0 z-10">Amount</th>
+                                                 <th class="px-4 py-3 text-center bg-surface-container sticky top-0 z-10">Status</th>
+                                                 <th class="px-4 py-3 text-center w-12 bg-surface-container sticky top-0 z-10"></th>
                                              </tr>
                                         </thead>
                                         <tbody class="divide-y divide-border-subtle text-data-sm text-on-surface" id="ledger-body">
@@ -1229,176 +1266,254 @@
                 </div>
 
                 <!-- 6. INSIGHTS PANEL -->
-                <div id="panel-insights" class="hidden h-full overflow-y-auto p-view-padding scroll-zone space-y-8">
-                    <!-- Dashboard Header -->
-                    <div class="flex justify-between items-end mb-6">
+                <div id="panel-insights" class="hidden h-full overflow-y-auto p-view-padding scroll-zone space-y-6">
+                    <!-- Header -->
+                    <div class="flex justify-between items-start mb-6">
                         <div>
-                            <h2 class="text-display-lg font-display-lg text-on-surface">Decision Center</h2>
-                            <p id="insights-date-subtitle" class="text-body-base text-text-muted mt-2">AI-powered insights based on your spending patterns.</p>
+                            <h2 class="text-display-lg font-display-lg text-on-surface">Insights</h2>
+                            <p class="text-body-base text-text-muted mt-1">Deep dive into your financial performance.</p>
                         </div>
-                        <div class="flex gap-2 p-1 bg-surface-container rounded-xl border border-border-subtle">
-                            <button id="btn-insight-briefing" onclick="setInsightsTab('briefing')" class="px-4 py-1.5 rounded-lg text-label-sm font-medium bg-primary-container text-on-primary-container transition-all">Briefing</button>
-                            <button id="btn-insight-analysis" onclick="setInsightsTab('analysis')" class="px-4 py-1.5 rounded-lg text-label-sm font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-all">Analysis</button>
-                            <button id="btn-insight-opps" onclick="setInsightsTab('opportunities')" class="px-4 py-1.5 rounded-lg text-label-sm font-medium text-on-surface-variant hover:bg-surface-variant/50 transition-all">Opportunities</button>
+                        <div class="flex flex-col items-end gap-1">
+                            <select id="insights-period-select" onchange="updateInsightsPeriod()" class="bg-surface-container border border-border-subtle rounded-lg px-2.5 py-1 text-xs text-on-surface-variant font-mono focus:ring-0 cursor-pointer">
+                                <option value="12">This Year</option>
+                                <option value="6">Last 6 Months</option>
+                                <option value="current" selected>This Month</option>
+                            </select>
+                            <span id="insights-date-range-text" class="text-[10px] text-on-surface-variant font-mono">1 - 30 Jun 2026</span>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-12 gap-panel-gap mb-8">
-                        <!-- AI Executive Briefing (Left) -->
-                        <div class="col-span-12 lg:col-span-8 glass-card p-8 relative overflow-hidden group">
-                            <!-- Background Glow Effect -->
-                            <div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-[80px] group-hover:bg-primary/20 transition-all duration-700"></div>
-                            <div class="relative z-10">
-                                <div class="flex items-center gap-3 mb-6">
-                                    <div class="p-2 bg-primary/20 rounded-lg text-primary">
-                                        <span class="material-symbols-outlined text-lg">auto_awesome</span>
-                                    </div>
-                                    <h3 class="text-headline-md font-headline-md text-on-surface">Executive Financial Briefing</h3>
+                    <!-- Row 1: Metrics & Health Score Grid -->
+                    <div class="grid grid-cols-12 gap-panel-gap">
+                        <!-- 5 Small metrics cards in col-span-12 xl:col-span-10 -->
+                        <div class="col-span-12 xl:col-span-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                            <!-- Card 1: Net Worth Change -->
+                            <div class="glass-card p-4 flex flex-col justify-between min-h-[140px] border-l-2 border-l-[#5e5ce6]">
+                                <div>
+                                    <span class="text-[11px] font-medium text-on-surface-variant block">Net Worth Change</span>
+                                    <h3 id="insight-metric-networth" class="text-headline-md font-bold text-white mt-1">+€0.00</h3>
                                 </div>
-                                <div class="prose prose-invert max-w-none mb-8">
-                                    <p id="insights-briefing-text" class="text-body-base leading-relaxed text-on-surface/90">
-                                        Calculating your latest financial intelligence briefing...
-                                    </p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span id="insight-metric-networth-change" class="text-success text-[10px] font-semibold">↑ 0.0% vs last month</span>
                                 </div>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div class="p-4 rounded-xl bg-surface-container-low border border-border-subtle flex flex-col gap-1">
-                                        <span class="text-success material-symbols-outlined text-xl">trending_up</span>
-                                        <span class="text-label-sm text-text-muted">Net Worth</span>
-                                        <span id="insights-net-worth-val" class="text-data-md font-data-md text-on-surface">+0.0%</span>
-                                    </div>
-                                    <div class="p-4 rounded-xl bg-surface-container-low border border-border-subtle flex flex-col gap-1">
-                                        <span class="text-warning material-symbols-outlined text-xl">warning</span>
-                                        <span class="text-label-sm text-text-muted">Over Budget</span>
-                                        <span id="insights-over-budget-val" class="text-data-md font-data-md text-on-surface">0 Categories</span>
-                                    </div>
-                                    <div class="p-4 rounded-xl bg-surface-container-low border border-border-subtle flex flex-col gap-1">
-                                        <span class="text-primary material-symbols-outlined text-xl">savings</span>
-                                        <span class="text-label-sm text-text-muted">Savings Buffer</span>
-                                        <span id="insights-savings-found-val" class="text-data-md font-data-md text-on-surface">€0 Found</span>
-                                    </div>
-                                    <div class="p-4 rounded-xl bg-surface-container-low border border-border-subtle flex flex-col gap-1">
-                                        <span class="text-success material-symbols-outlined text-xl">check_circle</span>
-                                        <span class="text-label-sm text-text-muted">FIRE Goal</span>
-                                        <span id="insights-fire-status-val" class="text-data-md font-data-md text-on-surface">On Track</span>
-                                    </div>
+                                <div class="h-6 w-full mt-2">
+                                    <svg id="sparkline-networth" class="w-full h-full overflow-visible"></svg>
+                                </div>
+                            </div>
+
+                            <!-- Card 2: Cash Flow -->
+                            <div class="glass-card p-4 flex flex-col justify-between min-h-[140px] border-l-2 border-l-[#30d158]">
+                                <div>
+                                    <span class="text-[11px] font-medium text-on-surface-variant block">Cash Flow</span>
+                                    <h3 id="insight-metric-cashflow" class="text-headline-md font-bold text-white mt-1">+€0.00</h3>
+                                </div>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span id="insight-metric-cashflow-change" class="text-success text-[10px] font-semibold">vs last month</span>
+                                </div>
+                                <div class="h-6 w-full mt-2">
+                                    <svg id="sparkline-cashflow" class="w-full h-full overflow-visible"></svg>
+                                </div>
+                            </div>
+
+                            <!-- Card 3: Savings Rate -->
+                            <div class="glass-card p-4 flex flex-col justify-between min-h-[140px] border-l-2 border-l-[#30d158]">
+                                <div>
+                                    <span class="text-[11px] font-medium text-on-surface-variant block">Savings Rate</span>
+                                    <h3 id="insight-metric-savingsrate" class="text-headline-md font-bold text-white mt-1">0%</h3>
+                                </div>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span id="insight-metric-savingsrate-change" class="text-success text-[10px] font-semibold">↑ 0.0% vs last month</span>
+                                </div>
+                                <div class="h-6 w-full mt-2">
+                                    <svg id="sparkline-savingsrate" class="w-full h-full overflow-visible"></svg>
+                                </div>
+                            </div>
+
+                            <!-- Card 4: Total Expenses -->
+                            <div class="glass-card p-4 flex flex-col justify-between min-h-[140px] border-l-2 border-l-[#ffd60a]">
+                                <div>
+                                    <span class="text-[11px] font-medium text-on-surface-variant block">Total Expenses</span>
+                                    <h3 id="insight-metric-expenses" class="text-headline-md font-bold text-white mt-1">€0.00</h3>
+                                </div>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span id="insight-metric-expenses-change" class="text-warning text-[10px] font-semibold">↑ 0.0% vs last month</span>
+                                </div>
+                                <div class="h-6 w-full mt-2">
+                                    <svg id="sparkline-expenses" class="w-full h-full overflow-visible"></svg>
+                                </div>
+                            </div>
+
+                            <!-- Card 5: Investment Return -->
+                            <div class="glass-card p-4 flex flex-col justify-between min-h-[140px] border-l-2 border-l-[#0a84ff]">
+                                <div>
+                                    <span class="text-[11px] font-medium text-on-surface-variant block">Investment Return</span>
+                                    <h3 id="insight-metric-investment" class="text-headline-md font-bold text-white mt-1">0.0%</h3>
+                                </div>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span id="insight-metric-investment-change" class="text-on-surface-variant text-[10px] font-semibold">YTD</span>
+                                </div>
+                                <div class="h-6 w-full mt-2">
+                                    <svg id="sparkline-investment" class="w-full h-full overflow-visible"></svg>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Score Radial (Right) -->
-                        <div class="col-span-12 lg:col-span-4 glass-card p-8 flex flex-col items-center justify-center text-center">
-                            <div class="relative w-48 h-48 mb-6">
+                        <!-- Right Card: Financial Health Score -->
+                        <div class="col-span-12 xl:col-span-2 glass-card p-5 flex flex-col items-center justify-center text-center min-h-[160px]">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Financial Health Score</span>
+                            <div class="relative w-28 h-28 flex items-center justify-center mb-2 shrink-0">
                                 <svg class="w-full h-full transform -rotate-90">
-                                    <circle class="text-surface-container-highest" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-width="8"></circle>
-                                    <circle id="insights-score-ring" class="text-success" cx="96" cy="96" fill="transparent" r="88" stroke="currentColor" stroke-dasharray="552.9" stroke-dashoffset="552.9" stroke-width="8" style="transition: stroke-dashoffset 0.8s ease-out;"></circle>
+                                    <circle class="text-surface-variant/20" cx="56" cy="56" fill="transparent" r="48" stroke="currentColor" stroke-width="6"></circle>
+                                    <circle id="insight-score-gauge" class="text-success" cx="56" cy="56" fill="transparent" r="48" stroke="currentColor" stroke-dasharray="301.6" stroke-dashoffset="301.6" stroke-width="6" style="transition: stroke-dashoffset 0.8s ease-out;"></circle>
                                 </svg>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span id="insights-score-value" class="text-display-lg font-display-lg">100</span>
-                                    <span class="text-label-sm text-text-muted">/100</span>
+                                    <span id="insight-score-val" class="text-headline-md font-bold">82</span>
+                                    <span class="text-[9px] text-text-muted">/100</span>
                                 </div>
                             </div>
-                            <h4 id="insights-score-label" class="text-headline-md font-headline-md text-on-surface mb-2">Nominal</h4>
-                            <p class="text-label-sm text-text-muted">Dynamically computed based on savings, budget overheads and emergency buffers.</p>
-                        </div>
-                    </div>
-
-                    <!-- Secondary Analysis Row -->
-                    <div class="grid grid-cols-12 gap-panel-gap mb-8">
-                        <!-- What Changed & Why (Left) -->
-                        <div class="col-span-12 lg:col-span-8 flex flex-col gap-panel-gap overflow-hidden">
-                            <div class="glass-card p-6 flex flex-col overflow-hidden min-h-[260px]">
-                                <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-widest mb-6">Key Insights</h3>
-                                <div id="insights-key-list" class="flex-1 overflow-y-auto scroll-hide space-y-4 pr-2 max-h-[200px]">
-                                    <!-- Dynamic Insights populated from ledger -->
-                                </div>
-                            </div>
-                            
-                            <!-- Spending Distribution Visual -->
-                            <div class="glass-card p-6 flex flex-col justify-between">
-                                <div class="flex items-center justify-between mb-6">
-                                    <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-widest">Spending Analysis</h3>
-                                    <span class="text-primary text-label-sm font-semibold uppercase tracking-wider font-mono">50/30/20 Rule</span>
-                                </div>
-                                <div class="flex flex-col md:flex-row items-center gap-12">
-                                    <div class="relative w-32 h-32 shrink-0">
-                                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                                            <circle cx="18" cy="18" fill="transparent" r="16" stroke="#1f1f27" stroke-width="4"></circle>
-                                            <circle id="circle-needs" cx="18" cy="18" fill="transparent" r="16" stroke="#5e5ce6" stroke-dasharray="0, 100" stroke-dashoffset="0" stroke-width="4" style="transition: stroke-dasharray 0.5s ease-out, stroke-dashoffset 0.5s ease-out;"></circle>
-                                            <circle id="circle-wants" cx="18" cy="18" fill="transparent" r="16" stroke="#ffd60a" stroke-dasharray="0, 100" stroke-dashoffset="0" stroke-width="4" style="transition: stroke-dasharray 0.5s ease-out, stroke-dashoffset 0.5s ease-out;"></circle>
-                                            <circle id="circle-savings" cx="18" cy="18" fill="transparent" r="16" stroke="#30d158" stroke-dasharray="0, 100" stroke-dashoffset="0" stroke-width="4" style="transition: stroke-dasharray 0.5s ease-out, stroke-dashoffset 0.5s ease-out;"></circle>
-                                        </svg>
-                                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span id="insights-spending-total" class="font-mono text-xs font-bold text-white">€0.00</span>
-                                            <span class="text-[8px] font-mono uppercase text-on-surface-variant tracking-wider">Total</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-3 h-3 rounded-full bg-[#5e5ce6]"></div>
-                                            <div class="flex-1">
-                                                <span class="text-label-sm text-on-surface block font-bold">Needs</span>
-                                                <span id="insights-needs-breakdown" class="text-[11px] text-text-muted font-mono">0% · €0.00</span>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-3 h-3 rounded-full bg-[#ffd60a]"></div>
-                                            <div class="flex-1">
-                                                <span class="text-label-sm text-on-surface block font-bold">Wants</span>
-                                                <span id="insights-wants-breakdown" class="text-[11px] text-text-muted font-mono">0% · €0.00</span>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-3 h-3 rounded-full bg-[#30d158]"></div>
-                                            <div class="flex-1">
-                                                <span class="text-label-sm text-on-surface block font-bold">Savings</span>
-                                                <span id="insights-savings-breakdown" class="text-[11px] text-text-muted font-mono">0% · €0.00</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Recommended Actions (Right) -->
-                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col overflow-hidden min-h-[350px]">
-                            <h3 class="text-label-sm font-label-sm text-text-muted uppercase tracking-widest mb-6">Top Recommendations</h3>
-                            <div id="insights-recommendations-list" class="flex-1 overflow-y-auto scroll-hide space-y-4 pr-2">
-                                <!-- Dynamic recommendation cards -->
+                            <div class="flex items-center gap-1.5 justify-center">
+                                <span id="insight-score-badge" class="text-success text-xs font-bold flex items-center">● Excellent</span>
+                                <span id="insight-score-diff" class="text-success text-[10px] font-semibold">↑ 9 pts</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Trends Footer -->
-                    <section class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-panel-gap pb-8">
-                        <div class="glass-card p-6">
-                            <p class="text-label-sm text-text-muted mb-1">Net Worth</p>
-                            <div class="flex items-end justify-between">
-                                <span id="trends-footer-net-worth-val" class="text-data-lg font-data-lg text-on-surface">€0.00</span>
-                                <span id="trends-footer-net-worth-change" class="text-success text-xs font-bold">↑ 0.0%</span>
+                    <!-- Row 2: Expense Breakdown, Spending Trend, Key Insights -->
+                    <div class="grid grid-cols-12 gap-panel-gap">
+                        <!-- Expense Breakdown -->
+                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col">
+                            <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Expense Breakdown <span class="text-[10px] text-text-muted capitalize">(vs last month)</span></h3>
+                            <div class="flex items-center gap-6 flex-1 min-h-0">
+                                <!-- Donut on left -->
+                                <div class="relative w-36 h-36 shrink-0 flex items-center justify-center">
+                                    <svg id="insight-breakdown-donut" class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                        <!-- Dynamic donut circles -->
+                                    </svg>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                        <span id="insight-breakdown-total" class="font-mono text-xs font-bold text-white">€0.00</span>
+                                        <span class="text-[9px] text-text-muted uppercase tracking-wider">Total</span>
+                                    </div>
+                                </div>
+                                <!-- Categories on right -->
+                                <div id="insight-breakdown-list" class="flex-1 space-y-2 text-xs font-mono max-h-[220px] overflow-y-auto scroll-zone pr-1">
+                                    <!-- Populated dynamically -->
+                                </div>
                             </div>
                         </div>
-                        <div class="glass-card p-6">
-                            <p class="text-label-sm text-text-muted mb-1">Cash Flow</p>
-                            <div class="flex items-end justify-between">
-                                <span id="trends-footer-cash-flow-val" class="text-data-lg font-data-lg text-on-surface">€0.00</span>
-                                <span id="trends-footer-cash-flow-change" class="text-success text-xs font-bold">↑ 0.0%</span>
+
+                        <!-- Spending Trend -->
+                        <div class="col-span-12 lg:col-span-5 glass-card p-6 flex flex-col relative">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant">Spending Trend</h3>
+                                <div class="flex bg-surface-container border border-border-subtle p-0.5 rounded-lg text-[9px] font-bold uppercase">
+                                    <button onclick="setInsightsTrendType('daily')" id="insights-trend-btn-daily" class="px-2 py-0.5 rounded bg-surface-variant text-primary transition-all">Daily</button>
+                                    <button onclick="setInsightsTrendType('weekly')" id="insights-trend-btn-weekly" class="px-2 py-0.5 rounded text-on-surface-variant hover:text-white transition-all">Weekly</button>
+                                    <button onclick="setInsightsTrendType('monthly')" id="insights-trend-btn-monthly" class="px-2 py-0.5 rounded text-on-surface-variant hover:text-white transition-all">Monthly</button>
+                                </div>
+                            </div>
+                            <!-- Dynamic Line Chart -->
+                            <div class="flex-1 w-full relative min-h-[220px]">
+                                <div id="insights-trend-container" class="absolute inset-0 w-full h-full">
+                                    <svg id="insights-trend-svg" class="w-full h-full overflow-visible"></svg>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 mt-2 text-[10px] font-mono text-on-surface-variant justify-center">
+                                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#5e5ce6]"></span> This Month</span>
+                                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-zinc-600"></span> Last Month</span>
                             </div>
                         </div>
-                        <div class="glass-card p-6">
-                            <p class="text-label-sm text-text-muted mb-1">Savings Rate</p>
-                            <div class="flex items-end justify-between">
-                                <span id="trends-footer-savings-rate-val" class="text-data-lg font-data-lg text-on-surface">0%</span>
-                                <span id="trends-footer-savings-rate-change" class="text-success text-xs font-bold">↑ 0.0%</span>
+
+                        <!-- Key Insights -->
+                        <div class="col-span-12 lg:col-span-3 glass-card p-6 flex flex-col">
+                            <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Key Insights</h3>
+                            <div id="insights-cards-list" class="space-y-3 flex-1 overflow-y-auto scroll-zone max-h-[260px] pr-1">
+                                <!-- Populated dynamically -->
                             </div>
                         </div>
-                        <div class="glass-card p-6">
-                            <p class="text-label-sm text-text-muted mb-1">Monthly Spend</p>
-                            <div class="flex items-end justify-between">
-                                <span id="trends-footer-monthly-spend-val" class="text-data-lg font-data-lg text-on-surface">€0.00</span>
-                                <span id="trends-footer-monthly-spend-change" class="text-error text-xs font-bold">↑ 0.0%</span>
+                    </div>
+
+                    <!-- Row 3: Merchant Insights, Category Heatmap, Insights Summary -->
+                    <div class="grid grid-cols-12 gap-panel-gap">
+                        <!-- Merchant Insights -->
+                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between min-h-[300px]">
+                            <div>
+                                <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Merchant Insights</h3>
+                                <div class="overflow-x-auto scroll-zone">
+                                    <table class="w-full text-left text-xs font-mono border-collapse">
+                                        <thead>
+                                            <tr class="border-b border-border-subtle text-[9px] uppercase tracking-wider text-on-surface-variant font-bold">
+                                                <th class="pb-2">Merchant</th>
+                                                <th class="pb-2 text-right">Visits</th>
+                                                <th class="pb-2 text-right">Amount</th>
+                                                <th class="pb-2 text-right">Change</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="insight-merchant-body" class="divide-y divide-border-subtle/40">
+                                            <!-- Populated dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-border-subtle flex justify-center">
+                                <button onclick="switchTab('transactions')" class="text-primary text-label-sm font-bold hover:underline flex items-center gap-1">
+                                    <span>View all merchants</span>
+                                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
                             </div>
                         </div>
-                    </section>
+
+                        <!-- Category Heatmap -->
+                        <div class="col-span-12 lg:col-span-5 glass-card p-6 flex flex-col justify-between min-h-[300px]">
+                            <div>
+                                <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Category Heatmap</h3>
+                                <div class="grid grid-cols-12 gap-2 text-center text-[9px] font-mono font-bold text-on-surface-variant uppercase tracking-wider mb-2">
+                                    <div class="col-span-3 text-left">Category</div>
+                                    <div class="col-span-1">Mon</div>
+                                    <div class="col-span-1">Tue</div>
+                                    <div class="col-span-1">Wed</div>
+                                    <div class="col-span-1">Thu</div>
+                                    <div class="col-span-1">Fri</div>
+                                    <div class="col-span-1">Sat</div>
+                                    <div class="col-span-1">Sun</div>
+                                    <div class="col-span-2"></div>
+                                </div>
+                                <div id="insight-heatmap-rows" class="space-y-2.5">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-[9px] font-mono text-on-surface-variant mt-4 pt-4 border-t border-border-subtle">
+                                <span>Low intensity</span>
+                                <div class="w-48 h-2 rounded-full bg-gradient-to-r from-white/5 to-white/60 border border-border-subtle"></div>
+                                <span>High intensity</span>
+                            </div>
+                        </div>
+
+                        <!-- Insights Summary -->
+                        <div class="col-span-12 lg:col-span-3 glass-card p-6 flex flex-col justify-between min-h-[300px]">
+                            <div>
+                                <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Insights Summary</h3>
+                                <div id="insight-summary-cards" class="space-y-3 max-h-[220px] overflow-y-auto scroll-zone pr-1">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-border-subtle flex justify-center">
+                                <button onclick="switchTab('insights')" class="text-primary text-label-sm font-bold hover:underline flex items-center gap-1">
+                                    <span>View detailed analysis</span>
+                                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Top Recommendations (Slider) -->
+                    <div class="glass-card p-6 flex flex-col">
+                        <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Top Recommendations</h3>
+                        <div class="relative">
+                            <div id="insight-recs-slider" class="flex gap-4 overflow-x-auto scroll-zone scrollbar-none pb-2">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 7. AUTOMATION PANEL -->
@@ -1762,6 +1877,63 @@
                     </div>
                     <p id="recon-status-desc" class="text-[10px] text-on-surface-variant mt-2 leading-relaxed">Adjust your starting balance or check ledger items to resolve.</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bank Discovery Modal -->
+    <div id="bank-discovery-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[110] flex items-center justify-center hidden">
+        <div class="glass-panel-modal w-full max-w-[600px] border border-border-subtle relative flex flex-col h-[580px]">
+            <!-- Header -->
+            <div class="p-5 border-b border-border-subtle flex items-center justify-between shrink-0">
+                <div>
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-lg" data-weight="fill">account_balance</span>
+                        Link Bank Feed
+                    </h3>
+                    <p class="text-[10px] text-text-muted mt-0.5">Select your bank to connect a secure open banking read-only feed</p>
+                </div>
+                <button onclick="closeBankModal()" class="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-xs">close</span>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="flex-1 overflow-hidden p-5 flex flex-col min-h-0 text-white">
+                <!-- Search Box -->
+                <div class="relative flex items-center mb-4 shrink-0">
+                    <span class="material-symbols-outlined absolute left-3 text-white/30 text-sm">search</span>
+                    <input id="bank-search-input" 
+                           class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary transition-all" 
+                           placeholder="Search bank name or BIC code (e.g. ING, Revolut)..." 
+                           type="text">
+                </div>
+
+                <!-- Country Pill Selector -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-2 mb-3 shrink-0 select-none scroll-zone" id="country-pills-container">
+                    <!-- Dynamic pills generated below -->
+                </div>
+
+                <!-- Scrollable Grid Area -->
+                <div class="flex-1 overflow-y-auto pr-1 scroll-zone" id="bank-cards-container">
+                    <!-- Dynamic Cards or Skeletons -->
+                </div>
+            </div>
+
+            <!-- Error Banner Panel -->
+            <div id="modal-error-container" class="hidden p-3 mx-5 mb-5 bg-rose-500/10 border border-rose-500/20 text-rose-200 rounded-xl flex items-start gap-2.5 text-[10px]">
+                <span class="material-symbols-outlined text-rose-400 shrink-0 text-sm">error</span>
+                <div class="flex-1">
+                    <p class="font-semibold" id="modal-error-title">Connection Error</p>
+                    <p class="text-rose-200/75 mt-0.5" id="modal-error-msg">Wrong ASPSP name provided.</p>
+                </div>
+            </div>
+
+            <!-- Full-Screen Redirect/Loading Overlay -->
+            <div id="modal-loading-overlay" class="hidden absolute inset-0 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center text-center p-5 rounded-3xl z-20">
+                <div class="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin mb-3"></div>
+                <h4 class="text-white font-bold text-sm" id="modal-overlay-title">Retrieving Connection...</h4>
+                <p class="text-white/60 text-[10px] mt-1" id="modal-overlay-msg">Please authorize the secure feed on the next screen.</p>
             </div>
         </div>
     </div>

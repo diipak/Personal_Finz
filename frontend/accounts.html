@@ -35,6 +35,47 @@
             background: #e2e8f0;
             border-radius: 10px;
         }
+
+        /* Custom Scrollbar for scroll zones */
+        .scroll-zone::-webkit-scrollbar {
+            width: 4px;
+        }
+        .scroll-zone::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 4px;
+        }
+        .scroll-zone::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+        .scroll-zone::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Glassmorphic dialog */
+        dialog.bank-modal {
+            background: rgba(18, 18, 27, 0.95);
+            backdrop-filter: blur(28px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            box-shadow: 0 40px 80px -15px rgba(0, 0, 0, 0.6);
+            color: #e4e1ed;
+            padding: 0;
+            overflow: hidden;
+            outline: none;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+            transform: scale(0.95);
+            opacity: 0;
+        }
+        dialog.bank-modal[open] {
+            transform: scale(1);
+            opacity: 1;
+        }
+        dialog.bank-modal::backdrop {
+            background: rgba(7, 7, 10, 0.6);
+            backdrop-filter: blur(8px);
+            transition: opacity 0.25s ease;
+        }
     </style>
     <script id="tailwind-config">
         tailwind.config = {
@@ -331,6 +372,65 @@
             <span class="text-[10px] font-bold">Rules</span>
         </a>
     </nav>
+
+    <!-- Beautiful, Premium Bank Discovery Modal -->
+    <dialog id="bank-discovery-modal" class="bank-modal w-full max-w-[640px] focus:outline-none" closedby="any">
+        <!-- Main Modal Content -->
+        <div class="flex flex-col h-[600px] relative">
+            <!-- Header -->
+            <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-2xl" data-weight="fill">account_balance</span>
+                        Link Bank Feed
+                    </h3>
+                    <p class="text-xs text-white/50 mt-1">Select your bank to connect secure open banking read-only feed</p>
+                </div>
+                <button onclick="closeBankModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-base">close</span>
+                </button>
+            </div>
+
+            <!-- Body (Controls & List) -->
+            <div class="flex-1 overflow-hidden p-6 flex flex-col min-h-0">
+                <!-- Search Box -->
+                <div class="relative flex items-center mb-4 shrink-0">
+                    <span class="material-symbols-outlined absolute left-3.5 text-white/35">search</span>
+                    <input id="bank-search-input" 
+                           class="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" 
+                           placeholder="Search bank name or BIC code (e.g. ING, Revolut)..." 
+                           type="text">
+                </div>
+
+                <!-- Country Pill Selector -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-2 mb-4 shrink-0 select-none custom-scrollbar" id="country-pills-container">
+                    <!-- Dynamic pills generated below -->
+                </div>
+
+                <!-- Scrollable Grid Area -->
+                <div class="flex-1 overflow-y-auto pr-1 scroll-zone" id="bank-cards-container">
+                    <!-- Dynamic Cards or Skeletons -->
+                </div>
+            </div>
+
+            <!-- Error Banner Panel -->
+            <div id="modal-error-container" class="hidden p-4 mx-6 mb-6 bg-rose-500/10 border border-rose-500/20 text-rose-200 rounded-xl flex items-start gap-3 text-xs">
+                <span class="material-symbols-outlined text-rose-400 shrink-0">error</span>
+                <div class="flex-1">
+                    <p class="font-semibold" id="modal-error-title">Connection Error</p>
+                    <p class="text-rose-200/75 mt-0.5" id="modal-error-msg">Wrong ASPSP name provided.</p>
+                </div>
+            </div>
+
+            <!-- Full-Screen Redirect/Loading Overlay -->
+            <div id="modal-loading-overlay" class="hidden absolute inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center text-center p-6 z-20">
+                <div class="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin mb-4"></div>
+                <h4 class="text-white font-bold text-lg" id="modal-overlay-title">Retrieving Connection...</h4>
+                <p class="text-white/60 text-xs mt-1.5" id="modal-overlay-msg">Please authorize the secure feed on the next screen.</p>
+            </div>
+        </div>
+    </dialog>
+
     <script>
         // Micro-interactions for buttons
         document.querySelectorAll('button').forEach(btn => {
@@ -516,30 +616,214 @@
             }
         }
 
-        async function triggerBankSync() {
-            const institutionId = prompt("Enter the bank/institution name (e.g., 'Commerzbank (DE)', 'Advanzia Bank (DE)'):");
-            if (!institutionId || !institutionId.trim()) {
+        let activeCountry = "ALL";
+        let allBanks = [];
+
+        function openBankModal() {
+            const modal = document.getElementById('bank-discovery-modal');
+            modal.showModal();
+            // Reset state
+            document.getElementById('bank-search-input').value = "";
+            document.getElementById('modal-error-container').classList.add('hidden');
+            document.getElementById('modal-loading-overlay').classList.add('hidden');
+            renderCountryPills();
+            loadBanks(activeCountry);
+        }
+
+        function closeBankModal() {
+            const modal = document.getElementById('bank-discovery-modal');
+            modal.close();
+        }
+
+        function renderCountryPills() {
+            const container = document.getElementById('country-pills-container');
+            const countries = ["ALL", "DE", "FI", "FR", "NL", "IT", "ES", "SE", "PL", "GB"];
+            container.innerHTML = "";
+
+            countries.forEach(c => {
+                const pill = document.createElement('div');
+                const isActive = (c === activeCountry);
+                pill.className = `px-3.5 py-1.5 rounded-full text-xs font-semibold cursor-pointer border transition-all select-none whitespace-nowrap ${
+                    isActive 
+                        ? 'bg-primary text-white border-primary shadow-sm shadow-primary/20' 
+                        : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white'
+                }`;
+                pill.textContent = c;
+                pill.onclick = () => {
+                    activeCountry = c;
+                    renderCountryPills();
+                    loadBanks(c);
+                };
+                container.appendChild(pill);
+            });
+
+            // "Other..." Pill
+            const otherPill = document.createElement('div');
+            const isOtherActive = !countries.includes(activeCountry);
+            otherPill.className = `px-3.5 py-1.5 rounded-full text-xs font-semibold cursor-pointer border transition-all select-none whitespace-nowrap ${
+                isOtherActive
+                    ? 'bg-primary text-white border-primary shadow-sm shadow-primary/20' 
+                    : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white'
+            }`;
+            otherPill.textContent = isOtherActive ? `Other (${activeCountry})` : "Other...";
+            otherPill.onclick = () => {
+                const code = prompt("Enter 2-letter country code (e.g. AT, BE, RO):");
+                if (code && code.trim().length === 2) {
+                    activeCountry = code.trim().toUpperCase();
+                    renderCountryPills();
+                    loadBanks(activeCountry);
+                }
+            };
+            container.appendChild(otherPill);
+        }
+
+        async function loadBanks(country) {
+            const cardContainer = document.getElementById('bank-cards-container');
+            // Show skeleton loader
+            cardContainer.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-pulse">
+                    \${Array(6).fill(0).map(() => `
+                        <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 flex items-center">
+                            <div class="w-10 h-10 rounded-lg bg-white/10 shrink-0"></div>
+                            <div class="flex-1 space-y-2">
+                                <div class="h-3 bg-white/10 rounded-full w-2/3"></div>
+                                <div class="h-2 bg-white/5 rounded-full w-1/2"></div>
+                            </div>
+                        </div>
+                    \`).join('')}
+                </div>
+            `;
+
+            document.getElementById('modal-error-container').classList.add('hidden');
+
+            try {
+                const res = await fetch(`/api/sync/banks?country=\${country}`);
+                if (!res.ok) {
+                    throw new Error(`Server returned code \${res.status}`);
+                }
+                allBanks = await res.json();
+                renderBanks();
+            } catch (err) {
+                console.error("Error fetching supported banks:", err);
+                cardContainer.innerHTML = `
+                    <div class="py-8 text-center text-white/40 text-sm flex flex-col items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-4xl text-rose-500/80">cloud_off</span>
+                        <span>Failed to load supported banks.</span>
+                        <button onclick="loadBanks('\${country}')" class="mt-2 text-xs text-primary hover:underline font-bold">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderBanks() {
+            const query = document.getElementById('bank-search-input').value.trim().toLowerCase();
+            const cardContainer = document.getElementById('bank-cards-container');
+            cardContainer.innerHTML = "";
+
+            const filtered = allBanks.filter(b => {
+                const name = (b.name || "").toLowerCase();
+                const bic = (b.bic || "").toLowerCase();
+                return name.includes(query) || bic.includes(query);
+            });
+
+            if (filtered.length === 0) {
+                cardContainer.innerHTML = `
+                    <div class="py-12 text-center text-white/40 text-sm">
+                        No banks found matching "\${query}" in \${activeCountry}.
+                    </div>
+                `;
                 return;
             }
+
+            const grid = document.createElement('div');
+            grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2";
+
+            const limit = 150;
+            const itemsToRender = filtered.slice(0, limit);
+
+            itemsToRender.forEach(b => {
+                const card = document.createElement('div');
+                card.className = "flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 cursor-pointer transition-all duration-200 group active:scale-98 select-none";
+                
+                const logoUrl = b.logo ? `\${b.logo}` : "";
+                const nameChar = (b.name || "?").charAt(0).toUpperCase();
+
+                card.innerHTML = `
+                    <div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center p-1.5 overflow-hidden shrink-0 shadow-sm relative">
+                        \${logoUrl 
+                            ? `<img src="\${logoUrl}" alt="\${b.name}" class="max-w-full max-h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` 
+                            : ''
+                        }
+                        <div class="absolute inset-0 bg-primary/10 text-primary font-bold text-lg flex items-center justify-center rounded-lg" style="display: \${logoUrl ? 'none' : 'flex'};">
+                            \${nameChar}
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-xs font-bold text-white truncate leading-tight group-hover:text-primary-fixed-dim transition-colors">\${b.name}</h4>
+                        <p class="text-[9px] text-white/45 uppercase tracking-wide truncate mt-0.5">\${b.bic || 'No BIC'} • \${b.country}</p>
+                    </div>
+                    <span class="material-symbols-outlined text-sm text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all">chevron_right</span>
+                `;
+
+                card.onclick = () => selectBank(b.name, b.country);
+                grid.appendChild(card);
+            });
+
+            if (filtered.length > limit) {
+                const footer = document.createElement('div');
+                footer.className = "col-span-full py-3 text-center text-[10px] text-white/35 border-t border-white/5 mt-1";
+                footer.textContent = `Showing first \${limit} of \${filtered.length} banks. Use search to find your bank.`;
+                grid.appendChild(footer);
+            }
+
+            cardContainer.appendChild(grid);
+        }
+
+        async function selectBank(name, country) {
+            const overlay = document.getElementById('modal-loading-overlay');
+            const errorContainer = document.getElementById('modal-error-container');
+            const errorMsg = document.getElementById('modal-error-msg');
+            
+            overlay.classList.remove('hidden');
+            errorContainer.classList.add('hidden');
+
+            const institutionId = `${name} (${country})`;
 
             try {
                 const res = await fetch('/api/sync/link', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ institution_id: institutionId.trim() })
+                    body: JSON.stringify({ institution_id: institutionId })
                 });
+
                 if (!res.ok) {
                     const errData = await res.json();
-                    throw new Error(errData.detail || 'Failed to get authorization link');
+                    throw new Error(errData.detail || 'Failed to request bank authorization link.');
                 }
+
                 const data = await res.json();
                 if (data.link) {
-                    window.location.href = data.link;
+                    window.open(data.link, '_blank');
+                    overlay.classList.add('hidden');
+                    closeBankModal();
                 } else {
-                    alert("Authorization link not returned from server.");
+                    throw new Error("Authorization link was not returned by the server.");
                 }
             } catch (err) {
-                alert(`Error linking bank: ${err.message}`);
+                console.error("Failed to link bank:", err);
+                overlay.classList.add('hidden');
+                errorContainer.classList.remove('hidden');
+                
+                let detail = err.message;
+                if (detail.includes("Wrong ASPSP name") || detail.includes("WRONG_ASPSP_PROVIDED")) {
+                    detail = `The institution name "${name}" is not fully configured or is not supported under your current Enable Banking plan credentials.`;
+                } else if (detail.includes("Failed to fetch")) {
+                    detail = "Network error. Please check your local connection to the Personal_Finz API server.";
+                } else if (detail.includes("APP ID not set")) {
+                    detail = "Enable Banking client is not configured. Please set ENABLE_BANKING_APP_ID in your .env file.";
+                }
+                
+                errorMsg.textContent = detail;
             }
         }
 
@@ -588,16 +872,37 @@
             }
         }
 
-        document.getElementById('connect-bank-btn').addEventListener('click', triggerBankSync);
+        document.getElementById('connect-bank-btn').addEventListener('click', openBankModal);
         
         document.getElementById('auto-sync-checkbox').addEventListener('change', (e) => {
             saveAutoSyncSetting(e.target.checked);
         });
+
+        // Search input event listener
+        document.getElementById('bank-search-input').addEventListener('input', renderBanks);
         
         document.addEventListener('DOMContentLoaded', () => {
             checkAlerts();
             loadAccountsData();
             loadAutoSyncSetting();
+
+            // Light-dismiss click fallback
+            const modalEl = document.getElementById('bank-discovery-modal');
+            if (!('closedBy' in HTMLDialogElement.prototype)) {
+                modalEl.addEventListener('click', (event) => {
+                    if (event.target !== modalEl) return;
+                    const rect = modalEl.getBoundingClientRect();
+                    const isDialogContent = (
+                        rect.top <= event.clientY &&
+                        event.clientY <= rect.top + rect.height &&
+                        rect.left <= event.clientX &&
+                        event.clientX <= rect.left + rect.width
+                    );
+                    if (!isDialogContent) {
+                        closeBankModal();
+                    }
+                });
+            }
         });
     </script>
 </body>

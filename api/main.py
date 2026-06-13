@@ -15,7 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pydantic import BaseModel
 from typing import Optional
-from config import ENABLE_BANKING_APP_ID, ENABLE_BANKING_REDIRECT_URI, ALLOWED_CATEGORIES
+from config import ENABLE_BANKING_APP_ID, ENABLE_BANKING_REDIRECT_URI, ALLOWED_CATEGORIES, DEFAULT_DB_DIR
 from db.database import get_db, init_db
 from pipeline import process_manual_file, process_enable_banking_sync
 from api.services.analytics import get_financial_summary, get_health_metrics
@@ -405,6 +405,7 @@ def get_ledger():
             SELECT 
                 t.transaction_id as id,
                 t.booking_date as date,
+                t.account_id,
                 a.account_name,
                 t.description,
                 t.display_name,
@@ -680,6 +681,68 @@ class SettingsRequest(BaseModel):
 
 class GenericSettingRequest(BaseModel):
     value: str
+
+# Enable Banking Get Supported Banks (ASPSPs) Endpoint with 24h caching
+@app.get("/api/sync/banks")
+def get_supported_banks(country: str = "DE"):
+    import re
+    import time
+    import json
+    import requests
+    
+    country = country.strip().upper()
+    if country != "ALL" and not re.match(r"^[A-Z]{2}$", country):
+        raise HTTPException(status_code=400, detail="Invalid country code. Must be a 2-letter ISO code or 'ALL'.")
+        
+    if not ENABLE_BANKING_APP_ID:
+        raise HTTPException(status_code=400, detail="Enable Banking APP ID not set in environment.")
+
+    cache_file = os.path.join(DEFAULT_DB_DIR, f"aspsps_cache_{country}.json")
+    
+    # Check if cache exists and is fresh (< 24 hours)
+    if os.path.exists(cache_file):
+        try:
+            with open(cache_file, "r") as f:
+                cached = json.load(f)
+            if time.time() - cached.get("timestamp", 0) < 86400:
+                return cached.get("aspsps", [])
+        except Exception as cache_err:
+            logger.warning(f"Failed to read ASPSPs cache: {cache_err}")
+
+    # Fetch from Enable Banking
+    client = EnableBankingClient()
+    headers = client.get_headers()
+    url = f"{client.base_url}/aspsps"
+    params = {}
+    if country != "ALL":
+        params["country"] = country
+    
+    try:
+        res = requests.get(url, headers=headers, params=params, timeout=20)
+        res.raise_for_status()
+        data = res.json()
+        aspsps_list = data.get("aspsps", [])
+        
+        # Save to cache
+        try:
+            with open(cache_file, "w") as f:
+                json.dump({"timestamp": time.time(), "aspsps": aspsps_list}, f)
+        except Exception as cache_err:
+            logger.warning(f"Failed to write ASPSPs cache: {cache_err}")
+            
+        return aspsps_list
+    except Exception as e:
+        logger.error(f"Failed to fetch ASPSPs from Enable Banking for country {country}: {e}")
+        # Fallback to expired cache if available
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, "r") as f:
+                    cached = json.load(f)
+                logger.info(f"Returning expired cache for country {country} due to Enable Banking API error")
+                return cached.get("aspsps", [])
+            except Exception:
+                pass
+        raise HTTPException(status_code=500, detail=f"Failed to fetch supported banks: {e}")
 
 # Enable Banking Link Endpoint
 @app.post("/api/sync/link")

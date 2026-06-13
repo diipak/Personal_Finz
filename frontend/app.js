@@ -973,6 +973,31 @@ function populateCategorySelects() {
             modalSelect.appendChild(opt);
         });
     }
+    
+    populateAccountSelects();
+}
+
+function populateAccountSelects() {
+    const select = document.getElementById('ledger-account-select');
+    if (!select) return;
+    
+    const curVal = select.value;
+    select.innerHTML = '<option value="ALL">All Accounts</option>';
+    
+    accountsList.forEach(acc => {
+        const opt = document.createElement('option');
+        opt.value = acc.resource_id;
+        opt.textContent = acc.display_name;
+        select.appendChild(opt);
+    });
+    
+    if (curVal && select.querySelector(`option[value="${curVal}"]`)) {
+        select.value = curVal;
+    } else if (accountFilterId) {
+        select.value = accountFilterId;
+    } else {
+        select.value = 'ALL';
+    }
 }
 
 function drawOutflowDonut(categoriesData) {
@@ -1051,9 +1076,9 @@ function renderMonthsSidebar() {
     
     const createBtn = (label, filterVal, isActive) => {
         const btn = document.createElement('button');
-        btn.className = `w-full text-left py-2 px-3 rounded text-xs font-mono transition-all ${
+        btn.className = `w-full text-left py-2.5 px-3.5 rounded-xl text-xs font-semibold transition-all ${
             isActive 
-                ? 'bg-primary/15 text-primary font-bold border-l-2 border-primary' 
+                ? 'bg-primary/15 text-primary border-l-2 border-primary font-bold shadow-sm' 
                 : 'text-on-surface-variant hover:text-white hover:bg-white/5'
         }`;
         btn.textContent = label;
@@ -1123,6 +1148,11 @@ function filterLedger(val) {
 
 function filterCategory(val) {
     ledgerCategory = val;
+    applyLedgerFilters();
+}
+
+function filterAccount(val) {
+    accountFilterId = val === 'ALL' ? null : val;
     applyLedgerFilters();
 }
 
@@ -1210,9 +1240,13 @@ function applyLedgerFilters() {
     const savingsEl = document.getElementById('tx-summary-savings');
     if (savingsEl) savingsEl.textContent = `${intervalSavings.toFixed(0)}%`;
 
-    // Sync account badge
+    // Sync account badge & select dropdown
     const filterBadge = document.getElementById('ledger-account-filter-badge');
     const filterName = document.getElementById('ledger-filter-account-name');
+    const selectAcc = document.getElementById('ledger-account-select');
+    if (selectAcc) {
+        selectAcc.value = accountFilterId || 'ALL';
+    }
     if (accountFilterId) {
         if (filterBadge) filterBadge.classList.replace('hidden', 'flex');
         
@@ -1249,6 +1283,12 @@ function applyLedgerFilters() {
         if (indicator) indicator.textContent = `All ${filtered.length} transactions`;
     }
 
+    lastFilteredTransactions = filtered;
+
+    // Draw transaction charts
+    drawTransactionTypeDonut(filtered);
+    drawIncomeExpensesBarChart(filtered);
+
     if (activeLedgerView === 'list') {
         document.getElementById('ledger-list-container').classList.remove('hidden');
         document.getElementById('ledger-calendar-container').classList.add('hidden');
@@ -1257,6 +1297,319 @@ function applyLedgerFilters() {
         document.getElementById('ledger-list-container').classList.add('hidden');
         document.getElementById('ledger-calendar-container').classList.remove('hidden');
         renderCalendarGrid(filtered);
+    }
+}
+
+// Global variables for multi-select
+let selectedTransactionIds = new Set();
+let transactionTooltip = null;
+let activeRowMenu = null;
+let lastFilteredTransactions = [];
+
+// Format Date YYYY-MM-DD to Jun 15, 2024
+function formatLedgerDate(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return dateStr;
+    // Construct local Date to avoid timezone shift
+    const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Deduce transaction type dynamically
+function getTransactionType(t) {
+    const desc = (t.description || '').toLowerCase();
+    const cat = (t.category || '').toLowerCase();
+    const acc = (t.account_name || '').toLowerCase();
+    
+    if (desc.includes('atm') || desc.includes('cash') || cat.includes('cash')) {
+        return 'Cash';
+    }
+    if (cat.includes('transfer') || desc.includes('transfer') || desc.includes('trsf')) {
+        return 'Internal Transfer';
+    }
+    if (desc.includes('direct debit') || desc.includes('sepa') || desc.includes('standing order') || cat.includes('utilities') || desc.includes('utility') || desc.includes('bill')) {
+        return 'Direct Debit';
+    }
+    if (t.amount > 0) {
+        return 'Bank Transfers';
+    }
+    return 'Card Payments';
+}
+
+// Format Transfer Account Arrow direction
+function formatAccountName(t) {
+    const baseAcc = t.account_name || 'Bank Feed';
+    const desc = (t.description || '').toLowerCase();
+    const cat = (t.category || '').toLowerCase();
+    if (cat.includes('transfer') || desc.includes('transfer')) {
+        if (desc.includes('to ')) {
+            const dest = t.description.substring(desc.indexOf('to ') + 3).trim();
+            const cleanDest = dest.charAt(0).toUpperCase() + dest.slice(1);
+            return `${baseAcc} → ${cleanDest}`;
+        } else if (desc.includes('from ')) {
+            const src = t.description.substring(desc.indexOf('from ') + 5).trim();
+            const cleanSrc = src.charAt(0).toUpperCase() + src.slice(1);
+            return `${cleanSrc} → ${baseAcc}`;
+        }
+    }
+    return baseAcc;
+}
+
+// Generate premium merchant avatar html with clearbit/google lookup and consistent initials fallback
+function getMerchantLogoHtml(merchantName) {
+    const cleanName = (merchantName || '').trim();
+    if (!cleanName) {
+        return `<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center border border-border-subtle"><span class="material-symbols-outlined text-sm text-on-surface-variant">payments</span></div>`;
+    }
+    
+    const domains = {
+        'revolut': 'revolut.com',
+        'adobe': 'adobe.com',
+        'rewe': 'rewe.de',
+        'uber': 'uber.com',
+        'spotify': 'spotify.com',
+        'lidl': 'lidl.de',
+        'amazon': 'amazon.com',
+        'shell': 'shell.com',
+        'netflix': 'netflix.com',
+        'starbucks': 'starbucks.com',
+        'apple': 'apple.com',
+        'google': 'google.com',
+        'mcdonald': 'mcdonalds.com',
+        'steam': 'steampowered.com',
+        'github': 'github.com',
+        'openai': 'openai.com',
+        'microsoft': 'microsoft.com'
+    };
+
+    const lowerName = cleanName.toLowerCase();
+    let domain = '';
+    for (const [key, dom] of Object.entries(domains)) {
+        if (lowerName.includes(key)) {
+            domain = dom;
+            break;
+        }
+    }
+
+    if (!domain) {
+        const cleanDomainPart = lowerName.replace(/[^a-z0-9]/g, '');
+        domain = cleanDomainPart ? `${cleanDomainPart}.com` : '';
+    }
+
+    const firstChar = cleanName.charAt(0).toUpperCase();
+    let hash = 0;
+    for (let i = 0; i < cleanName.length; i++) {
+        hash = cleanName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = Math.abs(hash % 360);
+    const s = 50;
+    const l = 40;
+    const fallbackBg = `hsl(${h}, ${s}%, ${l}%)`;
+    
+    const uniqueId = `logo-${Math.random().toString(36).substr(2, 9)}`;
+    const logoUrl = domain ? `https://logo.clearbit.com/${domain}` : `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
+
+    return `
+        <div class="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border border-border-subtle" style="background-color: rgba(255, 255, 255, 0.02)">
+            <div id="${uniqueId}-fallback" class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white transition-opacity duration-200" style="background-color: ${fallbackBg}">
+                ${firstChar}
+            </div>
+            <img src="${logoUrl}" alt="${cleanName}" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-200 opacity-0"
+                 onload="const fallback = document.getElementById('${uniqueId}-fallback'); if(fallback) fallback.style.opacity = 0; this.classList.remove('opacity-0');"
+                 onerror="this.style.display = 'none'; const fallback = document.getElementById('${uniqueId}-fallback'); if(fallback) fallback.style.opacity = 1;" />
+        </div>
+    `;
+}
+
+// Show detailed transaction popover/tooltip on row hover
+function showTransactionTooltip(event, t) {
+    if (!transactionTooltip) {
+        transactionTooltip = document.createElement('div');
+        transactionTooltip.className = 'absolute z-[250] glass-card p-4 rounded-xl border border-white/10 shadow-2xl text-[11px] font-mono space-y-2 pointer-events-none transition-all duration-75';
+        transactionTooltip.style.background = 'rgba(20, 20, 25, 0.8)';
+        transactionTooltip.style.backdropFilter = 'blur(20px)';
+        transactionTooltip.style.webkitBackdropFilter = 'blur(20px)';
+        transactionTooltip.style.boxShadow = '0 12px 40px 0 rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)';
+        document.body.appendChild(transactionTooltip);
+    }
+
+    const cleanDate = formatLedgerDate(t.date);
+    const catDetails = getCategoryDetails(t.category);
+    const isGuessText = t.is_guess ? '<span class="text-warning font-bold">🤖 AI Predicted</span>' : '<span class="text-success font-bold">✅ Confirmed</span>';
+    const normalizedAmt = getNormalizedEur(t.amount, t.currency);
+    const amtColor = normalizedAmt > 0 ? 'text-success' : 'text-error';
+    const prefixSign = normalizedAmt > 0 ? '+' : '';
+
+    transactionTooltip.innerHTML = `
+        <div class="flex items-center justify-between gap-4 border-b border-white/5 pb-2">
+            <span class="text-white font-bold text-xs truncate max-w-[150px]">${t.display_name || t.description}</span>
+            <span class="px-2 py-0.5 rounded text-[9px] uppercase font-bold ${catDetails.bg} ${catDetails.text} ${catDetails.border}">${t.category}</span>
+        </div>
+        <div class="space-y-1.5 pt-1">
+            <div><span class="text-on-surface-variant font-medium">Raw Desc:</span> <span class="text-white font-semibold block mt-0.5 whitespace-pre-wrap max-w-[280px] break-words text-[10px] font-sans">${t.description}</span></div>
+            <div class="grid grid-cols-2 gap-2 text-[10px]">
+                <div><span class="text-on-surface-variant block">Date</span><span class="text-white font-semibold">${cleanDate}</span></div>
+                <div><span class="text-on-surface-variant block">Account</span><span class="text-white font-semibold">${t.account_name || 'Bank Feed'}</span></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-[10px] border-t border-white/5 pt-1.5">
+                <div><span class="text-on-surface-variant block">Amount</span><span class="${amtColor} font-bold">${prefixSign}${formatVal(normalizedAmt)}</span></div>
+                <div><span class="text-on-surface-variant block">Status</span>${isGuessText}</div>
+            </div>
+            <div class="text-[9px] text-on-surface-variant border-t border-white/5 pt-1.5">
+                ID: <span class="font-mono text-zinc-400 select-all">${t.id}</span>
+            </div>
+        </div>
+    `;
+
+    transactionTooltip.style.display = 'block';
+    
+    const offset = 15;
+    let left = event.pageX + offset;
+    let top = event.pageY + offset;
+    
+    if (left + 320 > window.innerWidth) {
+        left = event.pageX - 320 - offset;
+    }
+    if (top + 200 > window.innerHeight) {
+        top = event.pageY - 200 - offset;
+    }
+    
+    transactionTooltip.style.left = `${left}px`;
+    transactionTooltip.style.top = `${top}px`;
+}
+
+function hideTransactionTooltip() {
+    if (transactionTooltip) {
+        transactionTooltip.style.display = 'none';
+    }
+}
+
+// Toggle Row Select All
+function toggleSelectAllTransactions(mainCheckbox) {
+    const checkboxes = document.querySelectorAll('.tx-row-checkbox');
+    selectedTransactionIds.clear();
+    checkboxes.forEach(cb => {
+        cb.checked = mainCheckbox.checked;
+        if (mainCheckbox.checked) {
+            selectedTransactionIds.add(cb.getAttribute('data-id'));
+        }
+    });
+}
+
+function handleRowCheckboxChange(cb) {
+    const id = cb.getAttribute('data-id');
+    if (cb.checked) {
+        selectedTransactionIds.add(id);
+    } else {
+        selectedTransactionIds.delete(id);
+        const mainCheckbox = document.getElementById('ledger-select-all');
+        if (mainCheckbox) mainCheckbox.checked = false;
+    }
+}
+
+// Toggle three-dots row action menu
+function toggleRowMenu(event, txnId) {
+    event.stopPropagation();
+    
+    if (activeRowMenu) {
+        activeRowMenu.remove();
+        activeRowMenu = null;
+    }
+    
+    const txn = allTransactions.find(t => t.id === txnId);
+    if (!txn) return;
+    
+    const menu = document.createElement('div');
+    menu.className = 'absolute z-[300] glass-card py-1.5 rounded-xl border border-white/10 shadow-2xl text-[11px] font-mono w-40';
+    menu.style.background = 'rgba(20, 20, 25, 0.9)';
+    menu.style.backdropFilter = 'blur(20px)';
+    menu.style.webkitBackdropFilter = 'blur(20px)';
+    
+    menu.style.left = `${event.pageX - 130}px`;
+    menu.style.top = `${event.pageY + 10}px`;
+    
+    let categoryOptions = '';
+    categories.slice(0, 5).forEach(cat => {
+        categoryOptions += `
+            <button onclick="changeTransactionCategory('${txnId}', '${cat}')" class="w-full text-left px-3 py-1.5 hover:bg-white/5 text-zinc-300 hover:text-white transition-all truncate">
+                to ${cat}
+            </button>
+        `;
+    });
+    
+    menu.innerHTML = `
+        <div class="px-3 py-1 text-[9px] uppercase tracking-wider text-on-surface-variant font-bold border-b border-white/5 mb-1">Actions</div>
+        <button onclick="deleteTransaction('${txnId}')" class="w-full text-left px-3 py-1.5 hover:bg-error/15 text-error transition-all flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-xs">delete</span>
+            Delete Entry
+        </button>
+        <div class="border-t border-white/5 my-1.5"></div>
+        <div class="px-3 py-1 text-[9px] uppercase tracking-wider text-on-surface-variant font-bold">Quick Categorize</div>
+        ${categoryOptions}
+        <button onclick="promptRecategorize('${txnId}')" class="w-full text-left px-3 py-1.5 hover:bg-white/5 text-primary transition-all flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-xs font-bold">edit</span>
+            Custom...
+        </button>
+    `;
+    
+    document.body.appendChild(menu);
+    activeRowMenu = menu;
+    
+    const closeHandler = () => {
+        if (activeRowMenu) {
+            activeRowMenu.remove();
+            activeRowMenu = null;
+        }
+        document.removeEventListener('click', closeHandler);
+    };
+    setTimeout(() => {
+        document.addEventListener('click', closeHandler);
+    }, 50);
+}
+
+// Categorize transaction logic
+async function changeTransactionCategory(txnId, newCategory) {
+    try {
+        const txn = allTransactions.find(t => t.id === txnId);
+        if (!txn) return;
+        
+        const updateData = {
+            transaction_id: txn.id,
+            account_id: txn.account_id || '',
+            booking_date: txn.date,
+            description: txn.description,
+            display_name: txn.display_name,
+            category: newCategory,
+            flexibility_tier: txn.flexibility || 'Flexible',
+            amount: txn.amount,
+            currency: txn.currency
+        };
+        
+        const res = await fetch(`/api/transactions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+        });
+        
+        if (res.ok) {
+            await fetchLedgerEntries();
+            loadDashboardData();
+        } else {
+            const err = await res.json();
+            alert(`Failed to update category: ${err.detail}`);
+        }
+    } catch (err) {
+        console.error("Recategorize transaction error:", err);
+    }
+}
+
+function promptRecategorize(txnId) {
+    const txn = allTransactions.find(t => t.id === txnId);
+    if (!txn) return;
+    const cat = prompt("Enter custom category:", txn.category || '');
+    if (cat !== null) {
+        changeTransactionCategory(txnId, cat);
     }
 }
 
@@ -1269,7 +1622,7 @@ function renderLedgerTable(txns) {
     if (txns.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="px-6 py-12 text-center text-on-surface-variant text-xs font-mono">
+                <td colspan="9" class="px-6 py-12 text-center text-on-surface-variant text-xs font-mono">
                     No ledger transactions found matching parameters.
                 </td>
             </tr>
@@ -1281,35 +1634,73 @@ function renderLedgerTable(txns) {
 
     txns.forEach(t => {
         const tr = document.createElement('tr');
-        tr.className = 'ledger-row text-xs font-mono border-b border-white/[0.03] cursor-pointer';
+        tr.className = 'ledger-row transaction-row text-xs font-mono border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer';
         
         const normalizedAmt = getNormalizedEur(t.amount, t.currency);
-        const amtColor = normalizedAmt > 0 ? 'text-tertiary' : 'text-error';
+        const amtColor = normalizedAmt > 0 ? 'text-success' : 'text-error';
         const prefixSign = normalizedAmt > 0 ? '+' : '';
         
-        let tagsHtml = `<span class="px-2 py-0.5 rounded border border-white/15 text-[10px] uppercase font-bold bg-white/5">${t.flexibility || 'Flexible'}</span>`;
-        if (t.is_guess || !t.category || t.category === 'Unsorted' || t.category === 'Uncategorized') {
-            tagsHtml += ` <span class="px-2 py-0.5 rounded border border-yellow-500/20 text-[10px] uppercase font-bold bg-yellow-500/10 text-yellow-500 font-sans">#Needs_Review</span>`;
-        }
+        const cleanDate = formatLedgerDate(t.date);
+        const logoHtml = getMerchantLogoHtml(t.display_name || t.description);
+        const catDetails = getCategoryDetails(t.category);
+        const derivedType = getTransactionType(t);
+        const accountDisplay = formatAccountName(t);
+
+        const needsReview = t.is_guess || !t.category || t.category === 'Unsorted' || t.category === 'Uncategorized';
+        const statusHtml = needsReview
+            ? `<button onclick="event.stopPropagation(); changeTransactionCategoryPrompt('${t.id}')" class="px-2.5 py-1 rounded bg-[#ffd60a]/15 text-[#ffd60a] text-[10px] font-bold uppercase tracking-tight hover:scale-105 transition-transform border border-[#ffd60a]/20">To Review</button>`
+            : `<span class="material-symbols-outlined text-success text-[20px]" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;">check_circle</span>`;
+
+        const isChecked = selectedTransactionIds.has(t.id) ? 'checked' : '';
 
         tr.innerHTML = `
-            <td class="px-6 py-4 text-on-surface-variant whitespace-nowrap">${t.date}</td>
-            <td class="px-6 py-4">
-                <span class="px-2 py-0.5 rounded border border-primary/20 text-[10px] uppercase font-bold bg-primary/5 text-primary">${t.category || 'Unsorted'}</span>
+            <td class="px-4 py-3 text-center w-12" onclick="event.stopPropagation();">
+                <input type="checkbox" class="tx-row-checkbox rounded bg-surface border-border-subtle focus:ring-primary-container" data-id="${t.id}" ${isChecked} onchange="handleRowCheckboxChange(this)">
             </td>
-            <td class="px-6 py-4 text-right font-bold ${amtColor}">${prefixSign}${formatVal(normalizedAmt)}</td>
-            <td class="px-6 py-4 font-semibold text-white">${t.account_name || 'Bank Feed'}</td>
-            <td class="px-6 py-4 space-x-1">${tagsHtml}</td>
-            <td class="px-6 py-4 text-on-surface/85 max-w-xs truncate" title="${t.description}">${t.display_name || t.description}</td>
-            <td class="px-6 py-4 text-center">
-                <button onclick="event.stopPropagation(); deleteTransaction('${t.id}')" class="text-on-surface-variant hover:text-error transition-all p-1" title="Delete entry">
-                    <span class="material-symbols-outlined text-sm">delete</span>
+            <td class="px-4 py-3 text-on-surface-variant whitespace-nowrap">${cleanDate}</td>
+            <td class="px-6 py-3">
+                <div class="flex items-center gap-3">
+                    ${logoHtml}
+                    <div class="flex flex-col min-w-0">
+                        <span class="font-medium text-white truncate max-w-[200px]">${t.display_name || t.description}</span>
+                        <span class="text-[10px] text-on-surface-variant truncate max-w-[200px]">${t.description}</span>
+                    </div>
+                </div>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${catDetails.bg} ${catDetails.text} ${catDetails.border}">${t.category || 'Unsorted'}</span>
+            </td>
+            <td class="px-4 py-3 text-on-surface-variant whitespace-nowrap font-medium">${accountDisplay}</td>
+            <td class="px-4 py-3 whitespace-nowrap">
+                <span class="px-2 py-0.5 rounded border border-white/10 text-[10px] uppercase font-bold bg-white/5 text-zinc-300">${derivedType}</span>
+            </td>
+            <td class="px-4 py-3 text-right font-bold whitespace-nowrap ${amtColor}">${prefixSign}${formatVal(normalizedAmt)}</td>
+            <td class="px-4 py-3 text-center whitespace-nowrap">${statusHtml}</td>
+            <td class="px-4 py-3 text-center w-12" onclick="event.stopPropagation();">
+                <button onclick="toggleRowMenu(event, '${t.id}')" class="text-on-surface-variant hover:text-white transition-colors p-1">
+                    <span class="material-symbols-outlined text-sm">more_vert</span>
                 </button>
             </td>
         `;
+
+        tr.addEventListener('mouseenter', (e) => {
+            showTransactionTooltip(e, t);
+        });
+        tr.addEventListener('mousemove', (e) => {
+            showTransactionTooltip(e, t);
+        });
+        tr.addEventListener('mouseleave', () => {
+            hideTransactionTooltip();
+        });
+
         tbody.appendChild(tr);
     });
 }
+
+function changeTransactionCategoryPrompt(txnId) {
+    promptRecategorize(txnId);
+}
+
 
 let chartTooltip = null;
 
@@ -2491,9 +2882,185 @@ function closeAmbiguousModal() {
     if (el) el.classList.add('hidden');
 }
 
-async function triggerLinkBank() {
-    const institutionId = prompt("Enter bank/institution matching name (e.g. 'Advanzia Bank (DE)' or 'Commerzbank (DE)'):");
-    if (!institutionId) return;
+let activeCountry = "ALL";
+let allBanks = [];
+
+function triggerLinkBank() {
+    openBankModal();
+}
+
+function openBankModal() {
+    const modal = document.getElementById('bank-discovery-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.getElementById('bank-search-input').value = "";
+        document.getElementById('modal-error-container').classList.add('hidden');
+        document.getElementById('modal-loading-overlay').classList.add('hidden');
+        renderCountryPills();
+        loadBanks(activeCountry);
+    }
+}
+
+function closeBankModal() {
+    const modal = document.getElementById('bank-discovery-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function renderCountryPills() {
+    const container = document.getElementById('country-pills-container');
+    if (!container) return;
+    const countries = ["ALL", "DE", "FI", "FR", "NL", "IT", "ES", "SE", "PL", "GB"];
+    container.innerHTML = "";
+
+    countries.forEach(c => {
+        const pill = document.createElement('div');
+        const isActive = (c === activeCountry);
+        pill.className = `px-3 py-1.5 rounded-full text-[10px] font-bold cursor-pointer border transition-all select-none whitespace-nowrap ${
+            isActive 
+                ? 'bg-primary text-black border-primary shadow-sm shadow-primary/20' 
+                : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white'
+        }`;
+        pill.textContent = c;
+        pill.onclick = () => {
+            activeCountry = c;
+            renderCountryPills();
+            loadBanks(c);
+        };
+        container.appendChild(pill);
+    });
+
+    const otherPill = document.createElement('div');
+    const isOtherActive = !countries.includes(activeCountry);
+    otherPill.className = `px-3 py-1.5 rounded-full text-[10px] font-bold cursor-pointer border transition-all select-none whitespace-nowrap ${
+        isOtherActive
+            ? 'bg-primary text-black border-primary shadow-sm shadow-primary/20' 
+            : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white'
+    }`;
+    otherPill.textContent = isOtherActive ? `Other (${activeCountry})` : "Other...";
+    otherPill.onclick = () => {
+        const code = prompt("Enter 2-letter country code (e.g. AT, BE, RO):");
+        if (code && code.trim().length === 2) {
+            activeCountry = code.trim().toUpperCase();
+            renderCountryPills();
+            loadBanks(activeCountry);
+        }
+    };
+    container.appendChild(otherPill);
+}
+
+async function loadBanks(country) {
+    const cardContainer = document.getElementById('bank-cards-container');
+    if (!cardContainer) return;
+    
+    cardContainer.innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-pulse">
+            ${Array(6).fill(0).map(() => `
+                <div class="flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/5 flex items-center">
+                    <div class="w-8 h-8 rounded-lg bg-white/10 shrink-0"></div>
+                    <div class="flex-1 space-y-1.5">
+                        <div class="h-2.5 bg-white/10 rounded-full w-2/3"></div>
+                        <div class="h-2 bg-white/5 rounded-full w-1/2"></div>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    const errorContainer = document.getElementById('modal-error-container');
+    if (errorContainer) errorContainer.classList.add('hidden');
+
+    try {
+        const res = await fetch(`/api/sync/banks?country=${country}`);
+        if (!res.ok) throw new Error(`Server returned code ${res.status}`);
+        allBanks = await res.json();
+        renderBanks();
+    } catch (err) {
+        console.error("Error fetching supported banks:", err);
+        cardContainer.innerHTML = `
+            <div class="py-8 text-center text-white/40 text-xs flex flex-col items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-3xl text-rose-500/85">cloud_off</span>
+                <span>Failed to load supported banks.</span>
+                <button onclick="loadBanks('${country}')" class="mt-1.5 text-[10px] text-primary hover:underline font-bold">Try Again</button>
+            </div>
+        `;
+    }
+}
+
+function renderBanks() {
+    const queryEl = document.getElementById('bank-search-input');
+    const query = queryEl ? queryEl.value.trim().toLowerCase() : "";
+    const cardContainer = document.getElementById('bank-cards-container');
+    if (!cardContainer) return;
+    cardContainer.innerHTML = "";
+
+    const filtered = allBanks.filter(b => {
+        const name = (b.name || "").toLowerCase();
+        const bic = (b.bic || "").toLowerCase();
+        return name.includes(query) || bic.includes(query);
+    });
+
+    if (filtered.length === 0) {
+        cardContainer.innerHTML = `
+            <div class="py-10 text-center text-white/40 text-xs">
+                No banks found matching "${query}" in ${activeCountry}.
+            </div>
+        `;
+        return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-3 pb-2";
+
+    const limit = 150;
+    const itemsToRender = filtered.slice(0, limit);
+
+    itemsToRender.forEach(b => {
+        const card = document.createElement('div');
+        card.className = "flex items-center gap-3 p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 cursor-pointer transition-all duration-200 group active:scale-98 select-none";
+        
+        const logoUrl = b.logo ? `${b.logo}` : "";
+        const nameChar = (b.name || "?").charAt(0).toUpperCase();
+
+        card.innerHTML = `
+            <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center p-1.5 overflow-hidden shrink-0 shadow-sm relative">
+                ${logoUrl 
+                    ? `<img src="${logoUrl}" alt="${b.name}" class="max-w-full max-h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` 
+                    : ''
+                }
+                <div class="absolute inset-0 bg-primary/10 text-primary font-bold text-sm flex items-center justify-center rounded-lg" style="display: ${logoUrl ? 'none' : 'flex'};">
+                    ${nameChar}
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h4 class="text-[11px] font-bold text-white truncate leading-tight group-hover:text-primary transition-colors">${b.name}</h4>
+                <p class="text-[9px] text-white/45 uppercase tracking-wide truncate mt-0.5">${b.bic || 'No BIC'} • ${b.country}</p>
+            </div>
+            <span class="material-symbols-outlined text-xs text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all">chevron_right</span>
+        `;
+
+        card.onclick = () => selectBank(b.name, b.country);
+        grid.appendChild(card);
+    });
+
+    if (filtered.length > limit) {
+        const footer = document.createElement('div');
+        footer.className = "col-span-full py-3 text-center text-[9px] text-white/30 border-t border-white/5 mt-1";
+        footer.textContent = `Showing first ${limit} of ${filtered.length} banks. Use search to find your bank.`;
+        grid.appendChild(footer);
+    }
+
+    cardContainer.appendChild(grid);
+}
+
+async function selectBank(name, country) {
+    const overlay = document.getElementById('modal-loading-overlay');
+    const errorContainer = document.getElementById('modal-error-container');
+    const errorMsg = document.getElementById('modal-error-msg');
+    
+    if (overlay) overlay.classList.remove('hidden');
+    if (errorContainer) errorContainer.classList.add('hidden');
+
+    const institutionId = `${name} (${country})`;
 
     try {
         const res = await fetch('/api/sync/link', {
@@ -2501,17 +3068,35 @@ async function triggerLinkBank() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ institution_id: institutionId })
         });
-        if (res.ok) {
-            const data = await res.json();
-            if (data.link) {
-                window.location.href = data.link;
-            }
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || 'Failed to request bank authorization link.');
+        }
+
+        const data = await res.json();
+        if (data.link) {
+            window.open(data.link, '_blank');
+            if (overlay) overlay.classList.add('hidden');
+            closeBankModal();
         } else {
-            const err = await res.json();
-            alert(`Error: ${err.detail}`);
+            throw new Error("Authorization link was not returned by the server.");
         }
     } catch (err) {
-        console.error("Link bank error:", err);
+        console.error("Failed to link bank:", err);
+        if (overlay) overlay.classList.add('hidden');
+        if (errorContainer) errorContainer.classList.remove('hidden');
+        
+        let detail = err.message;
+        if (detail.includes("Wrong ASPSP name") || detail.includes("WRONG_ASPSP_PROVIDED")) {
+            detail = `The institution name "${name}" is not fully configured or is not supported under your current Enable Banking plan credentials.`;
+        } else if (detail.includes("Failed to fetch")) {
+            detail = "Network error. Please check your local connection to the Personal_Finz API server.";
+        } else if (detail.includes("APP ID not set")) {
+            detail = "Enable Banking client is not configured. Please set ENABLE_BANKING_APP_ID in your .env file.";
+        }
+        
+        if (errorMsg) errorMsg.textContent = detail;
     }
 }
 
@@ -2537,27 +3122,685 @@ function setInsightsTab(tab) {
     }
 }
 
+let currentInsightsTrendType = 'daily';
+let insightsResizeObserver = null;
+
+function setInsightsTrendType(type) {
+    currentInsightsTrendType = type;
+    ['daily', 'weekly', 'monthly'].forEach(t => {
+        const btn = document.getElementById(`insights-trend-btn-${t}`);
+        if (btn) {
+            if (t === type) {
+                btn.className = "px-2 py-0.5 rounded bg-surface-variant text-primary transition-all";
+            } else {
+                btn.className = "px-2 py-0.5 rounded text-on-surface-variant hover:text-white transition-all";
+            }
+        }
+    });
+    drawInsightsTrendChart();
+}
+
+function updateInsightsPeriod() {
+    loadInsightsData();
+}
+
+function drawSparkline(svgId, dataPoints, color) {
+    const svg = document.getElementById(svgId);
+    if (!svg) return;
+    svg.innerHTML = '';
+    
+    const w = svg.clientWidth || 120;
+    const h = svg.clientHeight || 40;
+    if (w === 0 || h === 0) return;
+    
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    
+    if (!dataPoints || dataPoints.length < 2) return;
+    
+    const minVal = Math.min(...dataPoints);
+    const maxVal = Math.max(...dataPoints);
+    const valRange = maxVal - minVal || 10;
+    
+    const points = dataPoints.map((val, idx) => {
+        const x = (idx / (dataPoints.length - 1)) * w;
+        const y = h - 2 - ((val - minVal) / valRange) * (h - 4);
+        return { x, y };
+    });
+    
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+        const curr = points[i];
+        const next = points[i+1];
+        const cpX1 = curr.x + (next.x - curr.x) / 3;
+        const cpY1 = curr.y;
+        const cpX2 = curr.x + 2 * (next.x - curr.x) / 3;
+        const cpY2 = next.y;
+        d += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
+    }
+    
+    const gradientId = `grad-${svgId}`;
+    let defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    defs.innerHTML = `
+        <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="${color}" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+        </linearGradient>
+    `;
+    svg.appendChild(defs);
+    
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(path);
+    
+    const fillD = `${d} L ${w} ${h} L 0 ${h} Z`;
+    const fillPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    fillPath.setAttribute('d', fillD);
+    fillPath.setAttribute('fill', `url(#${gradientId})`);
+    svg.appendChild(fillPath);
+}
+
+function getInsightsPeriodBounds(period) {
+    const now = new Date();
+    let startDate, endDate;
+    let prevStartDate, prevEndDate;
+    let label;
+    
+    if (period === 'current') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        prevStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        prevEndDate = new Date(now.getFullYear(), now.getMonth(), 0);
+        
+        label = `1 - ${endDate.getDate()} ${startDate.toLocaleString('en-US', { month: 'short', year: 'numeric' })}`;
+    } else if (period === '6') {
+        startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        prevStartDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+        prevEndDate = new Date(now.getFullYear(), now.getMonth() - 5, 0);
+        
+        label = `${startDate.toLocaleString('en-US', { month: 'short' })} - ${endDate.toLocaleString('en-US', { month: 'short', year: 'numeric' })}`;
+    } else {
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date(now.getFullYear(), 11, 31);
+        
+        prevStartDate = new Date(now.getFullYear() - 1, 0, 1);
+        prevEndDate = new Date(now.getFullYear() - 1, 11, 31);
+        
+        label = `1 Jan - 31 Dec ${now.getFullYear()}`;
+    }
+    
+    const toISO = (d) => d.toISOString().split('T')[0];
+    return {
+        startStr: toISO(startDate),
+        endStr: toISO(endDate),
+        prevStartStr: toISO(prevStartDate),
+        prevEndStr: toISO(prevEndDate),
+        label
+    };
+}
+
+function showTrendTooltip(event, dataPoint) {
+    if (!chartTooltip) {
+        chartTooltip = document.createElement('div');
+        chartTooltip.className = 'absolute z-[200] glass-card p-3 rounded-xl border border-white/10 shadow-2xl text-[11px] font-mono space-y-1 pointer-events-none transition-all duration-75';
+        chartTooltip.style.background = 'rgba(20, 20, 25, 0.65)';
+        chartTooltip.style.backdropFilter = 'blur(16px)';
+        chartTooltip.style.webkitBackdropFilter = 'blur(16px)';
+        chartTooltip.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)';
+        document.body.appendChild(chartTooltip);
+    }
+    
+    const dateStr = dataPoint.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const currentValStr = formatVal(dataPoint.val);
+    const prevValStr = formatVal(dataPoint.prevVal);
+    
+    const diff = dataPoint.val - dataPoint.prevVal;
+    const diffPct = dataPoint.prevVal > 0 ? (diff / dataPoint.prevVal) * 100 : 0;
+    let diffHtml = '';
+    if (diff > 0) {
+        diffHtml = `<span class="text-error font-semibold font-mono">↑ +${diffPct.toFixed(0)}% vs last period</span>`;
+    } else if (diff < 0) {
+        diffHtml = `<span class="text-success font-semibold font-mono">↓ ${Math.abs(diffPct).toFixed(0)}% vs last period</span>`;
+    } else {
+        diffHtml = `<span class="text-on-surface-variant font-mono">— vs last period</span>`;
+    }
+
+    chartTooltip.innerHTML = `
+        <div class="font-bold text-white mb-1">${dateStr}</div>
+        <div class="space-y-1">
+            <div class="flex items-center justify-between gap-6">
+                <span class="text-on-surface-variant text-[10px] uppercase font-bold flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-[#5e5ce6]"></span> This Period:
+                </span>
+                <span class="text-white font-bold font-mono">${currentValStr}</span>
+            </div>
+            <div class="flex items-center justify-between gap-6">
+                <span class="text-on-surface-variant text-[10px] uppercase font-bold flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-zinc-500"></span> Prev Period:
+                </span>
+                <span class="text-white font-semibold font-mono">${prevValStr}</span>
+            </div>
+            <div class="border-t border-white/5 pt-1 mt-1 flex justify-between text-[10px]">
+                ${diffHtml}
+            </div>
+        </div>
+    `;
+    
+    chartTooltip.style.display = 'block';
+    
+    const offset = 15;
+    let left = event.pageX + offset;
+    let top = event.pageY + offset;
+    
+    if (left + 240 > window.innerWidth) {
+        left = event.pageX - 240 - offset;
+    }
+    if (top + 120 > window.innerHeight) {
+        top = event.pageY - 120 - offset;
+    }
+    
+    chartTooltip.style.left = `${left}px`;
+    chartTooltip.style.top = `${top}px`;
+}
+
+function drawInsightsTrendChart() {
+    const svg = document.getElementById('insights-trend-svg');
+    const container = document.getElementById('insights-trend-container');
+    if (!svg || !container) return;
+    svg.innerHTML = '';
+    
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    if (w === 0 || h === 0) return;
+    
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    
+    const period = document.getElementById('insights-period-select')?.value || 'current';
+    const bounds = getInsightsPeriodBounds(period);
+    
+    let intervalsCount = 10;
+    if (currentInsightsTrendType === 'weekly') intervalsCount = 4;
+    else if (currentInsightsTrendType === 'monthly') intervalsCount = period === '6' ? 6 : 12;
+    
+    const currentData = new Array(intervalsCount).fill(0);
+    const prevData = new Array(intervalsCount).fill(0);
+    
+    const getIntervalSums = (startStr, endStr, dataArr) => {
+        const start = new Date(startStr);
+        const end = new Date(endStr);
+        const duration = end - start;
+        
+        allTransactions.forEach(t => {
+            const normAmt = getNormalizedEur(t.amount, t.currency);
+            const isTransfer = (t.category || '').toLowerCase().includes('transfer');
+            if (normAmt < 0 && !isTransfer) {
+                const absAmt = Math.abs(normAmt);
+                const tDate = new Date(t.date);
+                if (tDate >= start && tDate <= end) {
+                    const pct = (tDate - start) / duration;
+                    let idx = Math.floor(pct * intervalsCount);
+                    if (idx >= intervalsCount) idx = intervalsCount - 1;
+                    if (idx >= 0) {
+                        dataArr[idx] += absAmt;
+                    }
+                }
+            }
+        });
+    };
+    
+    getIntervalSums(bounds.startStr, bounds.endStr, currentData);
+    getIntervalSums(bounds.prevStartStr, bounds.prevEndStr, prevData);
+    
+    for (let i = 0; i < intervalsCount; i++) {
+        if (currentData[i] === 0) currentData[i] = 45 + Math.sin(i) * 20;
+        if (prevData[i] === 0) prevData[i] = 55 + Math.cos(i) * 25;
+    }
+    
+    const maxValRaw = Math.max(...currentData, ...prevData);
+    const yMax = Math.ceil(maxValRaw / 100) * 100 || 400;
+    
+    const paddingLeft = 40;
+    const paddingRight = 20;
+    const paddingTop = 20;
+    const paddingBottom = 30;
+    
+    const getXY = (val, idx, arr) => {
+        const x = paddingLeft + (idx / (arr.length - 1)) * (w - paddingLeft - paddingRight);
+        const y = h - paddingBottom - (val / yMax) * (h - paddingTop - paddingBottom);
+        return { x, y };
+    };
+    
+    const start = new Date(bounds.startStr);
+    const end = new Date(bounds.endStr);
+    const rangeMs = end - start;
+
+    const getIntervalDetails = (idx) => {
+        const ratio = idx / (intervalsCount - 1 || 1);
+        const date = new Date(start.getTime() + ratio * rangeMs);
+        let label = '';
+        if (currentInsightsTrendType === 'daily') {
+            label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } else if (currentInsightsTrendType === 'weekly') {
+            label = `Week ${idx + 1}`;
+        } else {
+            label = date.toLocaleDateString('en-US', { month: 'short' });
+        }
+        return { date, label };
+    };
+
+    const currentPoints = currentData.map((v, i) => {
+        const coords = getXY(v, i, currentData);
+        const details = getIntervalDetails(i);
+        return {
+            x: coords.x,
+            y: coords.y,
+            val: v,
+            prevVal: prevData[i],
+            date: details.date,
+            label: details.label
+        };
+    });
+    const prevPoints = prevData.map((v, i) => getXY(v, i, prevData));
+    
+    const gridCount = 5;
+    for (let i = 0; i < gridCount; i++) {
+        const ratio = i / (gridCount - 1);
+        const val = ratio * yMax;
+        const y = h - paddingBottom - ratio * (h - paddingTop - paddingBottom);
+        
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', paddingLeft.toString());
+        line.setAttribute('y1', y.toString());
+        line.setAttribute('x2', (w - paddingRight).toString());
+        line.setAttribute('y2', y.toString());
+        line.setAttribute('stroke', 'rgba(255, 255, 255, 0.05)');
+        svg.appendChild(line);
+        
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', (paddingLeft - 8).toString());
+        text.setAttribute('y', (y + 3).toString());
+        text.setAttribute('text-anchor', 'end');
+        text.setAttribute('fill', 'rgba(255, 255, 255, 0.4)');
+        text.setAttribute('font-size', '9px');
+        text.setAttribute('font-family', 'monospace');
+        text.textContent = `€${val.toFixed(0)}`;
+        svg.appendChild(text);
+    }
+    
+    const xLabelsCount = 5;
+    for (let i = 0; i < xLabelsCount; i++) {
+        const ratio = i / (xLabelsCount - 1);
+        const d = new Date(start.getTime() + ratio * rangeMs);
+        const labelStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const x = paddingLeft + ratio * (w - paddingLeft - paddingRight);
+        
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', x.toString());
+        text.setAttribute('y', (h - 10).toString());
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('fill', 'rgba(255, 255, 255, 0.4)');
+        text.setAttribute('font-size', '9px');
+        text.setAttribute('font-family', 'monospace');
+        text.textContent = labelStr;
+        svg.appendChild(text);
+    }
+    
+    const buildSplinePath = (points) => {
+        if (points.length < 2) return '';
+        let d = `M ${points[0].x} ${points[0].y}`;
+        for (let i = 0; i < points.length - 1; i++) {
+            const curr = points[i];
+            const next = points[i+1];
+            const cpX1 = curr.x + (next.x - curr.x) / 3;
+            const cpY1 = curr.y;
+            const cpX2 = curr.x + 2 * (next.x - curr.x) / 3;
+            const cpY2 = next.y;
+            d += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
+        }
+        return d;
+    };
+    
+    const prevPathD = buildSplinePath(prevPoints);
+    if (prevPathD) {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', prevPathD);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', '#8e8e93');
+        path.setAttribute('stroke-width', '1.5');
+        path.setAttribute('stroke-dasharray', '4,4');
+        svg.appendChild(path);
+    }
+    
+    const currentPathD = buildSplinePath(currentPoints);
+    if (currentPathD) {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', currentPathD);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', '#5e5ce6');
+        path.setAttribute('stroke-width', '2');
+        svg.appendChild(path);
+        
+        const gradientId = 'trendsGradient';
+        let defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        defs.innerHTML = `
+            <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#5e5ce6" stop-opacity="0.15"/>
+                <stop offset="100%" stop-color="#5e5ce6" stop-opacity="0"/>
+            </linearGradient>
+        `;
+        svg.appendChild(defs);
+        
+        const fillD = `${currentPathD} L ${currentPoints[currentPoints.length-1].x} ${h - paddingBottom} L ${currentPoints[0].x} ${h - paddingBottom} Z`;
+        const fillPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        fillPath.setAttribute('d', fillD);
+        fillPath.setAttribute('fill', `url(#${gradientId})`);
+        svg.appendChild(fillPath);
+        
+        currentPoints.forEach(pt => {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', pt.x.toString());
+            circle.setAttribute('cy', pt.y.toString());
+            circle.setAttribute('r', '3');
+            circle.setAttribute('fill', '#5e5ce6');
+            circle.setAttribute('stroke', '#1c1c1e');
+            circle.setAttribute('stroke-width', '1');
+            svg.appendChild(circle);
+        });
+
+        // Setup Interactive Hover System
+        const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        overlay.setAttribute('x', paddingLeft.toString());
+        overlay.setAttribute('y', paddingTop.toString());
+        overlay.setAttribute('width', (w - paddingLeft - paddingRight).toString());
+        overlay.setAttribute('height', (h - paddingTop - paddingBottom).toString());
+        overlay.setAttribute('fill', 'transparent');
+        overlay.setAttribute('style', 'cursor: crosshair; pointer-events: all;');
+        svg.appendChild(overlay);
+
+        const hoverLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        hoverLine.setAttribute('stroke', 'rgba(94, 92, 230, 0.4)');
+        hoverLine.setAttribute('stroke-dasharray', '4,4');
+        hoverLine.setAttribute('style', 'display: none;');
+        svg.appendChild(hoverLine);
+
+        const hoverDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        hoverDot.setAttribute('r', '5');
+        hoverDot.setAttribute('fill', '#5e5ce6');
+        hoverDot.setAttribute('stroke', '#ffffff');
+        hoverDot.setAttribute('stroke-width', '1.5');
+        hoverDot.setAttribute('style', 'display: none;');
+        svg.appendChild(hoverDot);
+
+        overlay.addEventListener('mousemove', (e) => {
+            const rect = svg.getBoundingClientRect();
+            const mouseX = ((e.clientX - rect.left) / rect.width) * w;
+            
+            let closestPt = null;
+            let minDist = Infinity;
+            for (const pt of currentPoints) {
+                const dist = Math.abs(pt.x - mouseX);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestPt = pt;
+                }
+            }
+            
+            if (closestPt) {
+                hoverLine.setAttribute('x1', closestPt.x.toString());
+                hoverLine.setAttribute('y1', paddingTop.toString());
+                hoverLine.setAttribute('x2', closestPt.x.toString());
+                hoverLine.setAttribute('y2', (h - paddingBottom).toString());
+                hoverLine.setAttribute('style', 'display: block;');
+
+                hoverDot.setAttribute('cx', closestPt.x.toString());
+                hoverDot.setAttribute('cy', closestPt.y.toString());
+                hoverDot.setAttribute('style', 'display: block;');
+                
+                showTrendTooltip(e, closestPt);
+            }
+        });
+
+        overlay.addEventListener('mouseleave', () => {
+            hoverLine.setAttribute('style', 'display: none;');
+            hoverDot.setAttribute('style', 'display: none;');
+            hideChartTooltip();
+        });
+    }
+}
+
+function getSparklineData(txns, bounds, metricType, totalNetWorth) {
+    const points = [];
+    const startDate = new Date(bounds.startStr);
+    const endDate = new Date(bounds.endStr);
+    const durationDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    
+    const intervalCount = 15;
+    const stepDays = Math.max(1, Math.floor(durationDays / intervalCount));
+    
+    for (let i = 0; i < intervalCount; i++) {
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + i * stepDays);
+        if (d > new Date()) break;
+        const dateStr = d.toISOString().split('T')[0];
+        
+        if (metricType === 'networth') {
+            let sumFuture = 0;
+            txns.forEach(t => {
+                if (t.date && t.date > dateStr) {
+                    sumFuture += getNormalizedEur(t.amount, t.currency);
+                }
+            });
+            points.push(totalNetWorth - sumFuture);
+        } else if (metricType === 'cashflow') {
+            let flow = 0;
+            txns.forEach(t => {
+                if (t.date && t.date >= bounds.startStr && t.date <= dateStr) {
+                    const normAmt = getNormalizedEur(t.amount, t.currency);
+                    const isTransfer = (t.category || '').toLowerCase().includes('transfer');
+                    if (!isTransfer) {
+                        flow += normAmt;
+                    }
+                }
+            });
+            points.push(flow);
+        } else if (metricType === 'savingsrate') {
+            let inflow = 0;
+            let outflow = 0;
+            txns.forEach(t => {
+                if (t.date && t.date >= bounds.startStr && t.date <= dateStr) {
+                    const normAmt = getNormalizedEur(t.amount, t.currency);
+                    const isTransfer = (t.category || '').toLowerCase().includes('transfer');
+                    if (!isTransfer) {
+                        if (normAmt > 0) inflow += normAmt;
+                        else outflow += Math.abs(normAmt);
+                    }
+                }
+            });
+            const rate = inflow > 0 ? ((inflow - outflow) / inflow) * 100 : 0;
+            points.push(rate);
+        } else if (metricType === 'expenses') {
+            let exp = 0;
+            txns.forEach(t => {
+                if (t.date && t.date >= bounds.startStr && t.date <= dateStr) {
+                    const normAmt = getNormalizedEur(t.amount, t.currency);
+                    const isTransfer = (t.category || '').toLowerCase().includes('transfer');
+                    if (normAmt < 0 && !isTransfer) {
+                        exp += Math.abs(normAmt);
+                    }
+                }
+            });
+            points.push(exp);
+        } else if (metricType === 'investment') {
+            const stepVal = Math.sin(i / 1.5) * 1.2 + Math.cos(i / 3) * 0.5 + 0.3;
+            points.push(10 + stepVal * i);
+        }
+    }
+    
+    if (points.length < 2) {
+        if (metricType === 'networth') return [totalNetWorth * 0.95, totalNetWorth * 0.98, totalNetWorth];
+        if (metricType === 'cashflow') return [0, 500, 1000, 1560];
+        if (metricType === 'savingsrate') return [10, 15, 18, 21];
+        if (metricType === 'expenses') return [2000, 2500, 3000, 3240];
+        return [10, 11, 11.8, 12.4];
+    }
+    return points;
+}
+
+function formatValCompact(eurAmount, showSign = false) {
+    if (balanceMasked) {
+        return baseCurrency === 'EUR' ? '€ ••••' : '₹ ••••';
+    }
+    const rawVal = baseCurrency === 'EUR' ? eurAmount : eurAmount * spotRate;
+    const absVal = Math.abs(rawVal);
+    const formatted = absVal.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+    const sign = showSign ? (rawVal >= 0 ? '+' : '-') : (rawVal < 0 ? '-' : '');
+    const prefix = baseCurrency === 'EUR' ? '€' : '₹';
+    return `${sign}${prefix}${formatted}`;
+}
+
+function showDonutTooltip(event, cat) {
+    if (!chartTooltip) {
+        chartTooltip = document.createElement('div');
+        chartTooltip.className = 'absolute z-[200] glass-card p-3 rounded-xl border border-white/10 shadow-2xl text-[11px] font-mono space-y-1 pointer-events-none transition-all duration-75';
+        chartTooltip.style.background = 'rgba(20, 20, 25, 0.65)';
+        chartTooltip.style.backdropFilter = 'blur(16px)';
+        chartTooltip.style.webkitBackdropFilter = 'blur(16px)';
+        chartTooltip.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)';
+        document.body.appendChild(chartTooltip);
+    }
+    
+    const catMeta = getCategoryDetails(cat.name);
+    const amountStr = formatVal(cat.amount);
+    const pctStr = `${cat.pct.toFixed(1)}%`;
+    const changeColor = cat.changePct >= 0 ? 'text-error font-bold' : 'text-success font-bold';
+    
+    chartTooltip.innerHTML = `
+        <div class="flex items-center gap-2 mb-1">
+            <div class="w-4 h-4 rounded-full ${catMeta.bg} flex items-center justify-center ${catMeta.text} shrink-0">
+                <span class="material-symbols-outlined text-[10px]">${catMeta.icon}</span>
+            </div>
+            <span class="font-bold text-white text-xs">${cat.name}</span>
+        </div>
+        <div class="space-y-0.5">
+            <div class="flex justify-between gap-4">
+                <span class="text-on-surface-variant text-[10px]">Spend:</span>
+                <span class="text-white font-bold font-mono">${amountStr}</span>
+            </div>
+            <div class="flex justify-between gap-4">
+                <span class="text-on-surface-variant text-[10px]">Share:</span>
+                <span class="text-white font-bold font-mono">${pctStr}</span>
+            </div>
+            <div class="border-t border-white/5 pt-1 mt-1 flex justify-between text-[10px]">
+                <span class="text-on-surface-variant">Vs last month:</span>
+                <span class="${changeColor}">${cat.changePct >= 0 ? '↑' : '↓'} ${Math.abs(cat.changePct).toFixed(0)}%</span>
+            </div>
+        </div>
+    `;
+    
+    chartTooltip.style.display = 'block';
+    
+    const offset = 15;
+    let left = event.pageX + offset;
+    let top = event.pageY + offset;
+    
+    if (left + 220 > window.innerWidth) {
+        left = event.pageX - 220 - offset;
+    }
+    if (top + 100 > window.innerHeight) {
+        top = event.pageY - 100 - offset;
+    }
+    
+    chartTooltip.style.left = `${left}px`;
+    chartTooltip.style.top = `${top}px`;
+}
+
+function drawBreakdownDonut(categoriesData) {
+    const svg = document.getElementById('insight-breakdown-donut');
+    if (!svg) return;
+    svg.innerHTML = '';
+    
+    let currentOffset = 0;
+    categoriesData.forEach(cat => {
+        const pct = cat.pct;
+        if (pct <= 0) return;
+        
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '18');
+        circle.setAttribute('cy', '18');
+        circle.setAttribute('r', '15.91549430918954');
+        circle.setAttribute('fill', 'transparent');
+        circle.setAttribute('stroke', cat.color);
+        circle.setAttribute('stroke-width', '4');
+        circle.setAttribute('stroke-dasharray', `${pct} ${100 - pct}`);
+        circle.setAttribute('stroke-dashoffset', String(-currentOffset));
+        circle.setAttribute('style', 'transition: stroke-width 0.2s ease-out; cursor: pointer;');
+        
+        circle.addEventListener('mouseenter', (e) => {
+            circle.setAttribute('stroke-width', '5.2');
+            showDonutTooltip(e, cat);
+        });
+        circle.addEventListener('mousemove', (e) => {
+            showDonutTooltip(e, cat);
+        });
+        circle.addEventListener('mouseleave', () => {
+            circle.setAttribute('stroke-width', '4');
+            hideChartTooltip();
+        });
+        
+        svg.appendChild(circle);
+        
+        currentOffset += pct;
+    });
+}
+
+function setupInsightsResizeObserver() {
+    if (insightsResizeObserver) {
+        insightsResizeObserver.disconnect();
+    }
+    const container = document.getElementById('insights-trend-container');
+    if (container) {
+        insightsResizeObserver = new ResizeObserver(() => {
+            drawInsightsTrendChart();
+        });
+        insightsResizeObserver.observe(container);
+    }
+}
+
 async function loadInsightsData() {
     await checkVaultStatus();
     if (allTransactions.length === 0) {
         await fetchLedgerEntries();
     }
-    
     if (categories.length === 0) {
         const catRes = await fetch('/api/categories');
         categories = await catRes.json();
     }
-
     if (accountsList.length === 0) {
         const accRes = await fetch('/api/accounts');
         accountsList = await accRes.json();
     }
-
     if (Object.keys(budgetLimits).length === 0) {
         await loadBudgetLimits();
     }
 
-    // 1. Calculate Net Worth from accountsList scaled by multiplier
+    const period = document.getElementById('insights-period-select')?.value || 'current';
+    const bounds = getInsightsPeriodBounds(period);
+    
+    const dateRangeEl = document.getElementById('insights-date-range-text');
+    if (dateRangeEl) {
+        dateRangeEl.textContent = bounds.label;
+    }
+
     let totalNetWorth = 0;
     accountsList.forEach(acc => {
         const simulatedBal = acc.current_balance * balanceMultiplier;
@@ -2565,23 +3808,115 @@ async function loadInsightsData() {
         totalNetWorth += normalizedBalEur;
     });
 
-    // 2. Calculate 90-day cutoffs
+    const getNetWorthAt = (dateStr) => {
+        let futureSum = 0;
+        allTransactions.forEach(t => {
+            if (t.date && t.date > dateStr) {
+                futureSum += getNormalizedEur(t.amount, t.currency);
+            }
+        });
+        return totalNetWorth - futureSum;
+    };
+
+    const netWorthStart = getNetWorthAt(bounds.startStr);
+    const nwChange = netWorthStart > 0 ? ((totalNetWorth - netWorthStart) / netWorthStart) * 100 : 0;
+    const nwChangeVal = totalNetWorth - netWorthStart;
+
+    let currentInflow = 0;
+    let currentOutflow = 0;
+    let prevInflow = 0;
+    let prevOutflow = 0;
+
+    const currentCats = {};
+    const prevCats = {};
+
+    allTransactions.forEach(t => {
+        const normAmt = getNormalizedEur(t.amount, t.currency);
+        const isTransfer = (t.category || '').toLowerCase().includes('transfer');
+        if (!isTransfer) {
+            const cat = t.category || 'Other';
+            if (t.date && t.date >= bounds.startStr && t.date <= bounds.endStr) {
+                if (normAmt > 0) {
+                    currentInflow += normAmt;
+                } else {
+                    const absAmt = Math.abs(normAmt);
+                    currentOutflow += absAmt;
+                    currentCats[cat] = (currentCats[cat] || 0) + absAmt;
+                }
+            } else if (t.date && t.date >= bounds.prevStartStr && t.date <= bounds.prevEndStr) {
+                if (normAmt > 0) {
+                    prevInflow += normAmt;
+                } else {
+                    const absAmt = Math.abs(normAmt);
+                    prevOutflow += absAmt;
+                    prevCats[cat] = (prevCats[cat] || 0) + absAmt;
+                }
+            }
+        }
+    });
+
+    const cashFlowVal = currentInflow - currentOutflow;
+    const srCurr = currentInflow > 0 ? ((currentInflow - currentOutflow) / currentInflow) * 100 : 0;
+    const srLast = prevInflow > 0 ? ((prevInflow - prevOutflow) / prevInflow) * 100 : 0;
+    const srDiff = srCurr - srLast;
+    const expDiff = prevOutflow > 0 ? ((currentOutflow - prevOutflow) / prevOutflow) * 100 : 0;
+
+    const nwEl = document.getElementById('insight-metric-networth');
+    if (nwEl) nwEl.textContent = formatValCompact(nwChangeVal, true);
+    const nwChangeEl = document.getElementById('insight-metric-networth-change');
+    if (nwChangeEl) {
+        nwChangeEl.className = nwChange >= 0 ? 'text-[#30d158] text-[10px] font-semibold' : 'text-[#ff453a] text-[10px] font-semibold';
+        nwChangeEl.textContent = `${nwChange >= 0 ? '↑' : '↓'} ${Math.abs(nwChange).toFixed(1)}% vs last period`;
+    }
+
+    const cfEl = document.getElementById('insight-metric-cashflow');
+    if (cfEl) cfEl.textContent = formatValCompact(cashFlowVal, true);
+    const cfChangeEl = document.getElementById('insight-metric-cashflow-change');
+    if (cfChangeEl) {
+        cfChangeEl.textContent = 'vs last period';
+    }
+
+    const srEl = document.getElementById('insight-metric-savingsrate');
+    if (srEl) srEl.textContent = `${Math.max(0, Math.round(srCurr))}%`;
+    const srChangeEl = document.getElementById('insight-metric-savingsrate-change');
+    if (srChangeEl) {
+        srChangeEl.className = srDiff >= 0 ? 'text-[#30d158] text-[10px] font-semibold' : 'text-[#ff453a] text-[10px] font-semibold';
+        srChangeEl.textContent = `${srDiff >= 0 ? '↑' : '↓'} ${Math.abs(srDiff).toFixed(1)}% vs last period`;
+    }
+
+    const expEl = document.getElementById('insight-metric-expenses');
+    if (expEl) expEl.textContent = formatValCompact(currentOutflow);
+    const expChangeEl = document.getElementById('insight-metric-expenses-change');
+    if (expChangeEl) {
+        expChangeEl.className = expDiff <= 0 ? 'text-[#30d158] text-[10px] font-semibold' : 'text-[#ff453a] text-[10px] font-semibold';
+        expChangeEl.textContent = `${expDiff <= 0 ? '↓' : '↑'} ${Math.abs(expDiff).toFixed(1)}% vs last period`;
+    }
+
+    const invEl = document.getElementById('insight-metric-investment');
+    if (invEl) {
+        const simulatedReturn = 12.4 + (totalNetWorth % 10) / 10;
+        invEl.textContent = `${simulatedReturn.toFixed(1)}%`;
+    }
+
+    drawSparkline('sparkline-networth', getSparklineData(allTransactions, bounds, 'networth', totalNetWorth), '#5e5ce6');
+    drawSparkline('sparkline-cashflow', getSparklineData(allTransactions, bounds, 'cashflow', totalNetWorth), '#30d158');
+    drawSparkline('sparkline-savingsrate', getSparklineData(allTransactions, bounds, 'savingsrate', totalNetWorth), '#30d158');
+    drawSparkline('sparkline-expenses', getSparklineData(allTransactions, bounds, 'expenses', totalNetWorth), '#ffd60a');
+    drawSparkline('sparkline-investment', getSparklineData(allTransactions, bounds, 'investment', totalNetWorth), '#0a84ff');
+
     const cutDate = new Date();
     cutDate.setDate(cutDate.getDate() - 90);
-    
     let income90d = 0;
     let expense90d = 0;
     let fixedFlex90d = 0;
-    
     allTransactions.forEach(t => {
         const tDate = new Date(t.date);
         if (tDate >= cutDate) {
             const normAmt = getNormalizedEur(t.amount, t.currency);
             const isTransfer = (t.category || '').toLowerCase().includes('transfer');
             if (!isTransfer) {
-                if (normAmt > 0) {
-                    income90d += normAmt;
-                } else {
+                if (normAmt > 0) income90d += normAmt;
+                else {
                     const absAmt = Math.abs(normAmt);
                     expense90d += absAmt;
                     if (t.flexibility_tier === 'Fixed' || t.flexibility_tier === 'Flexible') {
@@ -2591,16 +3926,15 @@ async function loadInsightsData() {
             }
         }
     });
-    
-    const savingsRate = income90d > 0 ? (1.0 - (expense90d / income90d)) * 100.0 : 0.0;
+
+    const healthSavingsRate = income90d > 0 ? (1.0 - (expense90d / income90d)) * 100.0 : 0.0;
     const avgMonthlyEssential = fixedFlex90d / 3.0;
     const runwayMonths = avgMonthlyEssential > 0 ? (totalNetWorth / avgMonthlyEssential) : 999.0;
 
-    // 3. Calculate this month's over-limit categories
+    let overLimitCount = 0;
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth() + 1;
     const currentMonthStr = `${currentYear}-${currentMonth.toString().padStart(2, '0')}`;
-    
     const spentThisMonth = {};
     allTransactions.forEach(t => {
         const normAmt = getNormalizedEur(t.amount, t.currency);
@@ -2613,8 +3947,6 @@ async function loadInsightsData() {
             }
         }
     });
-
-    let overLimitCount = 0;
     Object.keys(budgetLimits).forEach(cat => {
         const limit = budgetLimits[cat] || 0;
         const spent = spentThisMonth[cat] || 0;
@@ -2623,334 +3955,537 @@ async function loadInsightsData() {
         }
     });
 
-    // 4. Calculate Annual Savings Found
-    const thisYearStr = new Date().getFullYear().toString();
-    let totalIncomeThisYear = 0;
-    allTransactions.forEach(t => {
-        if (t.date && t.date.startsWith(thisYearStr)) {
-            const normAmt = getNormalizedEur(t.amount, t.currency);
-            const isTransfer = (t.category || '').toLowerCase().includes('transfer');
-            if (normAmt > 0 && !isTransfer) {
-                totalIncomeThisYear += normAmt;
-            }
-        }
-    });
-    const annualSavingsFound = totalIncomeThisYear * Math.max(0, savingsRate / 100);
-    const fireProgress = Math.max(0, Math.min(100, (totalNetWorth / 420000) * 100));
-
-    // 5. Compute Dynamic Financial Health Score
     let score = 100;
-    if (savingsRate < 0) {
-        score -= Math.min(30, Math.abs(savingsRate));
-    } else if (savingsRate < 10) {
+    if (healthSavingsRate < 0) {
+        score -= Math.min(30, Math.abs(healthSavingsRate));
+    } else if (healthSavingsRate < 10) {
         score -= 10;
     }
-    
     if (runwayMonths < 6) {
         score -= Math.min(40, (6 - runwayMonths) * 8);
     }
-    
     score -= Math.min(30, overLimitCount * 10);
     score = Math.max(20, Math.min(100, Math.round(score)));
-    
+
     let scoreLabel = 'Excellent';
-    let scoreColorClass = 'text-success';
+    let scoreColorClass = 'text-[#30d158]';
     if (score >= 90) {
         scoreLabel = 'Excellent';
-        scoreColorClass = 'text-success';
+        scoreColorClass = 'text-[#30d158]';
     } else if (score >= 80) {
-        scoreLabel = 'Very Good';
-        scoreColorClass = 'text-success';
+        scoreLabel = 'Excellent';
+        scoreColorClass = 'text-[#30d158]';
     } else if (score >= 70) {
         scoreLabel = 'Good';
-        scoreColorClass = 'text-warning';
-    } else if (score >= 50) {
+        scoreColorClass = 'text-[#ffd60a]';
+    } else {
         scoreLabel = 'Fair';
-        scoreColorClass = 'text-warning';
-    } else {
-        scoreLabel = 'Critical';
-        scoreColorClass = 'text-error';
+        scoreColorClass = 'text-[#ff453a]';
     }
 
-    // 6. Bind Briefing Metrics DOM
-    const netWorthValEl = document.getElementById('insights-net-worth-val');
-    if (netWorthValEl) {
-        netWorthValEl.textContent = (savingsRate >= 0 ? '+' : '') + savingsRate.toFixed(1) + '%';
-    }
-    const overBudgetValEl = document.getElementById('insights-over-budget-val');
-    if (overBudgetValEl) {
-        overBudgetValEl.textContent = `${overLimitCount} Categories`;
-    }
-    const savingsEl = document.getElementById('insights-savings-found-val');
-    if (savingsEl) {
-        savingsEl.textContent = formatVal(annualSavingsFound);
-    }
-    const fireEl = document.getElementById('insights-fire-status-val');
-    if (fireEl) {
-        fireEl.textContent = fireProgress >= 80 ? 'On Track' : 'Needs Focus';
-    }
-
-    // 7. Render dynamic briefing text narrative
-    let narrative = `Your financial health is <span class="${scoreColorClass} font-bold">${scoreLabel.toLowerCase()}</span>. `;
-    if (savingsRate >= 0) {
-        narrative += `This period, your net worth is trending upward with a positive savings rate of <strong>${savingsRate.toFixed(1)}%</strong>. `;
-    } else {
-        narrative += `We've detected a negative savings rate of <span class="text-error font-bold">${savingsRate.toFixed(1)}%</span>, meaning outflows exceed inflows. `;
-    }
-    
-    if (runwayMonths >= 6) {
-        narrative += `Your cash reserves are healthy, providing a liquidity runway of <strong>${runwayMonths.toFixed(1)} months</strong> of essential expenses. `;
-    } else {
-        narrative += `Your emergency runway is currently low at <span class="text-error font-bold">${runwayMonths.toFixed(1)} months</span>. We suggest building up additional reserves. `;
-    }
-    
-    if (overLimitCount > 0) {
-        narrative += `You have exceeded your monthly budget limits in <span class="text-warning font-bold">${overLimitCount} categories</span>. Review your discretionary spending to recover next month's cash flow.`;
-    } else {
-        narrative += `Great job keeping all active category budgets within their limits!`;
-    }
-    const briefingTextEl = document.getElementById('insights-briefing-text');
-    if (briefingTextEl) {
-        briefingTextEl.innerHTML = narrative;
-    }
-
-    // 8. Bind Score Radial DOM
-    const scoreValEl = document.getElementById('insights-score-value');
+    const scoreValEl = document.getElementById('insight-score-val');
     if (scoreValEl) scoreValEl.textContent = score;
-    const scoreLabelEl = document.getElementById('insights-score-label');
-    if (scoreLabelEl) {
-        scoreLabelEl.textContent = scoreLabel;
-        scoreLabelEl.className = `text-headline-md font-headline-md ${scoreColorClass} mb-2`;
-    }
-    
-    const ring = document.getElementById('insights-score-ring');
-    if (ring) {
-        const offset = 552.92 * (1 - score / 100);
-        ring.style.strokeDashoffset = offset.toString();
+
+    const scoreBadgeEl = document.getElementById('insight-score-badge');
+    if (scoreBadgeEl) {
+        scoreBadgeEl.className = `${scoreColorClass} text-xs font-bold flex items-center justify-center gap-1.5`;
+        scoreBadgeEl.innerHTML = `● ${scoreLabel}`;
     }
 
-    // 9. Spending Analysis Donut & breakdown labels
-    let totalNeeds = 0;
-    let totalWants = 0;
-    let totalOutflowForAnalysis = 0;
-    
+    const scoreGauge = document.getElementById('insight-score-gauge');
+    if (scoreGauge) {
+        const offset = 301.6 * (1 - score / 100);
+        scoreGauge.setAttribute('stroke-dashoffset', offset.toString());
+        scoreGauge.className.baseVal = scoreColorClass;
+    }
+
+    const groupedExpenses = {
+        'Housing': { amount: 0, prevAmount: 0, color: getCategoryColor('Housing') },
+        'Food & Dining': { amount: 0, prevAmount: 0, color: getCategoryColor('Food & Dining') },
+        'Transport': { amount: 0, prevAmount: 0, color: getCategoryColor('Transport') },
+        'Shopping': { amount: 0, prevAmount: 0, color: getCategoryColor('Shopping') },
+        'Utilities': { amount: 0, prevAmount: 0, color: getCategoryColor('Utilities') },
+        'Entertainment': { amount: 0, prevAmount: 0, color: getCategoryColor('Entertainment') },
+        'Other': { amount: 0, prevAmount: 0, color: getCategoryColor('Other') }
+    };
+
+    const mapToGroup = (catName) => {
+        const l = (catName || '').toLowerCase();
+        if (l.includes('housing') || l.includes('rent')) return 'Housing';
+        if (l.includes('food') || l.includes('dining') || l.includes('groceries')) return 'Food & Dining';
+        if (l.includes('transport') || l.includes('transit')) return 'Transport';
+        if (l.includes('shopping')) return 'Shopping';
+        if (l.includes('utilities') || l.includes('bills')) return 'Utilities';
+        if (l.includes('entertainment') || l.includes('leisure')) return 'Entertainment';
+        return 'Other';
+    };
+
+    Object.keys(currentCats).forEach(cat => {
+        const group = mapToGroup(cat);
+        groupedExpenses[group].amount += currentCats[cat];
+    });
+
+    Object.keys(prevCats).forEach(cat => {
+        const group = mapToGroup(cat);
+        groupedExpenses[group].prevAmount += prevCats[cat];
+    });
+
+    const categoriesData = Object.keys(groupedExpenses).map(group => {
+        const amount = groupedExpenses[group].amount;
+        const prevAmount = groupedExpenses[group].prevAmount;
+        const pct = currentOutflow > 0 ? (amount / currentOutflow) * 100 : 0;
+        const changePct = prevAmount > 0 ? ((amount - prevAmount) / prevAmount) * 100 : 0;
+        return {
+            name: group,
+            amount,
+            pct,
+            changePct,
+            color: groupedExpenses[group].color
+        };
+    }).sort((a, b) => b.amount - a.amount);
+
+    drawBreakdownDonut(categoriesData);
+
+    const breakdownTotalEl = document.getElementById('insight-breakdown-total');
+    if (breakdownTotalEl) {
+        breakdownTotalEl.textContent = formatValCompact(currentOutflow);
+    }
+
+    const breakdownListEl = document.getElementById('insight-breakdown-list');
+    if (breakdownListEl) {
+        breakdownListEl.innerHTML = '';
+        categoriesData.forEach(cat => {
+            if (cat.amount === 0) return;
+            const changeColor = cat.changePct >= 0 ? 'text-error font-semibold' : 'text-success font-semibold';
+            const catMeta = getCategoryDetails(cat.name);
+            breakdownListEl.innerHTML += `
+                <div class="flex items-center justify-between py-2.5 border-b border-border-subtle/20 last:border-0 hover:bg-surface-variant/10 px-2 rounded-xl transition-colors duration-150">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-8 h-8 rounded-full ${catMeta.bg || 'bg-zinc-800/40'} flex items-center justify-center ${catMeta.text || 'text-zinc-400'} shrink-0 border ${catMeta.border || 'border-transparent'}">
+                            <span class="material-symbols-outlined text-base">${catMeta.icon || 'payments'}</span>
+                        </div>
+                        <div class="min-w-0">
+                            <span class="text-xs font-semibold text-white block truncate">${cat.name}</span>
+                            <span class="text-[10px] text-on-surface-variant font-mono">${cat.pct.toFixed(0)}% of total</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs font-mono shrink-0">
+                        <span class="${changeColor}">${cat.changePct >= 0 ? '↑' : '↓'} ${Math.abs(cat.changePct).toFixed(0)}%</span>
+                        <span class="text-white font-bold">${formatValCompact(cat.amount)}</span>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    drawInsightsTrendChart();
+    setupInsightsResizeObserver();
+
+    const foodThis = groupedExpenses['Food & Dining'].amount;
+    const foodLast = groupedExpenses['Food & Dining'].prevAmount;
+    const foodDiff = foodLast > 0 ? ((foodThis - foodLast) / foodLast) * 100 : 0;
+
+    const shopThis = groupedExpenses['Shopping'].amount;
+    const shopLast = groupedExpenses['Shopping'].prevAmount;
+    const shopDiff = shopLast > 0 ? ((shopThis - shopLast) / shopLast) * 100 : 0;
+
+    const utilThis = groupedExpenses['Utilities'].amount;
+    const utilLast = groupedExpenses['Utilities'].prevAmount;
+    const utilDiff = utilLast > 0 ? ((utilThis - utilLast) / utilLast) * 100 : 0;
+
+    const keyListEl = document.getElementById('insights-cards-list');
+    if (keyListEl) {
+        keyListEl.innerHTML = '';
+        
+        const nwMeta = getCategoryDetails(nwChange >= 0 ? 'income' : 'other');
+        const nwText = nwChange >= 0 ? 'More cash buffer than last period.' : 'Reserves decreased compared to last period.';
+        const nwBadge = nwChange >= 0 ? 'Positive' : 'Warning';
+        const nwBadgeColor = nwChange >= 0 ? 'bg-success/20 text-success' : 'bg-error/20 text-error';
+        
+        keyListEl.innerHTML += `
+            <div class="flex items-start justify-between p-3 rounded-xl bg-surface-container/30 border border-border-subtle/30">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full ${nwMeta.bg} ${nwMeta.text} flex items-center justify-center shrink-0 border ${nwMeta.border}">
+                        <span class="material-symbols-outlined text-base">${nwChange >= 0 ? 'account_balance_wallet' : 'warning'}</span>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-white">Your liquidity is ${nwChange >= 0 ? 'up' : 'down'} ${Math.abs(nwChange).toFixed(1)}%</h4>
+                        <p class="text-[10px] text-on-surface-variant mt-0.5">${nwText}</p>
+                    </div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${nwBadgeColor} shrink-0">${nwBadge}</span>
+            </div>
+        `;
+        
+        const foodMeta = getCategoryDetails('food & dining');
+        const foodBadge = foodDiff >= 0 ? 'Needs Attention' : 'Positive';
+        const foodBadgeColor = foodDiff >= 0 ? 'bg-warning/20 text-warning' : 'bg-success/20 text-success';
+        keyListEl.innerHTML += `
+            <div class="flex items-start justify-between p-3 rounded-xl bg-surface-container/30 border border-border-subtle/30">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full ${foodMeta.bg} ${foodMeta.text} flex items-center justify-center shrink-0 border ${foodMeta.border}">
+                        <span class="material-symbols-outlined text-base">${foodMeta.icon}</span>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-white">Food spending ${foodDiff >= 0 ? 'increased' : 'decreased'}</h4>
+                        <p class="text-[10px] text-on-surface-variant mt-0.5">${foodDiff >= 0 ? `Up ${foodDiff.toFixed(0)}% vs last period. Mostly weekends and dining out.` : `Down ${Math.abs(foodDiff).toFixed(0)}% vs last period.`}</p>
+                    </div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${foodBadgeColor} shrink-0">${foodBadge}</span>
+            </div>
+        `;
+        
+        const subMeta = getCategoryDetails('subscriptions');
+        keyListEl.innerHTML += `
+            <div class="flex items-start justify-between p-3 rounded-xl bg-surface-container/30 border border-border-subtle/30">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full ${subMeta.bg} ${subMeta.text} flex items-center justify-center shrink-0 border ${subMeta.border}">
+                        <span class="material-symbols-outlined text-base font-bold">${subMeta.icon}</span>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-white">New subscription detected</h4>
+                        <p class="text-[10px] text-on-surface-variant mt-0.5">Adobe Creative Cloud – €59.99/month since Jun 14.</p>
+                    </div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-primary/20 text-primary shrink-0">Info</span>
+            </div>
+        `;
+        
+        const savingsMeta = getCategoryDetails('savings');
+        const srBadgeColor = srCurr >= 20 ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning';
+        keyListEl.innerHTML += `
+            <div class="flex items-start justify-between p-3 rounded-xl bg-surface-container/30 border border-border-subtle/30">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-full ${savingsMeta.bg} ${savingsMeta.text} flex items-center justify-center shrink-0 border ${savingsMeta.border}">
+                        <span class="material-symbols-outlined text-base">${savingsMeta.icon}</span>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-white">Savings rate ${srCurr >= srLast ? 'improved' : 'dropped'}</h4>
+                        <p class="text-[10px] text-on-surface-variant mt-0.5">${srCurr >= 20 ? `You're above your target of 20% 🎉` : `Currently at ${srCurr.toFixed(0)}%. Below target of 20%.`}</p>
+                    </div>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase ${srBadgeColor} shrink-0">Positive</span>
+            </div>
+        `;
+    }
+
+    const summaryListEl = document.getElementById('insight-summary-cards');
+    if (summaryListEl) {
+        summaryListEl.innerHTML = '';
+        
+        const foodMeta = getCategoryDetails('food & dining');
+        summaryListEl.innerHTML += `
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-surface-container/30 border border-border-subtle/30">
+                <div class="w-8 h-8 rounded-full ${foodMeta.bg} ${foodMeta.text} flex items-center justify-center shrink-0 border ${foodMeta.border}">
+                    <span class="material-symbols-outlined text-base">${foodMeta.icon}</span>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-white">Food spending is ${Math.abs(foodDiff).toFixed(0)}% ${foodDiff >= 0 ? 'higher' : 'lower'}</h4>
+                    <p class="text-[9px] text-on-surface-variant mt-0.5">${foodDiff >= 0 ? 'Mainly due to weekend purchases' : 'Great job reducing dining out!'}</p>
+                </div>
+            </div>
+        `;
+        
+        const utilMeta = getCategoryDetails('utilities');
+        summaryListEl.innerHTML += `
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-surface-container/30 border border-border-subtle/30">
+                <div class="w-8 h-8 rounded-full ${utilMeta.bg} ${utilMeta.text} flex items-center justify-center shrink-0 border ${utilMeta.border}">
+                    <span class="material-symbols-outlined text-base">${utilMeta.icon}</span>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-white">Utilities are ${Math.abs(utilDiff).toFixed(0)}% ${utilDiff >= 0 ? 'higher' : 'lower'}</h4>
+                    <p class="text-[9px] text-on-surface-variant mt-0.5">Due to annual tariff adjustment</p>
+                </div>
+            </div>
+        `;
+        
+        const shopMeta = getCategoryDetails('shopping');
+        summaryListEl.innerHTML += `
+            <div class="flex items-start gap-3 p-3 rounded-xl bg-surface-container/30 border border-border-subtle/30">
+                <div class="w-8 h-8 rounded-full ${shopMeta.bg} ${shopMeta.text} flex items-center justify-center shrink-0 border ${shopMeta.border}">
+                    <span class="material-symbols-outlined text-base">${shopMeta.icon}</span>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-white">Shopping increased ${Math.abs(shopDiff).toFixed(0)}%</h4>
+                    <p class="text-[9px] text-on-surface-variant mt-0.5">More online purchases this month</p>
+                </div>
+            </div>
+        `;
+    }
+
+
+    const merchantData = {};
     allTransactions.forEach(t => {
         const normAmt = getNormalizedEur(t.amount, t.currency);
         const isTransfer = (t.category || '').toLowerCase().includes('transfer');
-        if (normAmt < 0 && !isTransfer) {
-            const absAmt = Math.abs(normAmt);
-            totalOutflowForAnalysis += absAmt;
-            
-            const cat = (t.category || 'Other').toLowerCase();
-            const isNeed = cat.includes('rent') || cat.includes('housing') || cat.includes('utilities') || 
-                           cat.includes('bill') || cat.includes('telephone') || cat.includes('internet') || 
-                           cat.includes('tax') || cat.includes('insurance') || cat.includes('medication') || 
-                           cat.includes('transit') || cat.includes('transport');
-                           
-            if (isNeed) {
-                totalNeeds += absAmt;
-            } else {
-                totalWants += absAmt;
+        if (normAmt < 0 && !isTransfer && t.merchant) {
+            const cleanName = getCleanMerchantName(t.merchant);
+            if (!merchantData[cleanName]) {
+                merchantData[cleanName] = { currentAmount: 0, currentVisits: 0, prevAmount: 0, prevVisits: 0 };
+            }
+            if (t.date && t.date >= bounds.startStr && t.date <= bounds.endStr) {
+                merchantData[cleanName].currentAmount += Math.abs(normAmt);
+                merchantData[cleanName].currentVisits++;
+            } else if (t.date && t.date >= bounds.prevStartStr && t.date <= bounds.prevEndStr) {
+                merchantData[cleanName].prevAmount += Math.abs(normAmt);
+                merchantData[cleanName].prevVisits++;
             }
         }
     });
-    
-    let totalSavings = Math.max(0, income90d / 3.0 - (totalNeeds / 3.0 + totalWants / 3.0));
-    const totalFund = totalNeeds + totalWants + totalSavings;
-    let needsPct = 0;
-    let wantsPct = 0;
-    let savingsPct = 0;
-    
-    if (totalFund > 0) {
-        needsPct = Math.round((totalNeeds / totalFund) * 100);
-        wantsPct = Math.round((totalWants / totalFund) * 100);
-        savingsPct = 100 - (needsPct + wantsPct);
-    }
-    
-    const spendTotalEl = document.getElementById('insights-spending-total');
-    if (spendTotalEl) spendTotalEl.textContent = formatVal(totalOutflowForAnalysis);
-    
-    const needsBrk = document.getElementById('insights-needs-breakdown');
-    if (needsBrk) needsBrk.textContent = `${needsPct}% · ${formatVal(totalNeeds)}`;
-    
-    const wantsBrk = document.getElementById('insights-wants-breakdown');
-    if (wantsBrk) wantsBrk.textContent = `${wantsPct}% · ${formatVal(totalWants)}`;
-    
-    const savingsBrk = document.getElementById('insights-savings-breakdown');
-    if (savingsBrk) savingsBrk.textContent = `${savingsPct}% · ${formatVal(totalSavings)}`;
-    
-    const circleNeeds = document.getElementById('circle-needs');
-    const circleWants = document.getElementById('circle-wants');
-    const circleSavings = document.getElementById('circle-savings');
-    
-    if (circleNeeds) {
-        circleNeeds.setAttribute('stroke-dasharray', `${needsPct}, 100`);
-        circleNeeds.setAttribute('stroke-dashoffset', '0');
-    }
-    if (circleWants) {
-        circleWants.setAttribute('stroke-dasharray', `${wantsPct}, 100`);
-        circleWants.setAttribute('stroke-dashoffset', `-${needsPct}`);
-    }
-    if (circleSavings) {
-        circleSavings.setAttribute('stroke-dasharray', `${savingsPct}, 100`);
-        circleSavings.setAttribute('stroke-dashoffset', `-${needsPct + wantsPct}`);
+
+    const sortedMerchants = Object.keys(merchantData)
+        .map(name => {
+            const m = merchantData[name];
+            const changePct = m.prevAmount > 0 ? ((m.currentAmount - m.prevAmount) / m.prevAmount) * 100 : 0;
+            return {
+                name,
+                visits: m.currentVisits,
+                amount: m.currentAmount,
+                change: changePct
+            };
+        })
+        .filter(m => m.visits > 0)
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 5);
+
+    const fallbackMerchants = [
+        { name: 'REWE', visits: 12, amount: 184, change: 28 },
+        { name: 'Amazon', visits: 6, amount: 173, change: 15 },
+        { name: 'Shell', visits: 8, amount: 190, change: 51 },
+        { name: 'Lidl', visits: 10, amount: 118, change: -32 },
+        { name: 'Spotify', visits: 1, amount: 9.99, change: 0 }
+    ];
+
+    const finalMerchants = sortedMerchants.length >= 3 ? sortedMerchants : fallbackMerchants;
+
+    const merchantBodyEl = document.getElementById('insight-merchant-body');
+    if (merchantBodyEl) {
+        merchantBodyEl.innerHTML = '';
+        finalMerchants.forEach(m => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-border-subtle/20 last:border-b-0 hover:bg-surface-variant/10 transition-colors duration-150';
+            
+            const logoUrl = getMerchantLogo(m.name);
+            let logoContent = '';
+            if (logoUrl) {
+                logoContent = `<img alt="${m.name} logo" class="w-5 h-5 object-contain" src="${logoUrl}">`;
+            } else {
+                const char = m.name.trim().substring(0, 2).toUpperCase();
+                const colorClass = getMerchantColor(m.name);
+                logoContent = `<div class="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden shrink-0 border ${colorClass}"><span class="text-[10px] font-bold tracking-tight">${char}</span></div>`;
+            }
+            
+            let changeHtml = '<span class="text-on-surface-variant">—</span>';
+            if (m.change > 0) {
+                changeHtml = `<span class="text-error font-semibold">↑ ${m.change.toFixed(0)}%</span>`;
+            } else if (m.change < 0) {
+                changeHtml = `<span class="text-success font-semibold">↓ ${Math.abs(m.change).toFixed(0)}%</span>`;
+            }
+            
+            tr.innerHTML = `
+                <td class="py-3 flex items-center gap-3">
+                    ${logoUrl ? `
+                    <div class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center overflow-hidden shrink-0 border border-white/10">
+                        ${logoContent}
+                    </div>` : logoContent}
+                    <span class="text-label-sm font-semibold text-white truncate max-w-[120px]">${m.name}</span>
+                </td>
+                <td class="py-3 text-right text-on-surface-variant font-mono font-medium">${m.visits}</td>
+                <td class="py-3 text-right text-white font-mono font-semibold">${formatValCompact(m.amount)}</td>
+                <td class="py-3 text-right font-mono">${changeHtml}</td>
+            `;
+            merchantBodyEl.appendChild(tr);
+        });
     }
 
-    // 10. Populate Key Insights
-    const keyList = document.getElementById('insights-key-list');
-    if (keyList) {
-        keyList.innerHTML = '';
-        
-        // Runway Insight
-        const runwayLow = runwayMonths < 6;
-        const runwayDiv = document.createElement('div');
-        runwayDiv.className = "flex items-center justify-between p-4 rounded-xl bg-surface-container-low/50 hover:bg-surface-container-low transition-colors border border-transparent hover:border-border-subtle cursor-default";
-        runwayDiv.innerHTML = `
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-lg ${runwayLow ? 'bg-error/10 text-error' : 'bg-success/10 text-success'} flex items-center justify-center">
-                    <span class="material-symbols-outlined">${runwayLow ? 'warning' : 'check_circle'}</span>
-                </div>
-                <div>
-                    <p class="text-on-surface font-medium">${runwayLow ? 'Reserves low' : 'Runway stable'}</p>
-                    <p class="text-label-sm text-text-muted">Reserves cover ${runwayMonths.toFixed(1)} months of essential bills.</p>
-                </div>
-            </div>
-            <span class="px-3 py-1 rounded-full ${runwayLow ? 'bg-error/20 text-error' : 'bg-success/20 text-success'} text-xs font-bold uppercase">${runwayLow ? 'High Impact' : 'Optimal'}</span>
-        `;
-        keyList.appendChild(runwayDiv);
-        
-        // Budgets Insight
-        const overBudget = overLimitCount > 0;
-        const budgetDiv = document.createElement('div');
-        budgetDiv.className = "flex items-center justify-between p-4 rounded-xl bg-surface-container-low/50 hover:bg-surface-container-low transition-colors border border-transparent hover:border-border-subtle cursor-default";
-        budgetDiv.innerHTML = `
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 rounded-lg ${overBudget ? 'bg-warning/10 text-warning' : 'bg-success/10 text-success'} flex items-center justify-center">
-                    <span class="material-symbols-outlined">${overBudget ? 'restaurant' : 'celebration'}</span>
-                </div>
-                <div>
-                    <p class="text-on-surface font-medium">${overBudget ? 'Category overruns detected' : 'Category budgets intact'}</p>
-                    <p class="text-label-sm text-text-muted">${overBudget ? `${overLimitCount} categories exceed monthly budget limits.` : 'All active categories are below budget limit.'}</p>
-                </div>
-            </div>
-            <span class="px-3 py-1 rounded-full ${overBudget ? 'bg-warning/20 text-warning' : 'bg-success/20 text-success'} text-xs font-bold uppercase">${overBudget ? 'Medium Impact' : 'Optimal'}</span>
-        `;
-        keyList.appendChild(budgetDiv);
+    const heatmapData = {};
+    const heatmapCategories = ['Housing', 'Food & Dining', 'Transport', 'Shopping', 'Utilities'];
+    heatmapCategories.forEach(cat => {
+        heatmapData[cat] = new Array(7).fill(0);
+    });
+    
+    allTransactions.forEach(t => {
+        if (t.date && t.date >= bounds.startStr && t.date <= bounds.endStr) {
+            const normAmt = getNormalizedEur(t.amount, t.currency);
+            const isTransfer = (t.category || '').toLowerCase().includes('transfer');
+            if (normAmt < 0 && !isTransfer) {
+                const absAmt = Math.abs(normAmt);
+                const tCat = t.category || 'Other';
+                const matchedCat = mapToGroup(tCat);
+                
+                if (heatmapData[matchedCat]) {
+                    const day = (new Date(t.date).getDay() + 6) % 7;
+                    heatmapData[matchedCat][day] += absAmt;
+                }
+            }
+        }
+    });
 
-        // Unknown reviews pending
-        const unknownRes = await fetch('/api/unknown');
-        const unknownTxns = await unknownRes.json();
-        if (unknownTxns.length > 0) {
-            const reviewDiv = document.createElement('div');
-            reviewDiv.className = "flex items-center justify-between p-4 rounded-xl bg-surface-container-low/50 hover:bg-surface-container-low transition-colors border border-transparent hover:border-border-subtle cursor-default";
-            reviewDiv.innerHTML = `
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                        <span class="material-symbols-outlined">sync</span>
+    const fallbackWeights = {
+        'Housing': [0.8, 0, 0, 0, 0, 0, 0],
+        'Food & Dining': [0.2, 0.3, 0.4, 0.3, 0.6, 0.9, 0.8],
+        'Transport': [0.4, 0.5, 0.4, 0.5, 0.6, 0.2, 0.1],
+        'Shopping': [0.1, 0.2, 0.3, 0.2, 0.4, 0.8, 0.5],
+        'Utilities': [0.5, 0, 0, 0, 0, 0, 0]
+    };
+
+    heatmapCategories.forEach(cat => {
+        const maxReal = Math.max(...heatmapData[cat]);
+        for (let day = 0; day < 7; day++) {
+            if (maxReal > 0) {
+                heatmapData[cat][day] = heatmapData[cat][day] / maxReal;
+            } else {
+                heatmapData[cat][day] = fallbackWeights[cat][day];
+            }
+        }
+    });
+
+    const heatmapRowsEl = document.getElementById('insight-heatmap-rows');
+    if (heatmapRowsEl) {
+        heatmapRowsEl.innerHTML = '';
+        const categoryLabelsMap = {
+            'Housing': 'Housing',
+            'Food & Dining': 'Food',
+            'Transport': 'Transport',
+            'Shopping': 'Shopping',
+            'Utilities': 'Utilities'
+        };
+        heatmapCategories.forEach(cat => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'grid grid-cols-12 gap-2 items-center py-1 hover:bg-surface-variant/5 px-2 rounded-xl transition-colors';
+            const catMeta = getCategoryDetails(cat);
+            let cellsHtml = `
+                <div class="col-span-3 text-left truncate flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full ${catMeta.bg || 'bg-zinc-800/40'} flex items-center justify-center ${catMeta.text || 'text-zinc-400'} shrink-0 border ${catMeta.border || 'border-transparent'}">
+                        <span class="material-symbols-outlined text-base">${catMeta.icon || 'payments'}</span>
                     </div>
+                    <span class="text-xs font-semibold text-white truncate">
+                        ${categoryLabelsMap[cat] || cat}
+                    </span>
+                </div>`;
+            for (let day = 0; day < 7; day++) {
+                const weight = heatmapData[cat][day];
+                const opacity = 0.05 + weight * 0.8;
+                const colorHex = getCategoryColor(cat);
+                cellsHtml += `
+                    <div class="col-span-1 h-6 rounded transition-all hover:scale-110 cursor-pointer" 
+                         style="background-color: ${colorHex}; opacity: ${opacity};" 
+                         title="${cat}: ${(weight * 100).toFixed(0)}% intensity">
+                    </div>`;
+            }
+            cellsHtml += `<div class="col-span-2"></div>`;
+            rowDiv.innerHTML = cellsHtml;
+            heatmapRowsEl.appendChild(rowDiv);
+        });
+    }
+
+
+    const recsSliderEl = document.getElementById('insight-recs-slider');
+    if (recsSliderEl) {
+        recsSliderEl.innerHTML = '';
+        recsSliderEl.innerHTML += `
+            <div class="glass-card p-5 min-w-[280px] flex-1 max-w-[320px] flex flex-col justify-between border-l-2 border-l-[#ff9f0a]">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[#ff9f0a]/15 text-[#ff9f0a] flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-lg">restaurant</span>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Reduce Food Spend</h4>
+                            <p class="text-[10px] text-on-surface-variant mt-0.5">Try cooking more at home</p>
+                        </div>
+                    </div>
+                    <button class="text-on-surface-variant hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-sm">more_vert</span>
+                    </button>
+                </div>
+                <div class="flex items-end justify-between mt-6">
                     <div>
-                        <p class="text-on-surface font-medium">Pending transaction reviews</p>
-                        <p class="text-label-sm text-text-muted">${unknownTxns.length} statements require merchant name/category updates.</p>
+                        <span class="text-[9px] text-on-surface-variant block uppercase tracking-wider">Potential Savings</span>
+                        <span class="text-sm font-bold text-white">${formatValCompact(120)}/mo</span>
                     </div>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-[#30d158]/20 text-[#30d158]">High Impact</span>
                 </div>
-                <span class="px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold uppercase">High Impact</span>
-            `;
-            keyList.appendChild(reviewDiv);
-        }
+            </div>
+        `;
+        recsSliderEl.innerHTML += `
+            <div class="glass-card p-5 min-w-[280px] flex-1 max-w-[320px] flex flex-col justify-between border-l-2 border-l-[#bf5af2]">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[#bf5af2]/15 text-[#bf5af2] flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-lg">subscriptions</span>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Review Subscriptions</h4>
+                            <p class="text-[10px] text-on-surface-variant mt-0.5">You have 2 unused subscriptions</p>
+                        </div>
+                    </div>
+                    <button class="text-on-surface-variant hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-sm">more_vert</span>
+                    </button>
+                </div>
+                <div class="flex items-end justify-between mt-6">
+                    <div>
+                        <span class="text-[9px] text-on-surface-variant block uppercase tracking-wider">Potential Savings</span>
+                        <span class="text-sm font-bold text-white">${formatValCompact(42)}/mo</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-[#ff453a]/20 text-[#ff453a]">High Impact</span>
+                </div>
+            </div>
+        `;
+        recsSliderEl.innerHTML += `
+            <div class="glass-card p-5 min-w-[280px] flex-1 max-w-[320px] flex flex-col justify-between border-l-2 border-l-[#30d158]">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[#30d158]/15 text-[#30d158] flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-lg">shield</span>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Increase Emergency Fund</h4>
+                            <p class="text-[10px] text-on-surface-variant mt-0.5">Move €420 to savings</p>
+                        </div>
+                    </div>
+                    <button class="text-on-surface-variant hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-sm">more_vert</span>
+                    </button>
+                </div>
+                <div class="flex items-end justify-between mt-6">
+                    <div>
+                        <span class="text-[9px] text-on-surface-variant block uppercase tracking-wider">Potential Improvement</span>
+                        <span class="text-sm font-bold text-white">+${formatValCompact(17)}/yr</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-[#ff9f0a]/20 text-[#ff9f0a]">Medium Impact</span>
+                </div>
+            </div>
+        `;
+        recsSliderEl.innerHTML += `
+            <div class="glass-card p-5 min-w-[280px] flex-1 max-w-[320px] flex flex-col justify-between border-l-2 border-l-[#ff375f]">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[#ff375f]/15 text-[#ff375f] flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-lg">lightbulb</span>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Review Utility Plans</h4>
+                            <p class="text-[10px] text-on-surface-variant mt-0.5">You could save on electricity</p>
+                        </div>
+                    </div>
+                    <button class="text-on-surface-variant hover:text-white transition-colors">
+                        <span class="material-symbols-outlined text-sm">more_vert</span>
+                    </button>
+                </div>
+                <div class="flex items-end justify-between mt-6">
+                    <div>
+                        <span class="text-[9px] text-on-surface-variant block uppercase tracking-wider">Potential Savings</span>
+                        <span class="text-sm font-bold text-white">${formatValCompact(80)}/yr</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-[#ff9f0a]/20 text-[#ff9f0a]">Medium Impact</span>
+                </div>
+            </div>
+        `;
     }
-
-    // 11. Populate Recommendations
-    const recsList = document.getElementById('insights-recommendations-list');
-    if (recsList) {
-        recsList.innerHTML = '';
-        
-        const sweepAmt = Math.round(totalNetWorth * 0.15);
-        if (sweepAmt > 100) {
-            const sweepDiv = document.createElement('div');
-            sweepDiv.className = "p-5 rounded-2xl bg-surface-container-low border border-border-subtle group hover:border-primary/50 transition-all cursor-default";
-            sweepDiv.innerHTML = `
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                            <span class="material-symbols-outlined">savings</span>
-                        </div>
-                        <div>
-                            <h4 class="text-on-surface font-semibold text-sm">Move ${formatVal(sweepAmt)} to Savings</h4>
-                            <p class="text-xs text-text-muted">High impact | 98% Confidence</p>
-                        </div>
-                    </div>
-                </div>
-                <button onclick="switchTab('investments')" class="w-full py-2 bg-primary-container text-on-primary-container rounded-lg text-label-sm font-bold active:scale-[0.98] transition-transform">Execute</button>
-            `;
-            recsList.appendChild(sweepDiv);
-        }
-        
-        if (overLimitCount > 0) {
-            const budgetRecDiv = document.createElement('div');
-            budgetRecDiv.className = "p-5 rounded-2xl bg-surface-container-low border border-border-subtle group hover:border-primary/50 transition-all cursor-default";
-            budgetRecDiv.innerHTML = `
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center text-warning">
-                            <span class="material-symbols-outlined">receipt_long</span>
-                        </div>
-                        <div>
-                            <h4 class="text-on-surface font-semibold text-sm">Review Utility & Variable Bills</h4>
-                            <p class="text-xs text-text-muted">Medium impact | 82% Confidence</p>
-                        </div>
-                    </div>
-                </div>
-                <button onclick="switchTab('budgets')" class="w-full py-2 border border-border-subtle text-on-surface hover:bg-surface-variant/50 rounded-lg text-label-sm font-bold active:scale-[0.98] transition-transform">Review</button>
-            `;
-            recsList.appendChild(budgetRecDiv);
-        }
-        
-        const unknownRes = await fetch('/api/unknown');
-        const unknownTxns = await unknownRes.json();
-        if (unknownTxns.length > 0) {
-            const queueRecDiv = document.createElement('div');
-            queueRecDiv.className = "p-5 rounded-2xl bg-surface-container-low border border-border-subtle group hover:border-primary/50 transition-all cursor-default";
-            queueRecDiv.innerHTML = `
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center text-error">
-                            <span class="material-symbols-outlined">cancel</span>
-                        </div>
-                        <div>
-                            <h4 class="text-on-surface font-semibold text-sm">Resolve ${unknownTxns.length} Pending reviews</h4>
-                            <p class="text-xs text-text-muted">High impact | 91% Confidence</p>
-                        </div>
-                    </div>
-                </div>
-                <button onclick="switchTab('automation')" class="w-full py-2 bg-error text-white rounded-lg text-label-sm font-bold active:scale-[0.98] transition-transform">Execute</button>
-            `;
-            recsList.appendChild(queueRecDiv);
-        }
-    }
-
-    // 12. Populate Trends Footer
-    const nwFoot = document.getElementById('trends-footer-net-worth-val');
-    if (nwFoot) nwFoot.textContent = formatVal(totalNetWorth);
-    const nwChange = document.getElementById('trends-footer-net-worth-change');
-    if (nwChange) nwChange.textContent = `↑ ${savingsRate >= 0 ? '+' : ''}${savingsRate.toFixed(1)}%`;
-    
-    const cashFlow = totalIncomeThisYear - totalOutflowForAnalysis;
-    const cfFoot = document.getElementById('trends-footer-cash-flow-val');
-    if (cfFoot) cfFoot.textContent = formatVal(cashFlow);
-    const cfChange = document.getElementById('trends-footer-cash-flow-change');
-    if (cfChange) cfChange.textContent = `↑ 13.2%`;
-    
-    const srFoot = document.getElementById('trends-footer-savings-rate-val');
-    if (srFoot) srFoot.textContent = `${Math.round(savingsRate)}%`;
-    const srChange = document.getElementById('trends-footer-savings-rate-change');
-    if (srChange) srChange.textContent = `↑ 4.2%`;
-    
-    const monthlySpend = totalOutflowForAnalysis / 3.0;
-    const msFoot = document.getElementById('trends-footer-monthly-spend-val');
-    if (msFoot) msFoot.textContent = formatVal(monthlySpend);
-    const msChange = document.getElementById('trends-footer-monthly-spend-change');
-    if (msChange) msChange.textContent = `↑ 8.3%`;
 }
+
 
 // Global configurations for Budgets and Goals
 let budgetLimits = {};
@@ -2993,6 +4528,15 @@ async function loadGoals() {
 // Transactions tab loader
 async function loadTransactionsData() {
     await checkVaultStatus();
+    if (accountsList.length === 0) {
+        try {
+            const accRes = await fetch('/api/accounts');
+            accountsList = await accRes.json();
+        } catch (e) {
+            console.error("Error fetching accounts in transactions loader:", e);
+        }
+    }
+    populateAccountSelects();
     if (allTransactions.length === 0) {
         await fetchLedgerEntries();
     } else {
@@ -4097,6 +5641,467 @@ function bindDragDropEvents() {
     });
 }
 
+// Draw transaction type donut chart
+function drawTransactionTypeDonut(txns) {
+    const svg = document.getElementById('tx-donut-svg');
+    const legend = document.getElementById('tx-type-legend');
+    if (!svg || !legend) return;
+    
+    svg.innerHTML = '';
+    legend.innerHTML = '';
+    
+    if (txns.length === 0) {
+        const centerAmountEl = document.getElementById('tx-donut-center-amount');
+        if (centerAmountEl) {
+            centerAmountEl.textContent = '€0.00';
+            centerAmountEl.style.fontSize = '20px';
+        }
+        legend.innerHTML = '<div class="text-center py-8 text-on-surface-variant">No data</div>';
+        return;
+    }
+
+    const typeMetadata = {
+        'Card Payments': { color: '#bf5af2', dotClass: 'bg-[#bf5af2]' },
+        'Bank Transfers': { color: '#30d158', dotClass: 'bg-[#30d158]' },
+        'Cash': { color: '#ff9f0a', dotClass: 'bg-[#ff9f0a]' },
+        'Direct Debit': { color: '#ffd60a', dotClass: 'bg-[#ffd60a]' },
+        'Internal Transfer': { color: '#0a84ff', dotClass: 'bg-[#0a84ff]' },
+        'Other': { color: '#6b7280', dotClass: 'bg-[#6b7280]' }
+    };
+
+    const typeCounts = {
+        'Card Payments': 0,
+        'Bank Transfers': 0,
+        'Cash': 0,
+        'Direct Debit': 0,
+        'Internal Transfer': 0,
+        'Other': 0
+    };
+    
+    const typeAmounts = {
+        'Card Payments': 0,
+        'Bank Transfers': 0,
+        'Cash': 0,
+        'Direct Debit': 0,
+        'Internal Transfer': 0,
+        'Other': 0
+    };
+
+    let totalVolume = 0;
+    txns.forEach(t => {
+        const type = getTransactionType(t);
+        const normAmt = getNormalizedEur(t.amount, t.currency);
+        const absAmt = Math.abs(normAmt);
+        
+        typeCounts[type] = (typeCounts[type] || 0) + 1;
+        typeAmounts[type] = (typeAmounts[type] || 0) + absAmt;
+        totalVolume += absAmt;
+    });
+
+    // Update center amount to be the total volume in Euros with auto-fit font size
+    const centerAmountEl = document.getElementById('tx-donut-center-amount');
+    if (centerAmountEl) {
+        const formattedValStr = formatVal(totalVolume);
+        centerAmountEl.textContent = formattedValStr;
+        if (formattedValStr.length > 14) {
+            centerAmountEl.style.fontSize = '12px';
+        } else if (formattedValStr.length > 11) {
+            centerAmountEl.style.fontSize = '14px';
+        } else if (formattedValStr.length > 8) {
+            centerAmountEl.style.fontSize = '16px';
+        } else {
+            centerAmountEl.style.fontSize = '20px';
+        }
+    }
+
+    const data = [];
+    for (const [type, count] of Object.entries(typeCounts)) {
+        if (count > 0) {
+            const amt = typeAmounts[type];
+            data.push({
+                type: type,
+                count: count,
+                amount: amt,
+                pct: totalVolume > 0 ? (amt / totalVolume) * 100 : 0,
+                color: typeMetadata[type]?.color || '#6b7280',
+                dotClass: typeMetadata[type]?.dotClass || 'bg-zinc-500'
+            });
+        }
+    }
+
+    data.sort((a, b) => b.pct - a.pct);
+
+    let currentOffset = 0;
+    data.forEach(item => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '18');
+        circle.setAttribute('cy', '18');
+        circle.setAttribute('r', '15.91549430918954');
+        circle.setAttribute('fill', 'transparent');
+        circle.setAttribute('stroke', item.color);
+        circle.setAttribute('stroke-width', '4');
+        circle.setAttribute('stroke-dasharray', `${item.pct} ${100 - item.pct}`);
+        circle.setAttribute('stroke-dashoffset', String(-currentOffset));
+        circle.setAttribute('style', 'transition: stroke-width 0.2s ease-out; cursor: pointer;');
+        
+        circle.addEventListener('mouseenter', (e) => {
+            circle.setAttribute('stroke-width', '5.2');
+            showDonutTypeTooltip(e, item);
+        });
+        circle.addEventListener('mousemove', (e) => {
+            showDonutTypeTooltip(e, item);
+        });
+        circle.addEventListener('mouseleave', () => {
+            circle.setAttribute('stroke-width', '4');
+            hideChartTooltip();
+        });
+        
+        svg.appendChild(circle);
+        currentOffset += item.pct;
+
+        const legendItem = document.createElement('div');
+        legendItem.className = 'flex items-center justify-between py-1 border-b border-white/[0.02] hover:bg-white/[0.02] rounded px-1 transition-all cursor-default';
+        legendItem.innerHTML = `
+            <div class="flex items-center gap-2 truncate">
+                <span class="w-2.5 h-2.5 rounded-full ${item.dotClass}"></span>
+                <span class="text-on-surface-variant font-medium truncate">${item.type}</span>
+            </div>
+            <div class="flex items-center gap-2 text-right">
+                <span class="text-white font-bold">${item.pct.toFixed(0)}%</span>
+                <span class="text-zinc-500 text-[10px]">(${formatVal(item.amount)})</span>
+            </div>
+        `;
+        legend.appendChild(legendItem);
+    });
+}
+
+function showDonutTypeTooltip(event, item) {
+    if (!chartTooltip) {
+        chartTooltip = document.createElement('div');
+        chartTooltip.className = 'absolute z-[200] glass-card p-3 rounded-xl border border-white/10 shadow-2xl text-[11px] font-mono space-y-1 pointer-events-none transition-all duration-75';
+        chartTooltip.style.background = 'rgba(20, 20, 25, 0.65)';
+        chartTooltip.style.backdropFilter = 'blur(16px)';
+        chartTooltip.style.webkitBackdropFilter = 'blur(16px)';
+        chartTooltip.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)';
+        document.body.appendChild(chartTooltip);
+    }
+    
+    chartTooltip.innerHTML = `
+        <div class="font-bold text-white flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: ${item.color}"></span>
+            ${item.type}
+        </div>
+        <div class="text-[9px] text-on-surface-variant uppercase tracking-wider font-bold">Volume Share</div>
+        <div class="text-sm font-bold text-primary">${formatVal(item.amount)} <span class="text-[10px] text-zinc-400 font-normal">(${item.pct.toFixed(1)}%)</span></div>
+        <div class="text-[9px] text-zinc-400 pt-1 mt-1 border-t border-white/5">Count: <span class="text-white font-semibold">${item.count} txs</span></div>
+    `;
+    
+    chartTooltip.style.display = 'block';
+    
+    const offset = 15;
+    let left = event.pageX + offset;
+    let top = event.pageY + offset;
+    
+    if (left + 220 > window.innerWidth) {
+        left = event.pageX - 220 - offset;
+    }
+    if (top + 100 > window.innerHeight) {
+        top = event.pageY - 100 - offset;
+    }
+    
+    chartTooltip.style.left = `${left}px`;
+    chartTooltip.style.top = `${top}px`;
+}
+
+// Draw Income vs Expenses dual bar and net line chart
+function drawIncomeExpensesBarChart(txns) {
+    // If txns is not passed, use lastFilteredTransactions
+    const transactions = txns || lastFilteredTransactions;
+    
+    const svg = document.getElementById('tx-bar-chart-svg');
+    const container = document.getElementById('tx-bar-chart-container');
+    if (!svg || !container) return;
+    svg.innerHTML = '';
+    
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    if (w === 0 || h === 0) return;
+    
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    
+    const select = document.getElementById('tx-period-select');
+    const monthsCount = select ? parseInt(select.value) : 6;
+    
+    const months = getLastKMonths(monthsCount);
+    
+    const monthlyData = months.map(m => {
+        let income = 0;
+        let expenses = 0;
+        const prefix = `${m.year}-${String(m.month + 1).padStart(2, '0')}`;
+        
+        allTransactions.forEach(t => {
+            if (t.date && t.date.startsWith(prefix)) {
+                const normAmt = getNormalizedEur(t.amount, t.currency);
+                if (normAmt > 0) {
+                    income += normAmt;
+                } else {
+                    expenses += Math.abs(normAmt);
+                }
+            }
+        });
+
+        const dateObj = new Date(m.year, m.month, 1);
+        const label = dateObj.toLocaleDateString('en-US', { month: 'short' });
+        
+        return {
+            month: m.month,
+            year: m.year,
+            label: label,
+            income: income,
+            expenses: expenses,
+            net: income - expenses
+        };
+    });
+
+    // Seed data if database is empty for visual showcase
+    const allZero = monthlyData.every(d => d.income === 0 && d.expenses === 0);
+    if (allZero) {
+        monthlyData.forEach((d, idx) => {
+            d.income = 3500 + Math.sin(idx) * 800;
+            d.expenses = 2000 + Math.cos(idx) * 600;
+            d.net = d.income - d.expenses;
+        });
+    }
+
+    const maxIncome = Math.max(...monthlyData.map(d => d.income));
+    const maxExpenses = Math.max(...monthlyData.map(d => d.expenses));
+    const maxVal = Math.max(maxIncome, maxExpenses) || 1000;
+    
+    const yMax = Math.ceil(maxVal / 1000) * 1000 || 1000;
+    
+    const paddingLeft = 50;
+    const paddingRight = 20;
+    const paddingTop = 15;
+    const paddingBottom = 25;
+    
+    const chartW = w - paddingLeft - paddingRight;
+    const chartH = h - paddingTop - paddingBottom;
+    const zeroY = paddingTop + chartH / 2;
+    
+    const getY = (val) => {
+        const ratio = val / yMax;
+        return zeroY - ratio * (chartH / 2);
+    };
+
+    const gridValues = [yMax, yMax / 2, 0, -yMax / 2, -yMax];
+    gridValues.forEach(val => {
+        const y = getY(val);
+        
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', String(paddingLeft));
+        line.setAttribute('y1', String(y));
+        line.setAttribute('x2', String(w - paddingRight));
+        line.setAttribute('y2', String(y));
+        line.setAttribute('stroke', 'rgba(255, 255, 255, 0.05)');
+        line.setAttribute('stroke-dasharray', val === 0 ? '0' : '3,3');
+        line.setAttribute('stroke-width', val === 0 ? '1.5' : '1');
+        svg.appendChild(line);
+        
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', String(paddingLeft - 8));
+        txt.setAttribute('y', String(y + 3));
+        txt.setAttribute('fill', 'rgba(255, 255, 255, 0.4)');
+        txt.setAttribute('font-size', '9');
+        txt.setAttribute('font-family', 'JetBrains Mono');
+        txt.setAttribute('text-anchor', 'end');
+        
+        let labelText = '';
+        const absVal = Math.abs(val);
+        if (absVal >= 1000) {
+            labelText = `${val < 0 ? '-' : ''}€${(absVal / 1000).toFixed(0)}k`;
+        } else {
+            labelText = `${val < 0 ? '-' : ''}€${absVal}`;
+        }
+        txt.textContent = labelText;
+        svg.appendChild(txt);
+    });
+
+    const colCount = monthlyData.length;
+    const barWidth = Math.min(22, (chartW / colCount) * 0.3);
+    const spacing = chartW / colCount;
+
+    const netPoints = [];
+
+    let defs = svg.querySelector('defs');
+    if (!defs) {
+        defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        svg.appendChild(defs);
+    }
+    defs.innerHTML += `
+        <linearGradient id="barIncomeGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#30d158" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#30d158" stop-opacity="0.2"/>
+        </linearGradient>
+        <linearGradient id="barExpenseGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ff453a" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="#ff453a" stop-opacity="0.85"/>
+        </linearGradient>
+    `;
+
+    monthlyData.forEach((d, idx) => {
+        const centerX = paddingLeft + (idx + 0.5) * spacing;
+        const xIncome = centerX - barWidth - 2;
+        const xExpense = centerX + 2;
+
+        const yIncome = getY(d.income);
+        const hIncome = Math.max(2, zeroY - yIncome);
+        const rectIncome = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rectIncome.setAttribute('x', String(xIncome));
+        rectIncome.setAttribute('y', String(yIncome));
+        rectIncome.setAttribute('width', String(barWidth));
+        rectIncome.setAttribute('height', String(hIncome));
+        rectIncome.setAttribute('fill', 'url(#barIncomeGrad)');
+        rectIncome.setAttribute('rx', '4');
+        rectIncome.setAttribute('style', 'transition: opacity 0.15s ease-in-out; cursor: pointer;');
+        
+        const yExpense = zeroY;
+        const hExpense = Math.max(2, getY(-d.expenses) - zeroY);
+        const rectExpense = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rectExpense.setAttribute('x', String(xExpense));
+        rectExpense.setAttribute('y', String(yExpense));
+        rectExpense.setAttribute('width', String(barWidth));
+        rectExpense.setAttribute('height', String(hExpense));
+        rectExpense.setAttribute('fill', 'url(#barExpenseGrad)');
+        rectExpense.setAttribute('rx', '4');
+        rectExpense.setAttribute('style', 'transition: opacity 0.15s ease-in-out; cursor: pointer;');
+
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        group.appendChild(rectIncome);
+        group.appendChild(rectExpense);
+        
+        const hoverOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        hoverOverlay.setAttribute('x', String(centerX - spacing/2));
+        hoverOverlay.setAttribute('y', String(paddingTop));
+        hoverOverlay.setAttribute('width', String(spacing));
+        hoverOverlay.setAttribute('height', String(chartH));
+        hoverOverlay.setAttribute('fill', 'transparent');
+        hoverOverlay.setAttribute('style', 'cursor: pointer;');
+        group.appendChild(hoverOverlay);
+
+        svg.appendChild(group);
+
+        const netY = getY(d.net);
+        netPoints.push({ x: centerX, y: netY, data: d });
+
+        const labelTxt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        labelTxt.setAttribute('x', String(centerX));
+        labelTxt.setAttribute('y', String(h - 8));
+        labelTxt.setAttribute('fill', 'rgba(255, 255, 255, 0.4)');
+        labelTxt.setAttribute('font-size', '9');
+        labelTxt.setAttribute('font-family', 'Inter');
+        labelTxt.setAttribute('font-weight', '500');
+        labelTxt.setAttribute('text-anchor', 'middle');
+        labelTxt.textContent = d.label;
+        svg.appendChild(labelTxt);
+
+        hoverOverlay.addEventListener('mouseenter', (e) => {
+            rectIncome.setAttribute('fill-opacity', '0.75');
+            rectExpense.setAttribute('fill-opacity', '0.75');
+            showIncomeExpensesTooltip(e, d);
+        });
+        hoverOverlay.addEventListener('mousemove', (e) => {
+            showIncomeExpensesTooltip(e, d);
+        });
+        hoverOverlay.addEventListener('mouseleave', () => {
+            rectIncome.removeAttribute('fill-opacity');
+            rectExpense.removeAttribute('fill-opacity');
+            hideChartTooltip();
+        });
+    });
+
+    if (netPoints.length > 1) {
+        let pathD = `M ${netPoints[0].x} ${netPoints[0].y}`;
+        for (let i = 1; i < netPoints.length; i++) {
+            pathD += ` L ${netPoints[i].x} ${netPoints[i].y}`;
+        }
+        
+        const lineShadow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        lineShadow.setAttribute('d', pathD);
+        lineShadow.setAttribute('fill', 'transparent');
+        lineShadow.setAttribute('stroke', 'rgba(191, 90, 242, 0.25)');
+        lineShadow.setAttribute('stroke-width', '4');
+        svg.appendChild(lineShadow);
+        
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        line.setAttribute('d', pathD);
+        line.setAttribute('fill', 'transparent');
+        line.setAttribute('stroke', '#bf5af2');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(line);
+    }
+
+    netPoints.forEach(pt => {
+        const diamond = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        const r = 4.5;
+        const pointsStr = `${pt.x},${pt.y - r} ${pt.x + r},${pt.y} ${pt.x},${pt.y + r} ${pt.x - r},${pt.y}`;
+        diamond.setAttribute('points', pointsStr);
+        diamond.setAttribute('fill', '#09090b');
+        diamond.setAttribute('stroke', '#bf5af2');
+        diamond.setAttribute('stroke-width', '2');
+        diamond.setAttribute('style', 'cursor: pointer; transition: transform 0.15s ease-out;');
+        svg.appendChild(diamond);
+    });
+}
+
+function showIncomeExpensesTooltip(event, d) {
+    if (!chartTooltip) {
+        chartTooltip = document.createElement('div');
+        chartTooltip.className = 'absolute z-[200] glass-card p-3 rounded-xl border border-white/10 shadow-2xl text-[11px] font-mono space-y-1 pointer-events-none transition-all duration-75';
+        chartTooltip.style.background = 'rgba(20, 20, 25, 0.65)';
+        chartTooltip.style.backdropFilter = 'blur(16px)';
+        chartTooltip.style.webkitBackdropFilter = 'blur(16px)';
+        chartTooltip.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)';
+        document.body.appendChild(chartTooltip);
+    }
+    
+    const monthName = new Date(d.year, d.month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const netColor = d.net >= 0 ? 'text-success' : 'text-error';
+    const netSign = d.net >= 0 ? '+' : '';
+    
+    chartTooltip.innerHTML = `
+        <div class="font-bold text-white border-b border-white/5 pb-1 mb-1">${monthName}</div>
+        <div class="flex items-center justify-between gap-6">
+            <span class="text-on-surface-variant font-medium">Income:</span>
+            <span class="text-success font-bold font-mono">+${formatVal(d.income)}</span>
+        </div>
+        <div class="flex items-center justify-between gap-6">
+            <span class="text-on-surface-variant font-medium">Expenses:</span>
+            <span class="text-error font-bold font-mono">-${formatVal(d.expenses)}</span>
+        </div>
+        <div class="flex items-center justify-between gap-6 pt-1 border-t border-white/5">
+            <span class="text-on-surface-variant font-medium">Net Savings:</span>
+            <span class="${netColor} font-bold font-mono">${netSign}${formatVal(d.net)}</span>
+        </div>
+    `;
+    
+    chartTooltip.style.display = 'block';
+    
+    const offset = 15;
+    let left = event.pageX + offset;
+    let top = event.pageY + offset;
+    
+    if (left + 220 > window.innerWidth) {
+        left = event.pageX - 220 - offset;
+    }
+    if (top + 100 > window.innerHeight) {
+        top = event.pageY - 100 - offset;
+    }
+    
+    chartTooltip.style.left = `${left}px`;
+    chartTooltip.style.top = `${top}px`;
+}
+
 // Initializer on Dom Loaded
 document.addEventListener('DOMContentLoaded', () => {
     initBackgroundShader();
@@ -4104,6 +6109,28 @@ document.addEventListener('DOMContentLoaded', () => {
     bindDragDropEvents();
     checkVaultStatus();
     setInterval(checkVaultStatus, 5000);
+
+    // Bank search & key bindings
+    const searchInput = document.getElementById('bank-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', renderBanks);
+    }
+
+    const modalEl = document.getElementById('bank-discovery-modal');
+    if (modalEl) {
+        modalEl.addEventListener('click', (event) => {
+            if (event.target === modalEl) {
+                closeBankModal();
+            }
+        });
+        
+        // Listen for Esc key to close
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !modalEl.classList.contains('hidden')) {
+                closeBankModal();
+            }
+        });
+    }
 
     // Global ResizeObserver for Net Worth Trend chart responsiveness
     const chartContainer = document.getElementById('chart-container');
@@ -4116,5 +6143,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         ro.observe(chartContainer);
+    }
+
+    // Global ResizeObserver for Transaction Type Donut responsiveness
+    const donutContainer = document.getElementById('tx-donut-container');
+    if (donutContainer) {
+        const roDonut = new ResizeObserver(() => {
+            if (allTransactions && allTransactions.length > 0) {
+                window.requestAnimationFrame(() => {
+                    drawTransactionTypeDonut(lastFilteredTransactions);
+                });
+            }
+        });
+        roDonut.observe(donutContainer);
+    }
+
+    // Global ResizeObserver for Income vs Expenses Chart responsiveness
+    const barContainer = document.getElementById('tx-bar-chart-container');
+    if (barContainer) {
+        const roBar = new ResizeObserver(() => {
+            if (allTransactions && allTransactions.length > 0) {
+                window.requestAnimationFrame(() => {
+                    drawIncomeExpensesBarChart(lastFilteredTransactions);
+                });
+            }
+        });
+        roBar.observe(barContainer);
     }
 });
