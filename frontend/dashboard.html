@@ -218,75 +218,101 @@
         .line-chart-gradient {
             fill: url(#chart-gradient);
         }
+
+        /* Fluid typography overrides */
+        .text-display-lg-fluid {
+            font-size: clamp(1.5rem, 4.5vw, 3rem);
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            font-weight: 600;
+        }
+        .text-headline-md-fluid {
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            line-height: 1.3;
+            letter-spacing: -0.01em;
+            font-weight: 600;
+        }
+
+        /* Sidebar transition details */
+        aside {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
     </style>
 </head>
 <body class="text-on-surface font-body-base text-body-base antialiased overflow-hidden selection:bg-primary/20 selection:text-primary">
     <!-- Ambient Radial Gradients Background -->
     <div class="fixed inset-0 -z-10 pointer-events-none" style="background: radial-gradient(circle at 15% 15%, rgba(94, 92, 230, 0.05) 0%, transparent 40%), radial-gradient(circle at 85% 85%, rgba(94, 92, 230, 0.04) 0%, transparent 45%), #09090b;"></div>
 
+    <!-- Mobile Sidebar Overlay -->
+    <div id="sidebar-overlay" onclick="closeMobileSidebar()" class="fixed inset-0 bg-black/60 z-20 hidden"></div>
+
     <!-- Main Layout -->
     <div class="flex h-screen w-full relative">
         <!-- Sidebar Navigation -->
-        <aside class="flex flex-col h-screen py-6 bg-surface-glass backdrop-blur-xl border-r border-border-subtle shrink-0 w-[280px] z-20">
-            <div class="px-6 mb-10">
+        <aside class="flex flex-col h-screen py-6 bg-surface-glass backdrop-blur-xl border-r border-border-subtle shrink-0 w-[260px] md:w-[72px] lg:w-[260px] fixed md:static inset-y-0 left-0 z-30 -translate-x-full md:translate-x-0">
+            <div class="px-6 mb-10 flex flex-col items-center md:items-start lg:items-start">
                 <h1 class="text-headline-md font-headline-md font-bold text-on-surface tracking-tight">
-                    <span style="color: rgb(76, 215, 246); font-size: 32px; letter-spacing: -1.6px; background-color: rgba(24, 24, 27, 0.4);">FinSync Pro</span>
+                    <span class="md:hidden lg:inline" style="color: rgb(76, 215, 246); font-size: 32px; letter-spacing: -1.6px; background-color: rgba(24, 24, 27, 0.4);">FinSync Pro</span>
+                    <span class="hidden md:inline lg:hidden text-primary text-2xl font-black bg-surface-variant/40 px-2 py-0.5 rounded">FP</span>
                 </h1>
-                <p class="text-label-sm font-label-sm text-on-surface-variant/60">Premium OS</p>
+                <p class="text-label-sm font-label-sm text-on-surface-variant/60 md:hidden lg:block">Premium OS</p>
             </div>
             
-            <nav class="flex-1 space-y-1" id="sidebar-nav">
+            <nav class="flex-1 space-y-1 px-3 md:px-2 lg:px-3" id="sidebar-nav">
                 <!-- Nav items styled as buttons with consistent look -->
-                <button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center gap-3 bg-primary-container text-on-primary-container rounded-lg px-4 py-2.5 mx-2 active-nav-glow scale-[0.98] transition-transform text-left font-semibold">
+                <button onclick="switchTab('overview'); closeMobileSidebar();" id="nav-overview" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 bg-primary-container text-on-primary-container rounded-lg px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start active-nav-glow scale-[0.98] transition-transform text-left font-semibold">
                     <span class="material-symbols-outlined text-[20px]">dashboard</span>
-                    <span class="text-label-sm font-label-sm">Overview</span>
+                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Overview</span>
                 </button>
-                <button onclick="switchTab('transactions')" id="nav-transactions" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium">
+                <button onclick="switchTab('transactions'); closeMobileSidebar();" id="nav-transactions" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium">
                     <span class="material-symbols-outlined text-[20px]">payments</span>
-                    <span class="text-label-sm font-label-sm">Transactions</span>
+                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Transactions</span>
                 </button>
-                <button onclick="switchTab('budgets')" id="nav-budgets" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium">
+                <button onclick="switchTab('budgets'); closeMobileSidebar();" id="nav-budgets" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium">
                     <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-                    <span class="text-label-sm font-label-sm">Budgets</span>
+                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Budgets</span>
                 </button>
-                <button onclick="switchTab('investments')" id="nav-investments" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium">
+                <button onclick="switchTab('investments'); closeMobileSidebar();" id="nav-investments" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium">
                     <span class="material-symbols-outlined text-[20px]">account_balance</span>
-                    <span class="text-label-sm font-label-sm">Investments</span>
+                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Investments</span>
                 </button>
-                <button onclick="switchTab('goals')" id="nav-goals" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium">
+                <button onclick="switchTab('goals'); closeMobileSidebar();" id="nav-goals" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium">
                     <span class="material-symbols-outlined text-[20px]">flag</span>
-                    <span class="text-label-sm font-label-sm">Goals</span>
+                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Goals</span>
                 </button>
-                <button onclick="switchTab('insights')" id="nav-insights" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium">
+                <button onclick="switchTab('insights'); closeMobileSidebar();" id="nav-insights" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium">
                     <span class="material-symbols-outlined text-[20px]">insights</span>
-                    <span class="text-label-sm font-label-sm">Insights</span>
+                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Insights</span>
                 </button>
-                <button onclick="switchTab('automation')" id="nav-automation" class="w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium relative">
+                <button onclick="switchTab('automation'); closeMobileSidebar();" id="nav-automation" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium relative">
                     <span class="material-symbols-outlined text-[20px]">robot_2</span>
-                    <span class="text-label-sm font-label-sm">Automation</span>
-                    <span id="review-badge" class="hidden absolute right-6 top-1/2 -translate-y-1/2 bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
+                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Automation</span>
+                    <span id="review-badge" class="hidden absolute right-6 md:right-1 lg:right-6 top-1/2 -translate-y-1/2 bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
                 </button>
             </nav>
 
             <div class="px-4 mt-auto space-y-4">
                 <!-- Cryptographic Secure Vault button -->
-                <div class="p-4 rounded-xl glass-panel-accent">
-                    <div class="flex items-center justify-between mb-3">
+                <div class="p-4 md:p-2 lg:p-4 rounded-xl glass-panel-accent">
+                    <div class="flex items-center justify-between md:justify-center lg:justify-between mb-3 md:mb-0 lg:mb-3">
                         <div class="flex items-center space-x-2">
                             <span class="material-symbols-outlined text-primary text-sm">lock</span>
-                            <span class="font-mono text-[10px] text-primary uppercase font-bold tracking-wider">Passcode Vault</span>
+                            <span class="font-mono text-[10px] text-primary uppercase font-bold tracking-wider md:hidden lg:inline">Passcode Vault</span>
                         </div>
-                        <span id="vault-status-indicator" class="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+                        <span id="vault-status-indicator" class="w-2 h-2 rounded-full bg-success animate-pulse md:hidden lg:inline-block"></span>
                     </div>
-                    <button onclick="lockVault()" class="w-full py-2 bg-surface-container-high hover:bg-surface-variant text-on-surface text-xs font-bold rounded-lg border border-border-subtle uppercase tracking-wider transition-all">Lock Console</button>
+                    <button onclick="lockVault()" class="w-full py-2 md:hidden lg:block bg-surface-container-high hover:bg-surface-variant text-on-surface text-xs font-bold rounded-lg border border-border-subtle uppercase tracking-wider transition-all">Lock Console</button>
+                    <button onclick="lockVault()" class="hidden md:flex lg:hidden w-8 h-8 mx-auto bg-surface-container-high hover:bg-surface-variant text-on-surface rounded-lg border border-border-subtle transition-all items-center justify-center">
+                        <span class="material-symbols-outlined text-sm">lock</span>
+                    </button>
                 </div>
                 
-                <div class="flex items-center justify-between px-2 text-on-surface-variant text-[11px] font-mono">
+                <div class="flex items-center justify-between md:justify-center lg:justify-between px-2 text-on-surface-variant text-[11px] font-mono">
                     <div class="flex items-center space-x-1.5">
                         <span class="w-2 h-2 rounded-full bg-success"></span>
-                        <span>API Sync</span>
+                        <span class="md:hidden lg:inline">API Sync</span>
                     </div>
-                    <span id="uptime-display">Uptime 99.98%</span>
+                    <span id="uptime-display" class="md:hidden lg:inline">Uptime 99.98%</span>
                 </div>
             </div>
         </aside>
@@ -294,8 +320,13 @@
         <!-- Main Workspace -->
         <main class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
             <!-- Top Sticky Navigation Bar -->
-            <header class="h-16 w-full flex-shrink-0 flex items-center justify-between px-view-padding bg-surface/80 backdrop-blur-md border-b border-border-subtle z-10">
-                <div class="flex items-center gap-6">
+            <header class="h-16 w-full flex-shrink-0 flex items-center justify-between px-4 md:px-view-padding bg-surface/80 backdrop-blur-md border-b border-border-subtle z-10">
+                <div class="flex items-center gap-2 md:gap-6">
+                    <!-- Hamburger Menu Toggle (Mobile) -->
+                    <button onclick="toggleMobileSidebar()" class="md:hidden p-1.5 rounded-lg hover:bg-surface-variant/30 text-on-surface-variant flex items-center justify-center">
+                        <span class="material-symbols-outlined text-xl">menu</span>
+                    </button>
+
                     <!-- Base Currency Switcher -->
                     <div class="flex items-center space-x-3 bg-surface-container-low border border-border-subtle p-0.5 rounded-lg">
                         <button onclick="setBaseCurrency('EUR')" id="currency-eur" class="px-3 py-1 text-xs font-bold rounded-md bg-primary text-black transition-all">EUR</button>
@@ -303,18 +334,18 @@
                     </div>
 
                     <!-- Spot Rate Simulation Slider -->
-                    <div class="flex items-center space-x-4 border-l border-border-subtle pl-6">
+                    <div class="hidden lg:flex items-center space-x-4 border-l border-border-subtle pl-6">
                         <span class="text-on-surface-variant text-[11px] font-semibold uppercase tracking-wider">Spot Rate</span>
                         <input oninput="updateSpotRate(this.value)" id="spot-rate-slider" class="w-32 h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-primary" max="95" min="85" step="0.05" type="range" value="90.00" />
                         <span id="spot-rate-value" class="font-mono text-xs text-primary font-bold">90.00 EUR/INR</span>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 md:gap-4">
                     <!-- Link Bank Institution CTA -->
-                    <button onclick="triggerLinkBank()" class="inline-flex items-center space-x-2 bg-primary text-black px-4 py-1.5 rounded-lg text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20">
+                    <button onclick="triggerLinkBank()" class="inline-flex items-center space-x-2 bg-primary text-black px-3 py-1.5 md:px-4 md:py-1.5 rounded-lg text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-primary/20">
                         <span class="material-symbols-outlined text-sm font-bold">link</span>
-                        <span>Link Institution</span>
+                        <span class="hidden sm:inline">Link Institution</span>
                     </button>
 
                     <button class="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant/30 transition-colors text-on-surface-variant">
@@ -323,8 +354,8 @@
                     </button>
 
                     <!-- Profile Info -->
-                    <div class="flex items-center space-x-3 border-l border-border-subtle pl-4">
-                        <div class="flex flex-col items-end">
+                    <div class="flex items-center space-x-3 border-l border-border-subtle pl-2 md:pl-4">
+                        <div class="hidden md:flex flex-col items-end">
                             <span class="text-xs font-bold text-white">Deepak Batham</span>
                             <span class="text-[9px] font-mono text-on-surface-variant uppercase tracking-wider">Console Owner</span>
                         </div>
@@ -342,12 +373,12 @@
                 <div id="panel-overview" class="h-full overflow-y-auto p-view-padding scroll-zone space-y-8">
                     <!-- Welcome Header -->
                     <div class="mb-section-margin">
-                        <div class="flex justify-between items-end">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
                             <div>
-                                <h2 class="text-display-lg font-display-lg text-on-surface">Good morning, Deepak 👋</h2>
+                                <h2 class="text-display-lg-fluid text-on-surface">Good morning, Deepak 👋</h2>
                                 <p class="text-body-base font-body-base text-on-surface-variant mt-2">Here's your financial overview for today.</p>
                             </div>
-                            <div class="flex flex-col items-end gap-1">
+                            <div class="flex flex-col items-start sm:items-end gap-1">
                                 <select class="bg-surface-container border border-border-subtle rounded-lg px-3 py-1 text-label-sm font-label-sm text-on-surface focus:outline-none cursor-pointer">
                                     <option>This Month</option>
                                 </select>
@@ -447,7 +478,7 @@
                         </div>
 
                         <!-- Top Spending Categories (col-span-4) -->
-                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between min-h-[360px]">
+                        <div class="col-span-12 md:col-span-6 lg:col-span-4 glass-card p-6 flex flex-col justify-between min-h-[360px]">
                             <div>
                                 <div class="flex justify-between items-center mb-5">
                                     <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant">Top Spending Categories</h3>
@@ -468,7 +499,7 @@
                         </div>
 
                         <!-- AI Financial Briefing (col-span-3) -->
-                        <div class="col-span-12 lg:col-span-3 glass-card p-6 flex flex-col justify-between min-h-[360px]">
+                        <div class="col-span-12 md:col-span-6 lg:col-span-3 glass-card p-6 flex flex-col justify-between min-h-[360px]">
                             <div>
                                 <div class="flex items-center gap-2 mb-5 text-primary">
                                     <span class="material-symbols-outlined">auto_awesome</span>
@@ -513,7 +544,7 @@
                         </div>
 
                         <!-- Budget Overview Widget (col-span-4) -->
-                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between min-h-[380px]">
+                        <div class="col-span-12 md:col-span-6 lg:col-span-4 glass-card p-6 flex flex-col justify-between min-h-[380px]">
                             <div>
                                 <div class="flex justify-between items-center mb-4">
                                     <span class="text-label-sm font-label-sm text-on-surface-variant">Budget Overview</span>
@@ -521,7 +552,7 @@
                                         <option>This Month</option>
                                     </select>
                                 </div>
-                                <div class="flex items-center justify-between gap-6 mt-4">
+                                <div class="flex flex-col sm:flex-row md:flex-col xl:flex-row items-center justify-between gap-6 mt-4">
                                     <div class="relative w-40 h-40 flex items-center justify-center shrink-0">
                                         <svg class="w-full h-full transform -rotate-90">
                                             <defs>
@@ -573,7 +604,7 @@
                         </div>
 
                         <!-- Recommended Actions Widget (col-span-3) -->
-                        <div class="col-span-12 lg:col-span-3 glass-card p-6 flex flex-col justify-between min-h-[380px]">
+                        <div class="col-span-12 md:col-span-6 lg:col-span-3 glass-card p-6 flex flex-col justify-between min-h-[380px]">
                             <div>
                                 <h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-4">Recommended Actions</h3>
                                 <div class="space-y-3" id="overview-actions-list">
@@ -622,15 +653,15 @@
                 <!-- 2. TRANSACTIONS PANEL -->
                 <div id="panel-transactions" class="hidden h-full flex flex-col p-view-padding overflow-hidden space-y-8">
                     <!-- Top Charts Grid -->
-                    <div class="grid grid-cols-12 gap-6 h-[290px] flex-shrink-0">
+                    <div class="grid grid-cols-12 gap-6 h-auto lg:h-[290px] flex-shrink-0">
                         <!-- Chart 1: Transaction Type Breakdown -->
-                        <div class="col-span-12 lg:col-span-5 glass-card p-6 flex flex-col justify-between relative overflow-hidden">
+                        <div class="col-span-12 lg:col-span-5 glass-card p-6 flex flex-col justify-between relative overflow-hidden min-h-[290px] lg:h-full">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-label-sm font-label-sm text-on-surface font-semibold">Transaction Type Breakdown</span>
                             </div>
-                            <div class="flex-1 flex items-center justify-between gap-6 min-h-0 relative">
+                            <div class="flex-1 flex flex-col sm:flex-row items-center justify-between gap-6 min-h-0 relative">
                                 <!-- SVG Donut Container -->
-                                <div class="relative w-40 h-40 flex-shrink-0 flex items-center justify-center" id="tx-donut-container">
+                                <div class="relative w-full max-w-[144px] aspect-square flex-shrink-0 flex items-center justify-center" id="tx-donut-container">
                                     <svg id="tx-donut-svg" class="w-full h-full -rotate-90" viewBox="0 0 36 36"></svg>
                                     <div class="absolute flex flex-col items-center justify-center text-center pointer-events-none">
                                         <span id="tx-donut-center-amount" class="text-headline-md font-data-md text-white font-bold">€0.00</span>
@@ -645,7 +676,7 @@
                         </div>
 
                         <!-- Chart 2: Income vs Expenses -->
-                        <div class="col-span-12 lg:col-span-7 glass-card p-6 flex flex-col justify-between relative overflow-hidden">
+                        <div class="col-span-12 lg:col-span-7 glass-card p-6 flex flex-col justify-between relative overflow-hidden min-h-[290px] lg:h-full">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-label-sm font-label-sm text-on-surface font-semibold">Income vs Expenses</span>
                                 <select id="tx-period-select" onchange="drawIncomeExpensesBarChart()" class="bg-surface-container-low border border-border-subtle rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-primary font-mono text-on-surface cursor-pointer">
@@ -677,18 +708,18 @@
                     </div>
 
                     <!-- Split-pane Primary Workspace (Dynamic Height) -->
-                    <div class="flex-1 glass-card rounded-[24px] overflow-hidden flex flex-row min-h-0 w-full mb-8">
+                    <div class="flex-1 glass-card rounded-[24px] overflow-hidden flex flex-col md:flex-row min-h-0 w-full mb-8">
                         <!-- Left Date Filtering Sidebar -->
-                        <div class="w-60 border-r border-border-subtle bg-surface-container-low/10 p-4 flex flex-col space-y-4 flex-shrink-0">
+                        <div class="w-full md:w-60 border-b md:border-b-0 md:border-r border-border-subtle bg-surface-container-low/10 p-4 flex flex-col sm:flex-row md:flex-col space-y-4 sm:space-y-0 md:space-y-4 sm:space-x-6 md:space-x-0 flex-shrink-0">
                             <div class="space-y-1">
                                 <span class="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold">Date Navigation</span>
                             </div>
-                            <div class="flex-1 overflow-y-auto scroll-zone space-y-1" id="ledger-months-list">
+                            <div class="overflow-x-auto md:overflow-y-auto scroll-zone flex flex-row md:flex-col gap-2 md:gap-1" id="ledger-months-list">
                                 <!-- Dynamic month feeds -->
                             </div>
-                            <div class="pt-3 border-t border-border-subtle space-y-3">
+                            <div class="pt-0 sm:pt-0 md:pt-3 border-t-0 sm:border-t-0 md:border-t border-border-subtle space-y-3 shrink-0">
                                 <span class="text-[10px] uppercase tracking-wider text-on-surface-variant font-bold block">Custom Interval</span>
-                                <div class="space-y-2">
+                                <div class="flex flex-row md:flex-col gap-2">
                                     <input type="date" id="custom-start-date" onchange="setCustomDateRange()" class="w-full bg-surface-container-low border border-border-subtle rounded-xl px-3 py-2 text-data-sm text-white focus:outline-none focus:border-primary transition-all font-mono" />
                                     <input type="date" id="custom-end-date" onchange="setCustomDateRange()" class="w-full bg-surface-container-low border border-border-subtle rounded-xl px-3 py-2 text-data-sm text-white focus:outline-none focus:border-primary transition-all font-mono" />
                                 </div>
@@ -787,18 +818,18 @@
                 <div id="panel-budgets" class="hidden h-full overflow-y-auto p-view-padding scroll-zone space-y-8">
                     <!-- Gauge and Metrics Grid -->
                     <div class="grid grid-cols-12 gap-panel-gap">
-                        <div class="col-span-12 lg:col-span-8 glass-card p-6 flex flex-col md:flex-row gap-8 items-center">
-                            <div class="relative w-48 h-48 flex items-center justify-center shrink-0">
-                                <svg class="w-full h-full transform -rotate-90">
+                        <div class="col-span-12 lg:col-span-8 glass-card p-6 flex flex-col sm:flex-row gap-8 items-center">
+                            <div class="relative w-full max-w-[192px] aspect-square flex items-center justify-center shrink-0">
+                                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 192 192">
                                     <circle class="text-surface-container-highest" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="12"></circle>
                                     <circle class="text-primary gauge-ring" id="budget-progress-gauge" cx="96" cy="96" fill="transparent" r="80" stroke="currentColor" stroke-width="12" style="stroke-dasharray: 502.65; stroke-dashoffset: 502.65; transition: stroke-dashoffset 0.8s ease-out;"></circle>
                                 </svg>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span class="text-display-lg font-display-lg text-on-surface" id="budget-gauge-pct">0%</span>
-                                    <span class="text-label-sm font-label-sm text-on-surface-variant">of budget used</span>
+                                    <span class="text-3xl sm:text-4xl font-bold text-on-surface" id="budget-gauge-pct">0%</span>
+                                    <span class="text-[10px] sm:text-xs font-semibold text-on-surface-variant mt-1">of budget used</span>
                                 </div>
                             </div>
-                            <div class="flex-1 grid grid-cols-3 gap-6 w-full">
+                            <div class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-6 w-full">
                                 <div class="space-y-1">
                                     <p class="text-label-sm font-label-sm text-on-surface-variant">Total Budget</p>
                                     <p class="text-data-lg font-data-lg text-on-surface" id="budget-summary-limit">€0.00</p>
@@ -941,7 +972,7 @@
                     <!-- SUB-VIEW 1: ASSETS OVERVIEW -->
                     <div id="sub-panel-investments-assets" class="space-y-8">
                         <!-- Context Summary -->
-                        <div class="grid grid-cols-4 gap-6">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                             <div class="glass-card p-6 relative overflow-hidden group">
                                 <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Total Assets Pool</span>
                                 <h2 id="asset-summary-total" class="text-headline-md font-bold text-white">€ 0.00</h2>
@@ -990,36 +1021,53 @@
                             </div>
 
                             <!-- Assets Allocation Donut -->
-                            <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col">
-                                <h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-6">Asset Allocation</h3>
-                                <div class="flex-1 flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10">
-                                    <div class="relative w-40 h-40 shrink-0">
-                                        <svg class="w-full h-full transform -rotate-90">
+                            <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col items-center justify-between">
+                                <h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider mb-6 w-full text-left">Asset Allocation</h3>
+                                <div class="flex-1 flex flex-col sm:flex-row lg:flex-col xl:flex-row items-center justify-center w-full gap-6">
+                                    <div class="relative w-full max-w-[180px] aspect-square shrink-0">
+                                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
                                             <circle class="text-surface-variant/20" cx="80" cy="80" fill="transparent" r="68" stroke="currentColor" stroke-width="12"></circle>
-                                            <circle id="asset-donut-investments" class="text-primary" cx="80" cy="80" fill="transparent" r="68" stroke="currentColor" stroke-dasharray="427.26" stroke-dashoffset="0" stroke-width="12"></circle>
-                                            <circle id="asset-donut-cashbank" class="text-success" cx="80" cy="80" fill="transparent" r="68" stroke="currentColor" stroke-dasharray="427.26" stroke-dashoffset="0" stroke-width="12"></circle>
+                                            <circle id="asset-donut-etf" cx="80" cy="80" fill="transparent" r="68" stroke="currentColor" stroke-dasharray="427.26" stroke-dashoffset="0" stroke-width="12" class="text-primary-container"></circle>
+                                            <circle id="asset-donut-stocks" cx="80" cy="80" fill="transparent" r="68" stroke="currentColor" stroke-dasharray="427.26" stroke-dashoffset="0" stroke-width="12" class="text-warning"></circle>
+                                            <circle id="asset-donut-bonds" cx="80" cy="80" fill="transparent" r="68" stroke="currentColor" stroke-dasharray="427.26" stroke-dashoffset="0" stroke-width="12" class="text-tertiary"></circle>
+                                            <circle id="asset-donut-cash" cx="80" cy="80" fill="transparent" r="68" stroke="currentColor" stroke-dasharray="427.26" stroke-dashoffset="0" stroke-width="12" class="text-surface-variant"></circle>
                                         </svg>
                                         <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                                            <span class="text-[9px] text-on-surface-variant uppercase tracking-wider font-bold">Total</span>
-                                            <span id="asset-donut-center-amount" class="text-base font-bold font-mono text-white leading-tight">€ 0.00</span>
+                                            <span id="asset-donut-center-pct" class="text-lg font-bold text-white leading-none">0.0%</span>
+                                            <span id="asset-donut-center-label" class="text-[9px] text-on-surface-variant uppercase tracking-wider font-bold mt-1">Cash</span>
                                         </div>
                                     </div>
-                                    <div class="w-full sm:w-auto sm:flex-1 max-w-[200px] space-y-4 text-xs">
+                                    <div class="w-full space-y-3 text-xs">
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center gap-2">
-                                                <div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
-                                                <span class="font-semibold text-on-surface">Investments</span>
+                                                <div class="w-2.5 h-2.5 rounded-full bg-primary-container"></div>
+                                                <span class="font-semibold text-on-surface">ETF</span>
                                             </div>
-                                            <span id="asset-legend-investments-pct" class="text-on-surface-variant font-mono text-[10px]">0.0%</span>
+                                            <span id="asset-legend-etf-pct" class="text-on-surface-variant font-mono text-[10px]">0.0%</span>
                                         </div>
                                         <div class="flex items-center justify-between">
                                             <div class="flex items-center gap-2">
-                                                <div class="w-2.5 h-2.5 rounded-full bg-success"></div>
-                                                <span class="font-semibold text-on-surface">Cash &amp; Bank</span>
+                                                <div class="w-2.5 h-2.5 rounded-full bg-warning"></div>
+                                                <span class="font-semibold text-on-surface">Stocks</span>
                                             </div>
-                                            <span id="asset-legend-cashbank-pct" class="text-on-surface-variant font-mono text-[10px]">0.0%</span>
+                                            <span id="asset-legend-stocks-pct" class="text-on-surface-variant font-mono text-[10px]">0.0%</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-2.5 h-2.5 rounded-full bg-tertiary"></div>
+                                                <span class="font-semibold text-on-surface">Bonds</span>
+                                            </div>
+                                            <span id="asset-legend-bonds-pct" class="text-on-surface-variant font-mono text-[10px]">0.0%</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-2.5 h-2.5 rounded-full bg-surface-variant"></div>
+                                                <span class="font-semibold text-on-surface">Cash</span>
+                                            </div>
+                                            <span id="asset-legend-cash-pct" class="text-on-surface-variant font-mono text-[10px]">0.0%</span>
                                         </div>
                                     </div>
+                                    <button class="mt-2 text-xs text-primary font-bold hover:underline">View full allocation &gt;</button>
                                 </div>
                             </div>
                         </div>
@@ -1076,7 +1124,7 @@
                     <!-- SUB-VIEW 2: PORTFOLIO GROWTH -->
                     <div id="sub-panel-investments-portfolio" class="space-y-8 hidden">
                         <!-- KPI Cards -->
-                        <div class="grid grid-cols-4 gap-6">
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                             <div class="glass-card p-6 flex flex-col justify-between">
                                 <span class="text-label-sm font-label-sm text-on-surface-variant">Total Portfolio Value</span>
                                 <h2 id="portfolio-kpi-value" class="text-headline-md font-bold text-white font-mono mt-2">€0.00</h2>
@@ -1101,7 +1149,7 @@
 
                         <!-- Spline Performance Chart -->
                         <div class="grid grid-cols-12 gap-panel-gap">
-                            <div class="col-span-8 glass-card p-8 min-h-[350px] flex flex-col justify-between relative overflow-hidden">
+                            <div class="col-span-12 lg:col-span-8 glass-card p-8 min-h-[350px] flex flex-col justify-between relative overflow-hidden font-sans">
                                 <div class="flex justify-between items-start mb-4">
                                     <div>
                                         <h3 class="text-label-sm font-label-sm font-bold text-on-surface-variant uppercase tracking-wider">Portfolio Performance</h3>
@@ -1119,7 +1167,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-span-4 glass-card p-6 flex flex-col justify-between">
+                            <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between">
                                 <h3 class="text-label-sm font-label-sm font-bold text-on-surface-variant uppercase tracking-wider mb-4">Allocation Details</h3>
                                 <div id="portfolio-allocation-details" class="space-y-3 text-xs">
                                     <!-- Dynamic list of allocations -->
@@ -1130,7 +1178,7 @@
                         <!-- Holdings list and rebalancing recommendations -->
                         <div class="grid grid-cols-12 gap-panel-gap">
                             <!-- Holdings Table -->
-                            <div class="col-span-8 glass-card overflow-hidden">
+                            <div class="col-span-12 lg:col-span-8 glass-card overflow-hidden">
                                 <div class="p-6 flex justify-between items-center border-b border-border-subtle">
                                     <h3 class="text-headline-md font-headline-md">Top Holdings</h3>
                                     <button class="text-label-sm text-primary">View all holdings</button>
@@ -1150,7 +1198,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="col-span-4 space-y-4">
+                            <div class="col-span-12 lg:col-span-4 space-y-4">
                                 <div class="glass-card p-4 border-l-4 border-l-success flex gap-3">
                                     <span class="material-symbols-outlined text-success">auto_awesome</span>
                                     <div>
@@ -1173,7 +1221,7 @@
                 <!-- 5. GOALS PANEL -->
                 <div id="panel-goals" class="hidden h-full overflow-y-auto p-view-padding scroll-zone space-y-8">
                     <!-- Context Summary (4 metrics cards) -->
-                    <div class="grid grid-cols-4 gap-6">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div class="glass-card p-6 relative overflow-hidden group">
                             <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Target Wealth Goal</span>
                             <h2 id="goal-summary-target" class="text-headline-md font-bold text-white">€ 500,000</h2>
@@ -1327,8 +1375,8 @@
                         <!-- Right Card: Financial Health Score -->
                         <div class="col-span-12 xl:col-span-2 glass-card p-5 flex flex-col items-center justify-center text-center min-h-[160px]">
                             <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Financial Health Score</span>
-                            <div class="relative w-28 h-28 flex items-center justify-center mb-2 shrink-0">
-                                <svg class="w-full h-full transform -rotate-90">
+                            <div class="relative w-full max-w-[112px] aspect-square flex items-center justify-center mb-2 shrink-0">
+                                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 112 112">
                                     <circle class="text-surface-variant/20" cx="56" cy="56" fill="transparent" r="48" stroke="currentColor" stroke-width="6"></circle>
                                     <circle id="insight-score-gauge" class="text-success" cx="56" cy="56" fill="transparent" r="48" stroke="currentColor" stroke-dasharray="301.6" stroke-dashoffset="301.6" stroke-width="6" style="transition: stroke-dashoffset 0.8s ease-out;"></circle>
                                 </svg>
@@ -1347,11 +1395,11 @@
                     <!-- Row 2: Expense Breakdown, Spending Trend, Key Insights -->
                     <div class="grid grid-cols-12 gap-panel-gap">
                         <!-- Expense Breakdown -->
-                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col">
+                        <div class="col-span-12 md:col-span-6 lg:col-span-4 glass-card p-6 flex flex-col">
                             <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Expense Breakdown <span class="text-[10px] text-text-muted capitalize">(vs last month)</span></h3>
-                            <div class="flex items-center gap-6 flex-1 min-h-0">
+                            <div class="flex flex-col sm:flex-row items-center gap-6 flex-1 min-h-0">
                                 <!-- Donut on left -->
-                                <div class="relative w-36 h-36 shrink-0 flex items-center justify-center">
+                                <div class="relative w-full max-w-[144px] aspect-square shrink-0 flex items-center justify-center">
                                     <svg id="insight-breakdown-donut" class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                                         <!-- Dynamic donut circles -->
                                     </svg>
@@ -1390,7 +1438,7 @@
                         </div>
 
                         <!-- Key Insights -->
-                        <div class="col-span-12 lg:col-span-3 glass-card p-6 flex flex-col">
+                        <div class="col-span-12 md:col-span-6 lg:col-span-3 glass-card p-6 flex flex-col">
                             <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Key Insights</h3>
                             <div id="insights-cards-list" class="space-y-3 flex-1 overflow-y-auto scroll-zone max-h-[260px] pr-1">
                                 <!-- Populated dynamically -->
@@ -1401,7 +1449,7 @@
                     <!-- Row 3: Merchant Insights, Category Heatmap, Insights Summary -->
                     <div class="grid grid-cols-12 gap-panel-gap">
                         <!-- Merchant Insights -->
-                        <div class="col-span-12 lg:col-span-4 glass-card p-6 flex flex-col justify-between min-h-[300px]">
+                        <div class="col-span-12 md:col-span-6 lg:col-span-4 glass-card p-6 flex flex-col justify-between min-h-[300px]">
                             <div>
                                 <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Merchant Insights</h3>
                                 <div class="overflow-x-auto scroll-zone">
@@ -1432,19 +1480,23 @@
                         <div class="col-span-12 lg:col-span-5 glass-card p-6 flex flex-col justify-between min-h-[300px]">
                             <div>
                                 <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Category Heatmap</h3>
-                                <div class="grid grid-cols-12 gap-2 text-center text-[9px] font-mono font-bold text-on-surface-variant uppercase tracking-wider mb-2">
-                                    <div class="col-span-3 text-left">Category</div>
-                                    <div class="col-span-1">Mon</div>
-                                    <div class="col-span-1">Tue</div>
-                                    <div class="col-span-1">Wed</div>
-                                    <div class="col-span-1">Thu</div>
-                                    <div class="col-span-1">Fri</div>
-                                    <div class="col-span-1">Sat</div>
-                                    <div class="col-span-1">Sun</div>
-                                    <div class="col-span-2"></div>
-                                </div>
-                                <div id="insight-heatmap-rows" class="space-y-2.5">
-                                    <!-- Populated dynamically -->
+                                <div class="overflow-x-auto w-full scroll-zone pb-2">
+                                    <div class="min-w-[450px]">
+                                        <div class="grid grid-cols-12 gap-2 text-center text-[9px] font-mono font-bold text-on-surface-variant uppercase tracking-wider mb-2">
+                                            <div class="col-span-3 text-left">Category</div>
+                                            <div class="col-span-1">Mon</div>
+                                            <div class="col-span-1">Tue</div>
+                                            <div class="col-span-1">Wed</div>
+                                            <div class="col-span-1">Thu</div>
+                                            <div class="col-span-1">Fri</div>
+                                            <div class="col-span-1">Sat</div>
+                                            <div class="col-span-1">Sun</div>
+                                            <div class="col-span-2"></div>
+                                        </div>
+                                        <div id="insight-heatmap-rows" class="space-y-2.5">
+                                            <!-- Populated dynamically -->
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="flex items-center justify-between text-[9px] font-mono text-on-surface-variant mt-4 pt-4 border-t border-border-subtle">
@@ -1455,7 +1507,7 @@
                         </div>
 
                         <!-- Insights Summary -->
-                        <div class="col-span-12 lg:col-span-3 glass-card p-6 flex flex-col justify-between min-h-[300px]">
+                        <div class="col-span-12 md:col-span-6 lg:col-span-3 glass-card p-6 flex flex-col justify-between min-h-[300px]">
                             <div>
                                 <h3 class="text-label-sm font-bold uppercase tracking-widest text-on-surface-variant mb-4">Insights Summary</h3>
                                 <div id="insight-summary-cards" class="space-y-3 max-h-[220px] overflow-y-auto scroll-zone pr-1">
@@ -1485,7 +1537,7 @@
                 <!-- 7. AUTOMATION PANEL -->
                 <div id="panel-automation" class="hidden h-full flex flex-col p-view-padding overflow-hidden space-y-8">
                     <!-- Context Summary (4 metrics cards) -->
-                    <div class="grid grid-cols-4 gap-6">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                         <div class="glass-card p-6 relative overflow-hidden group">
                             <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Pending Review</span>
                             <h2 id="auto-summary-review" class="text-headline-md font-bold text-error">0 Tx</h2>
@@ -1517,8 +1569,8 @@
 
                     <!-- Sub-view 1: Review Queue (Dynamic Height) -->
                     <div id="sub-panel-auto-review" class="flex-1 glass-card overflow-hidden flex flex-col min-h-0">
-                        <div class="overflow-y-auto scroll-zone flex-1">
-                            <table class="w-full text-left border-collapse text-xs font-mono">
+                        <div class="overflow-auto scroll-zone flex-1">
+                            <table class="w-full min-w-[750px] text-left border-collapse text-xs font-mono">
                                 <thead class="sticky top-0 bg-[#13131b] z-10">
                                     <tr class="border-b border-border-subtle bg-surface-container-low/20 text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">
                                         <th class="px-6 py-3.5">Date</th>
@@ -1542,8 +1594,8 @@
                     </div>
 
                     <!-- Sub-view 2: Rules Manager (Viewport-Locked) -->
-                    <div id="sub-panel-auto-rules" class="hidden flex-1 grid grid-cols-12 gap-8 min-h-0 overflow-hidden">
-                        <div class="col-span-5 glass-card p-6 space-y-5">
+                    <div id="sub-panel-auto-rules" class="hidden flex-1 grid grid-cols-12 gap-8 min-h-0 overflow-y-auto lg:overflow-hidden">
+                        <div class="col-span-12 lg:col-span-5 glass-card p-6 space-y-5">
                             <div>
                                 <h3 class="text-sm font-bold text-white">Sandbox Simulator</h3>
                                 <p class="text-xs text-on-surface-variant">Test regular expressions against raw statement descriptions before saving.</p>
@@ -1566,7 +1618,7 @@
                             </div>
                         </div>
 
-                        <div class="col-span-7 glass-card p-6 flex flex-col h-full min-h-0 overflow-hidden">
+                        <div class="col-span-12 lg:col-span-7 glass-card p-6 flex flex-col h-full min-h-0 overflow-hidden">
                             <div class="flex justify-between items-center mb-4 shrink-0">
                                 <div>
                                     <h3 class="text-sm font-bold text-white">Active Rule Definitions</h3>
@@ -1904,6 +1956,32 @@
         </div>
     </div>
 
+    <!-- Responsive Navigation Helpers -->
+    <script>
+        function toggleMobileSidebar() {
+            const sidebar = document.querySelector('aside');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                overlay.classList.add('block');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('block');
+                overlay.classList.add('hidden');
+            }
+        }
+        
+        function closeMobileSidebar() {
+            const sidebar = document.querySelector('aside');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar && overlay) {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('block');
+                overlay.classList.add('hidden');
+            }
+        }
+    </script>
     <!-- UI/UX Logic Script -->
     <script src="/frontend/app.js"></script>
 </body>

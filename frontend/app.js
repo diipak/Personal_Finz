@@ -487,6 +487,28 @@ async function loadOverviewData() {
         const savingsRate = income90d > 0 ? Math.round((1.0 - (expense90d / income90d)) * 100.0) : 0;
         const fireProgress = Math.max(0, Math.min(100, Math.round((totalNetWorth / 420000) * 100)));
 
+        // Calculate previous 90-day savings rate (90-180 days ago) for trend comparison
+        const prevCutDate = new Date();
+        prevCutDate.setDate(prevCutDate.getDate() - 180);
+        let prevIncome90d = 0;
+        let prevExpense90d = 0;
+        allTransactions.forEach(t => {
+            const tDate = new Date(t.date);
+            if (tDate >= prevCutDate && tDate < cutDate) {
+                const normAmt = getNormalizedEur(t.amount, t.currency);
+                const isTransfer = (t.category || '').toLowerCase().includes('transfer');
+                if (!isTransfer) {
+                    if (normAmt > 0) {
+                        prevIncome90d += normAmt;
+                    } else {
+                        prevExpense90d += Math.abs(normAmt);
+                    }
+                }
+            }
+        });
+        const prevSavingsRate = prevIncome90d > 0 ? Math.round((1.0 - (prevExpense90d / prevIncome90d)) * 100.0) : 0;
+        const savingsRateChange = savingsRate - prevSavingsRate;
+
         // Calculate 30-day net worth trend change
         let netWorthChangeLast30d = 0;
         const thirtyDaysAgo = new Date();
@@ -538,13 +560,13 @@ async function loadOverviewData() {
 
         const savingsRateChangeDisplay = document.getElementById('savings-rate-change-display');
         if (savingsRateChangeDisplay) {
-            savingsRateChangeDisplay.textContent = `+4.2% vs last month`; // matching screenshot visual
-            savingsRateChangeDisplay.className = `text-data-sm font-data-sm text-success`;
+            savingsRateChangeDisplay.textContent = `${savingsRateChange >= 0 ? '+' : ''}${savingsRateChange}% vs last period`;
+            savingsRateChangeDisplay.className = `text-data-sm font-data-sm ${savingsRateChange >= 0 ? 'text-success' : 'text-error'}`;
         }
         const savingsRateTrendArrow = document.getElementById('savings-rate-trend-arrow');
         if (savingsRateTrendArrow) {
-            savingsRateTrendArrow.textContent = 'arrow_upward';
-            savingsRateTrendArrow.className = 'material-symbols-outlined text-[14px] text-success';
+            savingsRateTrendArrow.textContent = savingsRateChange >= 0 ? 'arrow_upward' : 'arrow_downward';
+            savingsRateTrendArrow.className = `material-symbols-outlined text-[14px] ${savingsRateChange >= 0 ? 'text-success' : 'text-error'}`;
         }
 
         const fireDisplay = document.getElementById('fire-display');
@@ -2420,9 +2442,402 @@ async function loadInvestmentsData() {
             `;
             grid.appendChild(card);
         });
+
+        // Update Asset Allocation Donut
+        updateAssetAllocationDonut(totalReserves);
+
+        // Update Portfolio Growth View
+        updatePortfolioGrowthView();
+
     } catch (err) {
         console.error("Accounts render error:", err);
     }
+}
+
+function classifyAssetAccount(name) {
+    const n = name.toLowerCase();
+    if (n.includes('etf') || n.includes('index') || n.includes('vanguard') || n.includes('msci') || n.includes('mutual')) {
+        return 'ETF';
+    }
+    if (n.includes('stock') || n.includes('share') || n.includes('equity') || n.includes('advanzia') || n.includes('apple') || n.includes('google') || n.includes('tesla')) {
+        return 'Stocks';
+    }
+    if (n.includes('bond') || n.includes('debt') || n.includes('treasury')) {
+        return 'Bonds';
+    }
+    return 'Cash & Other';
+}
+
+function updateAssetAllocationDonut(totalReserves) {
+    let etfTotal = 0;
+    let stocksTotal = 0;
+    let bondsTotal = 0;
+    let cashTotal = 0;
+    
+    accountsList.forEach(acc => {
+        const simulatedBal = acc.current_balance * balanceMultiplier;
+        const valEur = getNormalizedEur(simulatedBal, acc.currency);
+        const category = classifyAssetAccount(acc.display_name);
+        if (category === 'ETF') {
+            etfTotal += valEur;
+        } else if (category === 'Stocks') {
+            stocksTotal += valEur;
+        } else if (category === 'Bonds') {
+            bondsTotal += valEur;
+        } else {
+            cashTotal += valEur;
+        }
+    });
+    
+    const total = etfTotal + stocksTotal + bondsTotal + cashTotal;
+    
+    const etfPct = total > 0 ? (etfTotal / total) : 0;
+    const stocksPct = total > 0 ? (stocksTotal / total) : 0;
+    const bondsPct = total > 0 ? (bondsTotal / total) : 0;
+    const cashPct = total > 0 ? (cashTotal / total) : 0;
+    
+    const circumference = 427.26;
+    const etfLength = etfPct * circumference;
+    const stocksLength = stocksPct * circumference;
+    const bondsLength = bondsPct * circumference;
+    const cashLength = cashPct * circumference;
+    
+    const etfCircle = document.getElementById('asset-donut-etf');
+    const stocksCircle = document.getElementById('asset-donut-stocks');
+    const bondsCircle = document.getElementById('asset-donut-bonds');
+    const cashCircle = document.getElementById('asset-donut-cash');
+    
+    if (etfCircle) {
+        etfCircle.setAttribute('stroke-dasharray', `${etfLength} ${circumference}`);
+        etfCircle.setAttribute('stroke-dashoffset', '0');
+    }
+    if (stocksCircle) {
+        stocksCircle.setAttribute('stroke-dasharray', `${stocksLength} ${circumference}`);
+        stocksCircle.setAttribute('stroke-dashoffset', `-${etfLength}`);
+    }
+    if (bondsCircle) {
+        bondsCircle.setAttribute('stroke-dasharray', `${bondsLength} ${circumference}`);
+        bondsCircle.setAttribute('stroke-dashoffset', `-${etfLength + stocksLength}`);
+    }
+    if (cashCircle) {
+        cashCircle.setAttribute('stroke-dasharray', `${cashLength} ${circumference}`);
+        cashCircle.setAttribute('stroke-dashoffset', `-${etfLength + stocksLength + bondsLength}`);
+    }
+    
+    const etfPctEl = document.getElementById('asset-legend-etf-pct');
+    const stocksPctEl = document.getElementById('asset-legend-stocks-pct');
+    const bondsPctEl = document.getElementById('asset-legend-bonds-pct');
+    const cashPctEl = document.getElementById('asset-legend-cash-pct');
+    
+    if (etfPctEl) etfPctEl.textContent = `${(etfPct * 100).toFixed(1)}%`;
+    if (stocksPctEl) stocksPctEl.textContent = `${(stocksPct * 100).toFixed(1)}%`;
+    if (bondsPctEl) bondsPctEl.textContent = `${(bondsPct * 100).toFixed(1)}%`;
+    if (cashPctEl) cashPctEl.textContent = `${(cashPct * 100).toFixed(1)}%`;
+    
+    // Determine largest category for the center display
+    const categories = [
+        { label: 'ETF', pct: etfPct },
+        { label: 'Stocks', pct: stocksPct },
+        { label: 'Bonds', pct: bondsPct },
+        { label: 'Cash', pct: cashPct }
+    ];
+    categories.sort((a, b) => b.pct - a.pct);
+    const largest = categories[0] || { label: 'Cash', pct: 0 };
+    
+    const centerPctEl = document.getElementById('asset-donut-center-pct');
+    const centerLabelEl = document.getElementById('asset-donut-center-label');
+    if (centerPctEl) {
+        centerPctEl.textContent = `${(largest.pct * 100).toFixed(1)}%`;
+    }
+    if (centerLabelEl) {
+        centerLabelEl.textContent = largest.label;
+    }
+}
+
+function updatePortfolioGrowthView() {
+    let totalPortfolioValue = 0;
+    const manualAssets = accountsList.filter(acc => acc.account_type === 'Manual Asset');
+    
+    manualAssets.forEach(acc => {
+        totalPortfolioValue += getNormalizedEur(acc.current_balance * balanceMultiplier, acc.currency);
+    });
+    
+    // 1. Portfolio Value & 30-Day Trend
+    let portfolioChangeLast30d = 0;
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    allTransactions.forEach(t => {
+        const isAssetAccount = manualAssets.some(acc => acc.resource_id === t.account_id);
+        if (isAssetAccount) {
+            const tDate = new Date(t.date);
+            if (tDate >= thirtyDaysAgo) {
+                portfolioChangeLast30d += getNormalizedEur(t.amount, t.currency);
+            }
+        }
+    });
+    
+    const portfolioPrevVal = totalPortfolioValue - portfolioChangeLast30d;
+    const portfolioPctChange = portfolioPrevVal !== 0 ? (portfolioChangeLast30d / portfolioPrevVal) * 100 : 0.0;
+    
+    const valEl = document.getElementById('portfolio-kpi-value');
+    if (valEl) valEl.textContent = formatVal(totalPortfolioValue);
+    const trendEl = document.getElementById('portfolio-kpi-trend');
+    if (trendEl) {
+        trendEl.innerHTML = `<span class="${portfolioPctChange >= 0 ? 'text-success' : 'text-error'} text-xs font-bold font-sans">${portfolioPctChange >= 0 ? '↑' : '↓'} ${Math.abs(portfolioPctChange).toFixed(1)}%</span> vs last month`;
+    }
+    
+    // 2. Reconstruct historical portfolio values for the last 6 months using transactions rollback
+    const hist = [];
+    const labels = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const endOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+        
+        let monthTotal = 0;
+        manualAssets.forEach(acc => {
+            let txnsAfter = 0;
+            allTransactions.forEach(t => {
+                if (t.account_id === acc.resource_id) {
+                    const tDate = new Date(t.date);
+                    if (tDate > endOfMonth) {
+                        txnsAfter += t.amount;
+                    }
+                }
+            });
+            const historicBal = (acc.current_balance - txnsAfter) * balanceMultiplier;
+            monthTotal += getNormalizedEur(historicBal, acc.currency);
+        });
+        
+        hist.push(monthTotal);
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        labels.push(`${monthNames[endOfMonth.getMonth()]} '${endOfMonth.getFullYear().toString().slice(-2)}`);
+    }
+    
+    // Draw SVG spline chart
+    drawPortfolioPerformanceChart(hist, labels);
+    
+    // 3. Calculate Gain/Loss & YTD Return
+    // First historical value (6 months ago) acts as baseline
+    const baselineVal = hist[0];
+    const gainVal = totalPortfolioValue - baselineVal;
+    const gainPct = baselineVal > 0 ? (gainVal / baselineVal) * 100 : 0.0;
+    
+    const gainValEl = document.getElementById('portfolio-gain-value');
+    if (gainValEl) gainValEl.textContent = formatVal(gainVal);
+    const gainTrendEl = document.getElementById('portfolio-gain-trend');
+    if (gainTrendEl) {
+        gainTrendEl.innerHTML = `<span class="${gainPct >= 0 ? 'text-success' : 'text-error'} text-xs font-bold font-sans">${gainPct >= 0 ? '↑' : '↓'} ${Math.abs(gainPct).toFixed(1)}%</span> vs 6 months ago`;
+    }
+    
+    // 4. Today's Change Simulation (deterministic based on daily date seed)
+    const todayChangeObj = (function(totalValue) {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        let hash = 0;
+        for (let i = 0; i < todayStr.length; i++) {
+            hash = todayStr.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const pct = ((Math.abs(hash) % 300) - 120) / 100; 
+        const val = totalValue * (pct / 100);
+        return { pct, val };
+    })(totalPortfolioValue);
+    
+    const todayValEl = document.getElementById('portfolio-today-value');
+    if (todayValEl) todayValEl.textContent = formatVal(todayChangeObj.val);
+    const todayTrendEl = document.getElementById('portfolio-today-trend');
+    if (todayTrendEl) {
+        todayTrendEl.innerHTML = `<span class="${todayChangeObj.pct >= 0 ? 'text-success' : 'text-error'} text-xs font-bold font-sans">${todayChangeObj.pct >= 0 ? '↑' : '↓'} ${Math.abs(todayChangeObj.pct).toFixed(2)}%</span> Today`;
+    }
+    
+    // 5. Annual Return (YTD performance rate from historical values)
+    const annualReturnEl = document.getElementById('portfolio-annual-return');
+    if (annualReturnEl) {
+        annualReturnEl.textContent = `${gainPct >= 0 ? '+' : ''}${gainPct.toFixed(1)}%`;
+    }
+    
+    // 6. Allocation Details details list
+    const allocContainer = document.getElementById('portfolio-allocation-details');
+    if (allocContainer) {
+        let etfVal = 0;
+        let stocksVal = 0;
+        let bondsVal = 0;
+        let otherVal = 0;
+        
+        manualAssets.forEach(acc => {
+            const val = getNormalizedEur(acc.current_balance * balanceMultiplier, acc.currency);
+            const type = classifyAssetAccount(acc.display_name);
+            if (type === 'ETF') etfVal += val;
+            else if (type === 'Stocks') stocksVal += val;
+            else if (type === 'Bonds') bondsVal += val;
+            else otherVal += val;
+        });
+        
+        if (totalPortfolioValue === 0) {
+            allocContainer.innerHTML = `
+                <div class="text-center py-4 text-[10px] text-on-surface-variant">
+                    No manual assets initialized yet.<br>Click "Initialize Asset" to add portfolios.
+                </div>
+            `;
+        } else {
+            const etfPct = ((etfVal / totalPortfolioValue) * 100).toFixed(1);
+            const stocksPct = ((stocksVal / totalPortfolioValue) * 100).toFixed(1);
+            const bondsPct = ((bondsVal / totalPortfolioValue) * 100).toFixed(1);
+            const otherPct = ((otherVal / totalPortfolioValue) * 100).toFixed(1);
+            
+            allocContainer.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-primary"></span> ETF</span>
+                    <span class="font-bold text-white font-mono">${etfPct}%</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-secondary"></span> Stocks</span>
+                    <span class="font-bold text-white font-mono">${stocksPct}%</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-success"></span> Bonds</span>
+                    <span class="font-bold text-white font-mono">${bondsPct}%</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-surface-variant"></span> Cash &amp; Other</span>
+                    <span class="font-bold text-white font-mono">${otherPct}%</span>
+                </div>
+            `;
+        }
+    }
+    
+    // 7. Render Holdings list
+    renderPortfolioHoldingsTable(accountsList, totalPortfolioValue);
+}
+
+function drawPortfolioPerformanceChart(values, labels) {
+    const svg = document.getElementById('portfolio-performance-svg');
+    const labelsDiv = document.getElementById('portfolio-performance-labels');
+    if (!svg || !labelsDiv) return;
+    
+    svg.innerHTML = '';
+    labelsDiv.innerHTML = '';
+    
+    // Add linearGradient definition for chart filling
+    svg.innerHTML = `
+        <defs>
+            <linearGradient id="portfolio-chart-gradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#5e5ce6" stop-opacity="0.3"></stop>
+                <stop offset="100%" stop-color="#5e5ce6" stop-opacity="0"></stop>
+            </linearGradient>
+        </defs>
+    `;
+    
+    labels.forEach(l => {
+        const span = document.createElement('span');
+        span.textContent = l;
+        labelsDiv.appendChild(span);
+    });
+    
+    if (values.every(v => v === 0)) {
+        // Draw straight line at y = 180
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M0,180 L800,180');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', '#5e5ce6');
+        path.setAttribute('stroke-width', '3');
+        path.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(path);
+        return;
+    }
+    
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+    const range = maxVal - minVal;
+    
+    const points = values.map((val, idx) => {
+        const x = idx * (800 / 5);
+        let y = 120;
+        if (range > 0) {
+            y = 200 - ((val - minVal) / range) * 160;
+        }
+        return { x, y };
+    });
+    
+    let pathD = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+        const curr = points[i];
+        const next = points[i+1];
+        const cpX1 = curr.x + 80;
+        const cpY1 = curr.y;
+        const cpX2 = next.x - 80;
+        const cpY2 = next.y;
+        pathD += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${next.x} ${next.y}`;
+    }
+    
+    const areaD = `${pathD} L 800 240 L 0 240 Z`;
+    
+    const areaPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    areaPath.setAttribute('d', areaD);
+    areaPath.setAttribute('fill', 'url(#portfolio-chart-gradient)');
+    svg.appendChild(areaPath);
+    
+    const linePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    linePath.setAttribute('d', pathD);
+    linePath.setAttribute('fill', 'none');
+    linePath.setAttribute('stroke', '#5e5ce6');
+    linePath.setAttribute('stroke-width', '3');
+    linePath.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(linePath);
+}
+
+function renderPortfolioHoldingsTable(accounts, totalPortfolioValue) {
+    const tbody = document.getElementById('portfolio-holdings-list');
+    if (!tbody) return;
+    
+    const manualAssets = accounts.filter(acc => acc.account_type === 'Manual Asset');
+    if (manualAssets.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-8 text-center text-xs text-on-surface-variant">
+                    No manual assets initialized yet. Go to Assets Overview -> Initialize Asset to add stock, ETF, or bond portfolios.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = '';
+    manualAssets.forEach(acc => {
+        const simulatedBal = acc.current_balance * balanceMultiplier;
+        const valEur = getNormalizedEur(simulatedBal, acc.currency);
+        const type = classifyAssetAccount(acc.display_name);
+        
+        let change30d = 0;
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        allTransactions.forEach(t => {
+            if (t.account_id === acc.resource_id) {
+                const tDate = new Date(t.date);
+                if (tDate >= thirtyDaysAgo) {
+                    change30d += t.amount;
+                }
+            }
+        });
+        
+        const prevBal = acc.current_balance - change30d;
+        const pctChange = prevBal !== 0 ? (change30d / prevBal) * 100 : 0.0;
+        const allocationPct = totalPortfolioValue > 0 ? ((valEur / totalPortfolioValue) * 100).toFixed(1) : '0.0';
+        
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-white/[0.02] transition-colors';
+        tr.innerHTML = `
+            <td class="px-6 py-4 font-semibold text-white">${acc.display_name}</td>
+            <td class="px-6 py-4 text-on-surface-variant">${type}</td>
+            <td class="px-6 py-4 font-bold text-white font-mono">${acc.currency === 'EUR' ? formatVal(simulatedBal) : `${acc.currency} ${simulatedBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</td>
+            <td class="px-6 py-4 font-mono font-bold ${pctChange >= 0 ? 'text-success' : 'text-error'}">
+                ${pctChange >= 0 ? '+' : ''}${pctChange.toFixed(1)}%
+            </td>
+            <td class="px-6 py-4 font-mono">${allocationPct}%</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 function openAddAssetSheet() {
@@ -4610,10 +5025,28 @@ async function loadBudgetsData() {
 
     const remainingBudget = Math.max(0, totalLimit - monthlyBudgetSpentOnLimitedCategories);
 
+    const spentPct = totalLimit > 0 ? Math.min(100, Math.round((monthlyBudgetSpentOnLimitedCategories / totalLimit) * 100)) : 0;
+
     document.getElementById('budget-summary-limit').textContent = formatVal(totalLimit);
-    document.getElementById('budget-summary-spent').textContent = formatVal(spentYTD);
+    document.getElementById('budget-summary-spent').textContent = formatVal(monthlyBudgetSpentOnLimitedCategories);
     document.getElementById('budget-summary-remaining').textContent = formatVal(remainingBudget);
     document.getElementById('budget-summary-overage').textContent = `${overLimitCount} Categories`;
+
+    const progressGauge = document.getElementById('budget-progress-gauge');
+    const pctEl = document.getElementById('budget-gauge-pct');
+    if (pctEl) pctEl.textContent = `${spentPct}%`;
+    
+    if (progressGauge) {
+        const circ = 502.65;
+        const offset = circ - (spentPct / 100) * circ;
+        progressGauge.style.strokeDasharray = `${circ}`;
+        progressGauge.style.strokeDashoffset = `${offset}`;
+    }
+    
+    const spentProgressBar = document.getElementById('budget-spent-progress-bar');
+    if (spentProgressBar) {
+        spentProgressBar.style.width = `${spentPct}%`;
+    }
 
     const listContainer = document.getElementById('category-budgets-list');
     if (listContainer) {
@@ -6170,4 +6603,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         roBar.observe(barContainer);
     }
+
+    // Debounced window resize handler to redraw active panel charts
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            const activePanel = document.querySelector('.flex-1.overflow-hidden.relative.flex.flex-col > div:not(.hidden)');
+            if (!activePanel) return;
+            const panelId = activePanel.id;
+            
+            if (panelId === 'panel-overview') {
+                if (allTransactions && allTransactions.length > 0) {
+                    drawSplineChart(allTransactions);
+                }
+            } else if (panelId === 'panel-transactions') {
+                if (allTransactions && allTransactions.length > 0) {
+                    drawTransactionTypeDonut(lastFilteredTransactions);
+                    drawIncomeExpensesBarChart(lastFilteredTransactions);
+                }
+            } else if (panelId === 'panel-investments') {
+                updatePortfolioGrowthView();
+            } else if (panelId === 'panel-insights') {
+                drawInsightsTrendChart();
+            }
+        }, 150);
+    });
 });
