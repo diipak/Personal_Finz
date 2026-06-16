@@ -3089,9 +3089,13 @@ async function submitCreateRule() {
             loadRulesData();
             document.getElementById('rule-modal-pattern').value = '';
             document.getElementById('rule-modal-display-name').value = '';
+        } else {
+            const data = await res.json();
+            alert(`Failed to save rule: ${data.detail || 'Unknown error'}`);
         }
     } catch (err) {
         console.error("Rule save error:", err);
+        alert(`Rule save error: ${err.message || err}`);
     }
 }
 
@@ -3539,6 +3543,8 @@ function setInsightsTab(tab) {
 
 let currentInsightsTrendType = 'daily';
 let insightsResizeObserver = null;
+let lastInsightsW = 0;
+let lastInsightsH = 0;
 
 function setInsightsTrendType(type) {
     currentInsightsTrendType = type;
@@ -4184,8 +4190,15 @@ function setupInsightsResizeObserver() {
     }
     const container = document.getElementById('insights-trend-container');
     if (container) {
-        insightsResizeObserver = new ResizeObserver(() => {
-            drawInsightsTrendChart();
+        insightsResizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const { width, height } = entry.contentRect;
+                if (Math.abs(width - lastInsightsW) > 1.5 || Math.abs(height - lastInsightsH) > 1.5) {
+                    lastInsightsW = width;
+                    lastInsightsH = height;
+                    drawInsightsTrendChart();
+                }
+            }
         });
         insightsResizeObserver.observe(container);
     }
@@ -6566,39 +6579,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Global ResizeObserver for Net Worth Trend chart responsiveness
+    let lastChartW = 0, lastChartH = 0;
     const chartContainer = document.getElementById('chart-container');
     if (chartContainer) {
         const ro = new ResizeObserver(entries => {
-            if (allTransactions && allTransactions.length > 0) {
-                window.requestAnimationFrame(() => {
-                    drawSplineChart(allTransactions);
-                });
+            for (let entry of entries) {
+                const { width, height } = entry.contentRect;
+                if (Math.abs(width - lastChartW) > 1.5 || Math.abs(height - lastChartH) > 1.5) {
+                    lastChartW = width;
+                    lastChartH = height;
+                    if (allTransactions && allTransactions.length > 0) {
+                        window.requestAnimationFrame(() => {
+                            drawSplineChart(allTransactions);
+                        });
+                    }
+                }
             }
         });
         ro.observe(chartContainer);
     }
 
     // Global ResizeObserver for Transaction Type Donut responsiveness
+    let lastDonutW = 0, lastDonutH = 0;
     const donutContainer = document.getElementById('tx-donut-container');
     if (donutContainer) {
-        const roDonut = new ResizeObserver(() => {
-            if (allTransactions && allTransactions.length > 0) {
-                window.requestAnimationFrame(() => {
-                    drawTransactionTypeDonut(lastFilteredTransactions);
-                });
+        const roDonut = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const { width, height } = entry.contentRect;
+                if (Math.abs(width - lastDonutW) > 1.5 || Math.abs(height - lastDonutH) > 1.5) {
+                    lastDonutW = width;
+                    lastDonutH = height;
+                    if (allTransactions && allTransactions.length > 0) {
+                        window.requestAnimationFrame(() => {
+                            drawTransactionTypeDonut(lastFilteredTransactions);
+                        });
+                    }
+                }
             }
         });
         roDonut.observe(donutContainer);
     }
 
     // Global ResizeObserver for Income vs Expenses Chart responsiveness
+    let lastBarW = 0, lastBarH = 0;
     const barContainer = document.getElementById('tx-bar-chart-container');
     if (barContainer) {
-        const roBar = new ResizeObserver(() => {
-            if (allTransactions && allTransactions.length > 0) {
-                window.requestAnimationFrame(() => {
-                    drawIncomeExpensesBarChart(lastFilteredTransactions);
-                });
+        const roBar = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const { width, height } = entry.contentRect;
+                if (Math.abs(width - lastBarW) > 1.5 || Math.abs(height - lastBarH) > 1.5) {
+                    lastBarW = width;
+                    lastBarH = height;
+                    if (allTransactions && allTransactions.length > 0) {
+                        window.requestAnimationFrame(() => {
+                            drawIncomeExpensesBarChart(lastFilteredTransactions);
+                        });
+                    }
+                }
             }
         });
         roBar.observe(barContainer);

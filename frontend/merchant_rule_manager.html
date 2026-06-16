@@ -505,14 +505,16 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const result = await response.json();
-                if (result.status === 'success') {
+                if (response.ok) {
                     closeRuleModal();
                     loadRules();
+                } else {
+                    const data = await response.json();
+                    alert(`Failed to save rule: ${data.detail || 'Unknown error'}`);
                 }
             } catch (error) {
                 console.error('Failed to save rule:', error);
-                alert('Error saving rule');
+                alert(`Error saving rule: ${error.message || error}`);
             }
         }
 

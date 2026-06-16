@@ -15,10 +15,10 @@ from config import DEFAULT_DB_DIR, DB_PATH
 from engine.rules import apply_rules_to_unpinned_transactions
 
 ACCOUNT_MAPPING = {
-    'Revolut': 'b941a58f-79ce-4e81-9da2-39dc370be4f1',
-    'Revolut Personal': 'b941a58f-79ce-4e81-9da2-39dc370be4f1',
-    'Commerzbank': 'cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b',
-    'Commerzbank Giro': 'cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b',
+    'Revolut': 'cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b',
+    'Revolut Personal': 'cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b',
+    'Commerzbank': 'b941a58f-79ce-4e81-9da2-39dc370be4f1',
+    'Commerzbank Giro': 'b941a58f-79ce-4e81-9da2-39dc370be4f1',
     'Advanzia Bank credit card': 'advanzia-manual-id',
     'HDFC': 'hdfc-manual-id',
     'HDFC Bank Account': 'hdfc-manual-id'

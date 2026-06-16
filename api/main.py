@@ -247,6 +247,14 @@ def save_rule(rule: dict = Body(...)):
                 ) VALUES (
                     :pattern_string, :match_type, :target_category, :display_name, :flexibility_tier, :amount_min, :amount_max, :priority
                 )
+                ON CONFLICT(pattern_string) DO UPDATE SET
+                    match_type = excluded.match_type,
+                    target_category = excluded.target_category,
+                    display_name = excluded.display_name,
+                    flexibility_tier = excluded.flexibility_tier,
+                    amount_min = excluded.amount_min,
+                    amount_max = excluded.amount_max,
+                    priority = excluded.priority
                 """,
                 mapped
             )

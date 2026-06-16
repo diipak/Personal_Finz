@@ -32,7 +32,10 @@ def match_rule(description: str, amount: float) -> dict:
             
             matched = False
             if match_type == "substring":
-                if re.search(rf"\b{re.escape(pattern)}\b", desc, re.IGNORECASE):
+                from engine.normalizer import normalize
+                norm_desc = normalize(desc)
+                norm_pattern = normalize(pattern)
+                if re.search(rf"\b{re.escape(norm_pattern)}\b", norm_desc, re.IGNORECASE) or pattern.lower() in desc.lower():
                     matched = True
             elif match_type == "exact":
                 if pattern.lower() == desc.lower():
@@ -88,10 +91,7 @@ def apply_rules_to_unpinned_transactions() -> int:
         txns = cursor.fetchall()
         
         for t in txns:
-            # We normalize the description before matching
-            from engine.normalizer import normalize
-            norm_desc = normalize(t["description"])
-            match = match_rule(norm_desc, t["amount"])
+            match = match_rule(t["description"], t["amount"])
             
             if match:
                 cursor.execute(

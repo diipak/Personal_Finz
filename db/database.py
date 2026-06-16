@@ -176,8 +176,8 @@ def seed_default_accounts(conn):
             INSERT OR IGNORE INTO accounts (
                 account_id, account_name, account_type, current_balance, native_currency, psd2_resource_hash, last_synchronized
             ) VALUES 
-            ('b941a58f-79ce-4e81-9da2-39dc370be4f1', 'Revolut Personal', 'Automated (PSD2)', 0.0, 'EUR', 'b941a58f-79ce-4e81-9da2-39dc370be4f1', '2026-06-07 08:02:47'),
-            ('cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b', 'Commerzbank Giro', 'Automated (PSD2)', 0.0, 'EUR', 'cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b', '2026-06-07 08:16:11'),
+            ('b941a58f-79ce-4e81-9da2-39dc370be4f1', 'Commerzbank Giro', 'Automated (PSD2)', 0.0, 'EUR', 'b941a58f-79ce-4e81-9da2-39dc370be4f1', '2026-06-07 08:02:47'),
+            ('cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b', 'Revolut Personal', 'Automated (PSD2)', 0.0, 'EUR', 'cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b', '2026-06-07 08:16:11'),
             ('advanzia-manual-id', 'Advanzia Bank credit card', 'Manual Fallback', 0.0, 'EUR', 'advanzia-manual-id', '2026-06-10 00:00:00'),
             ('hdfc-manual-id', 'HDFC Bank Account', 'Manual Fallback', 0.0, 'INR', 'hdfc-manual-id', '2026-06-10 00:00:00')
             """

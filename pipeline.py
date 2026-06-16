@@ -44,8 +44,7 @@ def process_manual_file(file_path: str, account_name: str, bank_type: str = None
             tx_hash = hashlib.sha256(raw_hash_str.encode()).hexdigest()
             
             # Categorize using rules
-            norm_desc = normalize(desc_val)
-            rule_result = match_rule(norm_desc, amount_val)
+            rule_result = match_rule(desc_val, amount_val)
             
             if rule_result:
                 category = rule_result["category"]
@@ -119,8 +118,7 @@ def process_enable_banking_sync(account_id: str, account_name: str) -> int:
             amount_val = txn["amount"]
             
             # Categorize using rules
-            norm_desc = normalize(desc_val)
-            rule_result = match_rule(norm_desc, amount_val)
+            rule_result = match_rule(desc_val, amount_val)
             
             if rule_result:
                 category = rule_result["category"]
