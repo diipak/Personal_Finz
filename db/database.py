@@ -490,28 +490,106 @@ def upsert_api_transaction(db_conn, txn_data: dict) -> bool:
         old_row = cursor.fetchone()
         old_merchant_id = old_row["merchant_id"] if old_row else None
 
-        # Resolve cluster_id in merchant_clusters
-        cursor.execute("SELECT cluster_id, merchant_id FROM merchant_clusters WHERE cluster_name = ?", (data["normalized_pattern"],))
-        cluster_row = cursor.fetchone()
-        if cluster_row:
-            cluster_id = cluster_row["cluster_id"]
-            merchant_id = cluster_row["merchant_id"]
-        else:
-            # Check if a merchant exists with normalized_merchant name to auto-link
-            cursor.execute("SELECT merchant_id FROM merchants WHERE name = ?", (data["normalized_merchant"],))
-            merchant_row = cursor.fetchone()
-            merchant_id = merchant_row["merchant_id"] if merchant_row else None
-            
-            samples = json.dumps([data["description"]])
+        # Resolve cluster_id from Memory Engine first (exact and prefix matches only)
+        from engine.memory import match_memory
+        mem_match = match_memory(db_conn, data["description"])
+        
+        cluster_id = None
+        merchant_id = None
+        
+        if mem_match and mem_match["is_auto_resolved"]:
+            merchant_id = mem_match["merchant_id"]
+            # Look up or create cluster for this pattern
+            cursor.execute("SELECT cluster_id FROM merchant_clusters WHERE cluster_name = ?", (data["normalized_pattern"],))
+            cluster_row = cursor.fetchone()
+            if cluster_row:
+                cluster_id = cluster_row["cluster_id"]
+                # Link cluster to this merchant if not linked
+                cursor.execute("UPDATE merchant_clusters SET merchant_id = ?, confidence_score = 1.0 WHERE cluster_id = ? AND merchant_id IS NULL", (merchant_id, cluster_id))
+            else:
+                samples = json.dumps([data["description"]])
+                cursor.execute(
+                    """
+                    INSERT INTO merchant_clusters (cluster_name, merchant_id, confidence_score, is_locked, is_user_verified, sample_descriptions)
+                    VALUES (?, ?, 1.0, 0, 1, ?)
+                    """,
+                    (data["normalized_pattern"], merchant_id, samples)
+                )
+                cluster_id = cursor.lastrowid
+        elif mem_match and not mem_match["is_auto_resolved"]:
+            # Soft similarity suggestion match - do not auto-resolve
+            cursor.execute("SELECT cluster_id FROM merchant_clusters WHERE cluster_name = ?", (data["normalized_pattern"],))
+            cluster_row = cursor.fetchone()
+            if cluster_row:
+                cluster_id = cluster_row["cluster_id"]
+            else:
+                samples = json.dumps([data["description"]])
+                cursor.execute(
+                    """
+                    INSERT INTO merchant_clusters (cluster_name, merchant_id, confidence_score, is_locked, is_user_verified, sample_descriptions)
+                    VALUES (?, NULL, ?, 0, 0, ?)
+                    """,
+                    (data["normalized_pattern"], mem_match["confidence_score"], samples)
+                )
+                cluster_id = cursor.lastrowid
+                
+            # Create a suggested rule in ai_suggested_rules if not exists
             cursor.execute(
-                """
-                INSERT INTO merchant_clusters (cluster_name, merchant_id, confidence_score, is_locked, is_user_verified, sample_descriptions)
-                VALUES (?, ?, 0.1, 0, 0, ?)
-                """,
-                (data["normalized_pattern"], merchant_id, samples)
+                "SELECT suggestion_id FROM ai_suggested_rules WHERE pattern_string = ? AND status = 'PENDING'",
+                (data["normalized_pattern"],)
             )
-            cluster_id = cursor.lastrowid
-            
+            if not cursor.fetchone():
+                cursor.execute(
+                    """
+                    SELECT m.name as merchant_name, cat.name as category, COALESCE(cat.flexibility_tier, 'Flexible') as flexibility
+                    FROM merchants m
+                    LEFT JOIN categories cat ON m.category_id = cat.category_id
+                    WHERE m.merchant_id = ?
+                    """,
+                    (mem_match["merchant_id"],)
+                )
+                m_info = cursor.fetchone()
+                if m_info:
+                    samples_json = json.dumps([data["description"]])
+                    cursor.execute(
+                        """
+                        INSERT INTO ai_suggested_rules (
+                            merchant_name, pattern_string, match_type, suggested_category,
+                            suggested_display_name, flexibility_tier, confidence_score, status, transaction_count, sample_descriptions
+                        ) VALUES (?, ?, 'substring', ?, ?, ?, ?, 'PENDING', 1, ?)
+                        """,
+                        (
+                            m_info["merchant_name"],
+                            data["normalized_pattern"],
+                            m_info["category"] or "Other",
+                            m_info["merchant_name"],
+                            m_info["flexibility"],
+                            mem_match["confidence_score"],
+                            samples_json
+                        )
+                    )
+        else:
+            # Fall back to existing resolution logic
+            cursor.execute("SELECT cluster_id, merchant_id FROM merchant_clusters WHERE cluster_name = ?", (data["normalized_pattern"],))
+            cluster_row = cursor.fetchone()
+            if cluster_row:
+                cluster_id = cluster_row["cluster_id"]
+                merchant_id = cluster_row["merchant_id"]
+            else:
+                cursor.execute("SELECT merchant_id FROM merchants WHERE name = ?", (data["normalized_merchant"],))
+                merchant_row = cursor.fetchone()
+                merchant_id = merchant_row["merchant_id"] if merchant_row else None
+                
+                samples = json.dumps([data["description"]])
+                cursor.execute(
+                    """
+                    INSERT INTO merchant_clusters (cluster_name, merchant_id, confidence_score, is_locked, is_user_verified, sample_descriptions)
+                    VALUES (?, ?, 0.1, 0, 0, ?)
+                    """,
+                    (data["normalized_pattern"], merchant_id, samples)
+                )
+                cluster_id = cursor.lastrowid
+                
         data["cluster_id"] = cluster_id
 
         # For backward compatibility, update denormalized category, display name and flexibility tier from the resolved merchant

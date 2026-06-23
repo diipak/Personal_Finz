@@ -1447,6 +1447,28 @@ def resolve_merchant_suggestions(payload: dict = Body(...)):
                     )
                     rules_created += 1
                 
+                # Add memory signature
+                sig_type = "EXACT"
+                if match_type == "regex":
+                    sig_type = "REGEX"
+                elif match_type == "substring":
+                    sig_type = "USER_CREATED"
+                
+                cursor.execute(
+                    """
+                    INSERT INTO merchant_signatures (
+                        pattern_string, merchant_id, signature_type, source_action, is_user_verified, confidence_score
+                    ) VALUES (?, ?, ?, 'user_verify', 1, 1.0)
+                    ON CONFLICT(pattern_string) DO UPDATE SET
+                        merchant_id = excluded.merchant_id,
+                        signature_type = excluded.signature_type,
+                        is_user_verified = 1,
+                        confidence_score = 1.0,
+                        updated_at = CURRENT_TIMESTAMP
+                    """,
+                    (pattern.lower(), merchant_id, sig_type)
+                )
+                
                 # Update merchant_clusters matching this pattern or merchant to point to new merchant
                 cursor.execute(
                     """
@@ -2078,6 +2100,26 @@ def promote_merchant_cluster(payload: dict = Body(...)):
             WHERE cluster_id = ?
         """, (merchant_id, cluster_id))
         
+        # Add memory signature on workbench promotion
+        cursor.execute("SELECT cluster_name FROM merchant_clusters WHERE cluster_id = ?", (cluster_id,))
+        c_row = cursor.fetchone()
+        c_name = c_row["cluster_name"] if c_row else merchant_name
+        
+        cursor.execute(
+            """
+            INSERT INTO merchant_signatures (
+                pattern_string, merchant_id, signature_type, source_action, is_user_verified, confidence_score
+            ) VALUES (?, ?, 'EXACT', 'workbench_promote', 1, 1.0)
+            ON CONFLICT(pattern_string) DO UPDATE SET
+                merchant_id = excluded.merchant_id,
+                signature_type = 'EXACT',
+                is_user_verified = 1,
+                confidence_score = 1.0,
+                updated_at = CURRENT_TIMESTAMP
+            """,
+            (c_name.lower(), merchant_id)
+        )
+        
         cursor.execute("""
             UPDATE transactions SET
                 category = ?,
@@ -2116,6 +2158,26 @@ def lock_merchant_cluster(payload: dict = Body(...)):
                 updated_at = CURRENT_TIMESTAMP
             WHERE cluster_id = ?
         """, (1 if is_locked else 0, cluster_id))
+        
+        # Save signature on lock if merchant_id is present
+        if is_locked:
+            cursor.execute("SELECT cluster_name, merchant_id FROM merchant_clusters WHERE cluster_id = ?", (cluster_id,))
+            c_row = cursor.fetchone()
+            if c_row and c_row["merchant_id"]:
+                cursor.execute(
+                    """
+                    INSERT INTO merchant_signatures (
+                        pattern_string, merchant_id, signature_type, source_action, is_user_verified, confidence_score
+                    ) VALUES (?, ?, 'EXACT', 'workbench_lock', 1, 1.0)
+                    ON CONFLICT(pattern_string) DO UPDATE SET
+                        merchant_id = excluded.merchant_id,
+                        signature_type = 'EXACT',
+                        is_user_verified = 1,
+                        confidence_score = 1.0,
+                        updated_at = CURRENT_TIMESTAMP
+                    """,
+                    (c_row["cluster_name"].lower(), c_row["merchant_id"])
+                )
         conn.commit()
         return {"status": "success"}
     except Exception as e:

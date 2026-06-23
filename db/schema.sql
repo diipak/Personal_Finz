@@ -193,7 +193,25 @@ CREATE TABLE IF NOT EXISTS ai_suggested_rules (
     created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 15. Unified Resolved View
+-- 15. Merchant Signatures (Memory Engine Cache Table)
+CREATE TABLE IF NOT EXISTS merchant_signatures (
+    signature_id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    pattern_string       TEXT NOT NULL UNIQUE,     -- Clean, normalized pattern (e.g. 'google one')
+    merchant_id          INTEGER NOT NULL,          -- Links to core merchants table
+    signature_type       TEXT NOT NULL,             -- 'EXACT', 'PREFIX', 'REGEX', 'AI_DISCOVERED', 'USER_CREATED'
+    source_action        TEXT NOT NULL,             -- 'user_verify', 'workbench_promote', 'auto_resolved', 'ai_review'
+    is_user_verified     BOOLEAN DEFAULT 0,         -- 1 if user explicitly verified or promoted this pattern
+    confidence_score     REAL NOT NULL DEFAULT 0.5, -- Range [0.0 - 1.0]
+    match_count          INTEGER DEFAULT 0,         -- Usage frequency
+    last_matched_at      TIMESTAMP,
+    created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (merchant_id) REFERENCES merchants(merchant_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_signatures_pattern ON merchant_signatures(pattern_string);
+
+-- 16. Unified Resolved View
 CREATE VIEW IF NOT EXISTS v_transactions_resolved AS
 SELECT 
     t.transaction_id,

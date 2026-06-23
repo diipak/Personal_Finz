@@ -22,6 +22,35 @@ def match_rule(description: str, amount: float) -> dict:
     conn = get_db()
     cursor = conn.cursor()
     try:
+        # Check Memory Engine first (exact and prefix matches only)
+        from engine.memory import match_memory
+        mem_match = match_memory(conn, desc)
+        if mem_match and mem_match["is_auto_resolved"]:
+            cursor.execute(
+                """
+                SELECT m.name as merchant_name, cat.name as category, COALESCE(cat.flexibility_tier, 'Flexible') as flexibility
+                FROM merchants m
+                LEFT JOIN categories cat ON m.category_id = cat.category_id
+                WHERE m.merchant_id = ?
+                """,
+                (mem_match["merchant_id"],)
+            )
+            m_info = cursor.fetchone()
+            if m_info:
+                from engine.merchant_normalizer import normalize_pattern_name
+                p_name = normalize_pattern_name(desc)
+                cursor.execute("SELECT cluster_id FROM merchant_clusters WHERE cluster_name = ?", (p_name,))
+                c_row = cursor.fetchone()
+                cluster_id = c_row["cluster_id"] if c_row else None
+                
+                return {
+                    "category": m_info["category"] or "Other",
+                    "display_name": m_info["merchant_name"],
+                    "flexibility": m_info["flexibility"],
+                    "merchant_id": mem_match["merchant_id"],
+                    "cluster_id": cluster_id
+                }
+
         # Fetch all rules with their resolved merchant details
         cursor.execute("""
             SELECT 
