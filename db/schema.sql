@@ -190,6 +190,7 @@ CREATE TABLE IF NOT EXISTS ai_suggested_rules (
     status                TEXT DEFAULT 'PENDING',-- 'PENDING', 'APPROVED', 'REJECTED', 'SUPERSEDED'
     transaction_count     INTEGER DEFAULT 0,     -- Number of transactions in cluster
     sample_descriptions   TEXT,                  -- JSON array or comma-separated list of raw descriptions
+    explanation_json      TEXT,                  -- JSON metadata containing explainable confidence signals & frequency metrics
     created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

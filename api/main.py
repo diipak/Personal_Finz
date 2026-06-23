@@ -174,7 +174,7 @@ def rules_ui():
 
 @app.get("/review")
 def review_ui():
-    return FileResponse(FRONTEND_DIR / "unknown_merchant_review.html")
+    return RedirectResponse(url="/?tab=merchant-intelligence&subtab=inbox")
 
 # Rules API Endpoint: Retrieve rules from SQLite
 @app.get("/api/rules")
@@ -1317,7 +1317,7 @@ def get_merchant_suggestions():
                 suggestion_id, merchant_name, pattern_string, match_type, 
                 suggested_category, suggested_display_name, flexibility_tier, 
                 amount_min, amount_max, confidence_score, status, 
-                transaction_count, sample_descriptions, created_at
+                transaction_count, sample_descriptions, explanation_json, created_at
             FROM ai_suggested_rules
             WHERE status = 'PENDING'
             ORDER BY transaction_count DESC, confidence_score DESC
@@ -1345,6 +1345,44 @@ def get_merchant_suggestions():
                 sug["sample_descriptions"] = json.loads(sug["sample_descriptions"])
             except Exception:
                 sug["sample_descriptions"] = [sug["sample_descriptions"]] if sug["sample_descriptions"] else []
+                
+            # Parse explanation_json
+            explanation = None
+            exp_json = r["explanation_json"]
+            if exp_json:
+                try:
+                    explanation = json.loads(exp_json)
+                except Exception:
+                    pass
+            
+            if not explanation:
+                explanation = {
+                    "reason": "Suggested based on recurring description similarity.",
+                    "supporting_signals": ["Contains key merchant identifier text"],
+                    "conflict_indicators": [],
+                    "frequency": "Infrequent"
+                }
+                
+            sug["confidence_explanation"] = {
+                "reason": explanation.get("reason") or "Suggested based on recurring description similarity.",
+                "supporting_signals": explanation.get("supporting_signals") or ["Contains key merchant identifier text"],
+                "conflict_indicators": explanation.get("conflict_indicators") or []
+            }
+            sug["frequency"] = explanation.get("frequency") or "Infrequent"
+            
+            # Calculate estimated impact metrics
+            freq = sug["frequency"].lower()
+            if freq == "weekly":
+                multiplier = 52
+            elif freq == "monthly":
+                multiplier = 12
+            elif freq == "quarterly":
+                multiplier = 4
+            else:
+                multiplier = 2 # Infrequent / Ad-hoc: typically low impact
+                
+            sug["future_txns_affected"] = multiplier
+            sug["effort_saved"] = multiplier
                 
             conf = sug["confidence_score"] or 0.0
             name = sug["merchant_name"].lower()
@@ -1489,6 +1527,87 @@ def resolve_merchant_suggestions(payload: dict = Body(...)):
                 )
                 suggestions_approved += 1
                 
+            elif action == "combine":
+                target_merchant_id = res.get("target_merchant_id")
+                pattern = res.get("pattern_string")
+                match_type = res.get("match_type", "substring")
+                
+                if not target_merchant_id or not pattern:
+                    continue
+                
+                # Fetch details of target merchant
+                cursor.execute(
+                    """
+                    SELECT m.name, cat.name as category, COALESCE(cat.flexibility_tier, 'Flexible') as flexibility
+                    FROM merchants m
+                    LEFT JOIN categories cat ON m.category_id = cat.category_id
+                    WHERE m.merchant_id = ?
+                    """,
+                    (target_merchant_id,)
+                )
+                m_row = cursor.fetchone()
+                if not m_row:
+                    continue
+                
+                merchant_name = m_row["name"]
+                category = m_row["category"]
+                flexibility = m_row["flexibility"]
+                
+                # Add memory signature pointing to target_merchant_id
+                sig_type = "EXACT"
+                if match_type == "regex":
+                    sig_type = "REGEX"
+                elif match_type == "substring":
+                    sig_type = "USER_CREATED"
+                
+                cursor.execute(
+                    """
+                    INSERT INTO merchant_signatures (
+                        pattern_string, merchant_id, signature_type, source_action, is_user_verified, confidence_score
+                    ) VALUES (?, ?, ?, 'user_verify', 1, 1.0)
+                    ON CONFLICT(pattern_string) DO UPDATE SET
+                        merchant_id = excluded.merchant_id,
+                        signature_type = excluded.signature_type,
+                        is_user_verified = 1,
+                        confidence_score = 1.0,
+                        updated_at = CURRENT_TIMESTAMP
+                    """,
+                    (pattern.lower(), target_merchant_id, sig_type)
+                )
+                
+                # Update merchant_clusters matching this pattern or merchant to point to target merchant
+                cursor.execute(
+                    """
+                    UPDATE merchant_clusters SET
+                        merchant_id = ?,
+                        confidence_score = 1.0,
+                        is_locked = 1,
+                        is_user_verified = 1,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE cluster_name = ? OR (merchant_id IS NULL AND cluster_name LIKE ?)
+                    """,
+                    (target_merchant_id, pattern, f"%{pattern}%")
+                )
+                
+                cursor.execute(
+                    "UPDATE ai_suggested_rules SET status = 'APPROVED' WHERE suggestion_id = ?",
+                    (sug_id,)
+                )
+                suggestions_approved += 1
+                rules_created += 1
+                
+            elif action == "reset_pending":
+                # Fetch details first to clean signatures/rules
+                cursor.execute("SELECT merchant_name, pattern_string FROM ai_suggested_rules WHERE suggestion_id = ?", (sug_id,))
+                s_row = cursor.fetchone()
+                if s_row:
+                    pat = s_row["pattern_string"]
+                    cursor.execute("DELETE FROM merchant_signatures WHERE pattern_string = ?", (pat.lower(),))
+                    cursor.execute("DELETE FROM regex_rules WHERE pattern_string = ?", (pat,))
+                cursor.execute(
+                    "UPDATE ai_suggested_rules SET status = 'PENDING' WHERE suggestion_id = ?",
+                    (sug_id,)
+                )
             else:
                 cursor.execute(
                     "UPDATE ai_suggested_rules SET status = 'REJECTED' WHERE suggestion_id = ?",
@@ -1618,8 +1737,9 @@ def get_merchant_intelligence_stats():
 
 # --- RELATIONAL MERCHANT INTELLIGENCE ENDPOINTS ---
 
-@app.get("/api/categories")
-def get_categories_new():
+@app.get("/api/categories/tree")
+def get_categories_tree():
+    """Returns the full DB-driven category + subcategory tree as {name: {category_id, subcategories[]}}."""
     conn = get_db()
     cursor = conn.cursor()
     try:
@@ -1647,7 +1767,7 @@ def get_categories_new():
                 })
         return tree
     except Exception as e:
-        logger.error(f"Error fetching categories: {e}")
+        logger.error(f"Error fetching category tree: {e}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         conn.close()
@@ -2422,6 +2542,138 @@ def get_merchant_dashboard_metrics():
     except Exception as e:
         logger.error(f"Error fetching dashboard metrics: {e}")
         raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+
+@app.post("/api/merchants/signatures/detach")
+def detach_signature(payload: dict = Body(...)):
+    signature_id = payload.get("signature_id")
+    new_merchant_name = payload.get("new_merchant_name")
+    category = payload.get("category", "Other")
+    flexibility = payload.get("flexibility", "Flexible")
+    
+    if not signature_id or not new_merchant_name:
+        raise HTTPException(status_code=400, detail="Missing signature_id or new_merchant_name")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # Get signature details
+        cursor.execute("SELECT pattern_string, merchant_id FROM merchant_signatures WHERE signature_id = ?", (signature_id,))
+        sig_row = cursor.fetchone()
+        if not sig_row:
+            raise HTTPException(status_code=404, detail="Signature not found")
+        
+        pattern = sig_row["pattern_string"]
+        
+        # Resolve category_id
+        cursor.execute("SELECT category_id FROM categories WHERE name = ?", (category,))
+        cat_row = cursor.fetchone()
+        if cat_row:
+            cat_id = cat_row["category_id"]
+        else:
+            cursor.execute("INSERT INTO categories (name, flexibility_tier) VALUES (?, ?)", (category, flexibility))
+            cat_id = cursor.lastrowid
+            
+        # Create a new separate merchant
+        cursor.execute(
+            "INSERT INTO merchants (name, category_id, is_verified, confidence_score) VALUES (?, ?, 1, 1.0)",
+            (new_merchant_name, cat_id)
+        )
+        new_merchant_id = cursor.lastrowid
+        
+        # Link signature to new merchant
+        cursor.execute(
+            "UPDATE merchant_signatures SET merchant_id = ?, updated_at = CURRENT_TIMESTAMP WHERE signature_id = ?",
+            (new_merchant_id, signature_id)
+        )
+        
+        # Update matching clusters
+        cursor.execute(
+            "UPDATE merchant_clusters SET merchant_id = ?, updated_at = CURRENT_TIMESTAMP WHERE cluster_name = ?",
+            (new_merchant_id, pattern)
+        )
+        
+        # Update matching transactions cluster and display name
+        cursor.execute(
+            """
+            UPDATE transactions 
+            SET display_name = ?, category = ?, flexibility_tier = ?
+            WHERE cluster_id IN (SELECT cluster_id FROM merchant_clusters WHERE merchant_id = ?)
+            """,
+            (new_merchant_name, category, flexibility, new_merchant_id)
+        )
+        
+        conn.commit()
+        return {"status": "success", "new_merchant_id": new_merchant_id}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error detaching signature: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.post("/api/transactions/reassign")
+def reassign_transactions(payload: dict = Body(...)):
+    transaction_ids = payload.get("transaction_ids", [])
+    target_merchant_id = payload.get("target_merchant_id")
+    
+    if not transaction_ids or not target_merchant_id:
+        raise HTTPException(status_code=400, detail="Missing transaction_ids or target_merchant_id")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # Get target merchant details
+        cursor.execute(
+            """
+            SELECT m.name, cat.name as category, COALESCE(cat.flexibility_tier, 'Flexible') as flexibility
+            FROM merchants m
+            LEFT JOIN categories cat ON m.category_id = cat.category_id
+            WHERE m.merchant_id = ?
+            """,
+            (target_merchant_id,)
+        )
+        m_row = cursor.fetchone()
+        if not m_row:
+            raise HTTPException(status_code=404, detail="Target merchant not found")
+            
+        m_name = m_row["name"]
+        category = m_row["category"]
+        flexibility = m_row["flexibility"]
+        
+        # We need to reassign these transactions. Since transactions are linked to clusters,
+        # we can directly update their display_name, category, flexibility_tier, and is_pinned=1.
+        # Let's find or create a cluster for this merchant
+        cursor.execute("SELECT cluster_id FROM merchant_clusters WHERE merchant_id = ? LIMIT 1", (target_merchant_id,))
+        cluster_row = cursor.fetchone()
+        if cluster_row:
+            cluster_id = cluster_row["cluster_id"]
+        else:
+            # Create a default cluster for this merchant
+            cursor.execute(
+                "INSERT INTO merchant_clusters (cluster_name, merchant_id, confidence_score, is_locked, is_user_verified) VALUES (?, ?, 1.0, 1, 1)",
+                (f"MANUAL-{m_name.upper()}", target_merchant_id)
+            )
+            cluster_id = cursor.lastrowid
+            
+        for tx_id in transaction_ids:
+            cursor.execute(
+                """
+                UPDATE transactions 
+                SET cluster_id = ?, display_name = ?, category = ?, flexibility_tier = ?, is_pinned = 1, is_guess = 0
+                WHERE transaction_id = ?
+                """,
+                (cluster_id, m_name, category, flexibility, tx_id)
+            )
+            
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error reassigning transactions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
 

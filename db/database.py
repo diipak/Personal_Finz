@@ -356,6 +356,19 @@ def init_db():
                         conn.commit()
                 except Exception as ms_err:
                     logger.warning(f"Could not check/alter merchant_stats: {ms_err}")
+
+            # Ensure ai_suggested_rules has explanation_json column
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='ai_suggested_rules'")
+            if cursor.fetchone():
+                try:
+                    cursor.execute("PRAGMA table_info(ai_suggested_rules)")
+                    sug_cols = [row[1] for row in cursor.fetchall()]
+                    if "explanation_json" not in sug_cols:
+                        logger.info("Adding explanation_json column to ai_suggested_rules table...")
+                        cursor.execute("ALTER TABLE ai_suggested_rules ADD COLUMN explanation_json TEXT;")
+                        conn.commit()
+                except Exception as sug_err:
+                    logger.warning(f"Could not check/alter ai_suggested_rules: {sug_err}")
                 
             conn.close()
         except Exception as check_err:

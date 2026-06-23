@@ -190,15 +190,29 @@ function switchTab(tab) {
 }
 
 function initRouter() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const subtabParam = urlParams.get('subtab');
     const path = window.location.pathname;
+    
     let targetTab = 'overview';
-    if (path.includes('transactions')) targetTab = 'transactions';
-    else if (path.includes('budgets')) targetTab = 'budgets';
-    else if (path.includes('investments') || path.includes('accounts')) targetTab = 'investments';
-    else if (path.includes('goals')) targetTab = 'goals';
-    else if (path.includes('insights') || path.includes('stats')) targetTab = 'insights';
-    else if (path.includes('automation') || path.includes('rules') || path.includes('review') || path.includes('import-ui')) targetTab = 'automation';
-    else if (path.includes('merchant-intelligence') || path.includes('merchant-intel')) targetTab = 'merchant-intelligence';
+    if (tabParam) {
+        targetTab = tabParam;
+        if (tabParam === 'merchant-intelligence' && subtabParam) {
+            miActiveSubTab = subtabParam;
+        }
+        if (tabParam === 'automation' && subtabParam) {
+            currentAutomationSubTab = subtabParam;
+        }
+    } else {
+        if (path.includes('transactions')) targetTab = 'transactions';
+        else if (path.includes('budgets')) targetTab = 'budgets';
+        else if (path.includes('investments') || path.includes('accounts')) targetTab = 'investments';
+        else if (path.includes('goals')) targetTab = 'goals';
+        else if (path.includes('insights') || path.includes('stats')) targetTab = 'insights';
+        else if (path.includes('automation') || path.includes('rules') || path.includes('review') || path.includes('import-ui')) targetTab = 'automation';
+        else if (path.includes('merchant-intelligence') || path.includes('merchant-intel')) targetTab = 'merchant-intelligence';
+    }
     switchTab(targetTab);
 }
 
@@ -6655,7 +6669,7 @@ function showIncomeExpensesTooltip(event, d) {
 }
 
 // ─── Merchant Intelligence Subsystem ──────────────────────────────────────────
-let miActiveSubTab = 'library';
+let miActiveSubTab = 'inbox';
 let miMerchants = [];
 let miWorkbenchClusters = [];
 let miCategoriesTree = {};
@@ -6667,6 +6681,14 @@ async function loadMerchantIntelligenceData() {
     await checkVaultStatus();
     await loadMiDashboardMetrics();
     await loadMiCategories();
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    const subtabParam = urlParams.get('subtab');
+    
+    if (tabParam === 'merchant-intelligence' && subtabParam) {
+        miActiveSubTab = subtabParam;
+    }
     setMiSubTab(miActiveSubTab);
 }
 
@@ -6675,7 +6697,11 @@ async function loadMiCategories() {
         const res = await fetch('/api/categories');
         if (!res.ok) throw new Error('Categories fetch error');
         miCategoriesTree = await res.json();
-        miAllCategories = Object.keys(miCategoriesTree);
+        // /api/categories can return either a flat string array or a {name: {...}} object.
+        // Object.keys() on an array returns numeric indices, so detect type explicitly.
+        miAllCategories = Array.isArray(miCategoriesTree)
+            ? miCategoriesTree
+            : Object.keys(miCategoriesTree);
         
         // Populate library filter dropdown
         const filterSel = document.getElementById('mi-library-category-filter');
@@ -6728,13 +6754,16 @@ async function loadMiDashboardMetrics() {
 function setMiSubTab(tab) {
     miActiveSubTab = tab;
     
-    document.getElementById('sub-panel-mi-library').classList.add('hidden');
-    document.getElementById('sub-panel-mi-analytics').classList.add('hidden');
-    document.getElementById('sub-panel-mi-workbench').classList.add('hidden');
+    const subPanels = ['inbox', 'library', 'analytics', 'workbench'];
+    subPanels.forEach(p => {
+        const el = document.getElementById(`sub-panel-mi-${p}`);
+        if (el) el.classList.add('hidden');
+    });
     
-    document.getElementById(`sub-panel-mi-${tab}`).classList.remove('hidden');
+    const targetPanel = document.getElementById(`sub-panel-mi-${tab}`);
+    if (targetPanel) targetPanel.classList.remove('hidden');
     
-    const btns = ['library', 'analytics', 'workbench'];
+    const btns = ['inbox', 'library', 'analytics', 'workbench'];
     btns.forEach(b => {
         const btn = document.getElementById(`btn-mi-${b}`);
         if (btn) {
@@ -6746,7 +6775,9 @@ function setMiSubTab(tab) {
         }
     });
     
-    if (tab === 'library') {
+    if (tab === 'inbox') {
+        loadMiInboxData();
+    } else if (tab === 'library') {
         loadMiLibraryData();
     } else if (tab === 'analytics') {
         loadMiAnalyticsData();
@@ -6832,24 +6863,29 @@ function renderMerchantLibrary() {
         if (hasChildren) {
             childHtml = `
                 <div class="mt-2 pl-6 border-l border-border-subtle/60 space-y-2">
-                    <p class="text-[9px] font-mono uppercase tracking-wider text-on-surface-variant/60">Sub-Services / Intents</p>
-                    ${children.map(c => `
-                        <div class="flex items-center justify-between text-xs py-1.5 hover:bg-white/5 px-2 rounded-lg transition-all">
-                            <div class="flex items-center gap-1.5 text-white/90">
-                                <span class="material-symbols-outlined text-xs text-on-surface-variant">subdirectory_arrow_right</span>
-                                <span>${c.name}</span>
-                                ${c.is_verified ? '<span class="material-symbols-outlined text-[12px] text-success">verified</span>' : ''}
+                    <p class="text-[9px] font-mono uppercase tracking-wider text-on-surface-variant/60">Outlets & Sub-Merchants</p>
+                    ${children.map(c => {
+                        const lastSeen = c.last_seen ? new Date(c.last_seen).toLocaleDateString() : 'Never';
+                        const spendStr = c.total_spend < 0 ? '€' + Math.abs(c.total_spend).toFixed(2) : '€0.00';
+                        return `
+                            <div class="flex items-center justify-between text-xs py-1.5 hover:bg-white/5 px-2 rounded-lg transition-all">
+                                <div class="flex items-center gap-1.5 text-white/90">
+                                    <span class="material-symbols-outlined text-xs text-on-surface-variant">subdirectory_arrow_right</span>
+                                    <span class="font-semibold">${c.name}</span>
+                                    ${c.is_verified ? '<span class="material-symbols-outlined text-[12px] text-success">verified</span>' : ''}
+                                </div>
+                                <div class="flex items-center gap-4 text-on-surface-variant">
+                                    <span class="text-[10px] font-mono">Spend: <strong class="text-white">${spendStr}</strong></span>
+                                    <span class="text-[10px] font-mono">${c.transaction_count} times</span>
+                                    <span class="text-[10px] font-mono">Last Seen: ${lastSeen}</span>
+                                    <button onclick="openMerchantProfileModal(${c.merchant_id})" class="text-primary text-[11px] font-bold hover:underline flex items-center gap-0.5">
+                                        <span>Profile</span>
+                                        <span class="material-symbols-outlined text-xs">arrow_forward</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-on-surface-variant/80 font-mono">${c.transaction_count} Tx</span>
-                                <span class="text-white/80 font-mono font-bold">${c.total_spend < 0 ? '€' + Math.abs(c.total_spend).toFixed(2) : '€0.00'}</span>
-                                <button onclick="openMerchantProfileModal(${c.merchant_id})" class="text-primary text-[11px] font-bold hover:underline flex items-center gap-0.5">
-                                    <span>Profile</span>
-                                    <span class="material-symbols-outlined text-xs">arrow_forward</span>
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `;
         }
@@ -7745,6 +7781,759 @@ async function saveMerchantProfile() {
     }
 }
 
+// ─── Merchant Inbox JavaScript ───
+let miInboxSuggestions = {};
+let miInboxActiveLevel = 'Level 1 (High Confidence)';
+let miInboxSelectedIds = new Set();
+let developerMode = false;
+let lastApprovedResolutions = null;
+let activeDetailSuggestion = null;
+
+async function loadMiInboxData() {
+    miInboxSelectedIds.clear();
+    const listContainer = document.getElementById('mi-inbox-list');
+    if (listContainer) {
+        listContainer.innerHTML = '<div class="text-center py-12 text-on-surface-variant font-mono text-xs">Loading Inbox suggestions...</div>';
+    }
+    try {
+        const res = await fetch('/api/merchant-intelligence/suggestions');
+        if (!res.ok) throw new Error('Suggestions API error');
+        miInboxSuggestions = await res.json();
+        
+        // Render sub-tab badges
+        let totalPending = 0;
+        const levels = [
+            { id: '1', key: 'Level 1 (High Confidence)', badgeId: 'badge-mi-inbox-l1' },
+            { id: '2', key: 'Level 2 (Quick Approval)', badgeId: 'badge-mi-inbox-l2' },
+            { id: '3', key: 'Level 3 (Needs Attention)', badgeId: 'badge-mi-inbox-l3' },
+            { id: '4', key: 'Level 4 (Ambiguous)', badgeId: 'badge-mi-inbox-l4' }
+        ];
+        
+        levels.forEach(lvl => {
+            const count = (miInboxSuggestions[lvl.key] || []).length;
+            totalPending += count;
+            const el = document.getElementById(lvl.badgeId);
+            if (el) {
+                el.textContent = count.toString();
+                if (count > 0) {
+                    el.className = `ml-2 text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                        lvl.id === '1' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+                        lvl.id === '2' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
+                        lvl.id === '3' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                        'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                    }`;
+                } else {
+                    el.className = 'ml-2 text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-500 font-bold';
+                }
+            }
+        });
+        
+        // Update main Inbox navigation tab count badge
+        const mainBadge = document.getElementById('badge-mi-inbox-count');
+        if (mainBadge) {
+            mainBadge.textContent = totalPending.toString();
+            if (totalPending > 0) {
+                mainBadge.classList.remove('hidden');
+            } else {
+                mainBadge.classList.add('hidden');
+            }
+        }
+        
+        renderMiInboxSuggestions();
+    } catch (e) {
+        console.error("loadMiInboxData failed:", e);
+        if (listContainer) {
+            listContainer.innerHTML = `<div class="text-center py-12 text-error font-mono text-xs">Error loading suggestions: ${e.message}</div>`;
+        }
+    }
+}
+
+function setMiInboxLevel(levelKey) {
+    miInboxActiveLevel = levelKey;
+    miInboxSelectedIds.clear();
+    
+    const levels = [
+        { key: 'Level 1 (High Confidence)', id: 'tab-inbox-l1' },
+        { key: 'Level 2 (Quick Approval)', id: 'tab-inbox-l2' },
+        { key: 'Level 3 (Needs Attention)', id: 'tab-inbox-l3' },
+        { key: 'Level 4 (Ambiguous)', id: 'tab-inbox-l4' }
+    ];
+    levels.forEach(l => {
+        const tabEl = document.getElementById(l.id);
+        if (tabEl) {
+            if (l.key === levelKey) {
+                tabEl.className = 'pb-3 text-xs font-bold border-b-2 border-primary text-white transition-all';
+            } else {
+                tabEl.className = 'pb-3 text-xs font-medium border-b-2 border-transparent text-on-surface-variant hover:text-white transition-all';
+            }
+        }
+    });
+    
+    // Hide/show auto-approve level 1 action bar
+    const bar = document.getElementById('inbox-level-1-bar');
+    if (bar) {
+        const count = (miInboxSuggestions['Level 1 (High Confidence)'] || []).length;
+        if (levelKey === 'Level 1 (High Confidence)' && count > 0) {
+            bar.classList.remove('hidden');
+        } else {
+            bar.classList.add('hidden');
+        }
+    }
+    
+    renderMiInboxSuggestions();
+}
+
+function renderMiInboxSuggestions() {
+    const listContainer = document.getElementById('mi-inbox-list');
+    if (!listContainer) return;
+    
+    const suggestions = miInboxSuggestions[miInboxActiveLevel] || [];
+    
+    // Reset select-all checkbox
+    const selectAllCb = document.getElementById('inbox-select-all-cb');
+    if (selectAllCb) {
+        selectAllCb.checked = false;
+        // Disable select-all for Level 3 and 4 per Safety Guidelines
+        if (miInboxActiveLevel.includes('Level 3') || miInboxActiveLevel.includes('Level 4')) {
+            selectAllCb.disabled = true;
+            selectAllCb.title = "Bulk approval is disabled for Level 3 and Level 4 to prevent accidental misclassifications.";
+        } else {
+            selectAllCb.disabled = false;
+            selectAllCb.removeAttribute('title');
+        }
+    }
+    
+    if (suggestions.length === 0) {
+        listContainer.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-20 bg-zinc-950/20 border border-border-subtle rounded-2xl space-y-4 max-w-lg mx-auto">
+                <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 rounded-full flex items-center justify-center shadow-inner">
+                    <span class="material-symbols-outlined text-2xl font-bold">check</span>
+                </div>
+                <h3 class="text-sm font-bold text-white">Inbox Zero Reached!</h3>
+                <p class="text-on-surface-variant text-center text-[10px] max-w-xs">
+                    No pending items in this level. Run the Merchant Intelligence loop to find new clusters.
+                </p>
+            </div>
+        `;
+        updateInboxBulkFooter();
+        return;
+    }
+    
+    listContainer.innerHTML = '';
+    
+    suggestions.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'glass-card border border-border-subtle/50 p-4 hover:border-primary/40 transition-all flex flex-col gap-2.5';
+        
+        const isChecked = miInboxSelectedIds.has(s.suggestion_id) ? 'checked' : '';
+        const levelCode = miInboxActiveLevel.includes('Level 1') ? 'L1' :
+                          miInboxActiveLevel.includes('Level 2') ? 'L2' :
+                          miInboxActiveLevel.includes('Level 3') ? 'L3' : 'L4';
+                          
+        const lvlBadgeColor = levelCode === 'L1' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                             levelCode === 'L2' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
+                             levelCode === 'L3' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                             'bg-rose-500/10 text-rose-400 border-rose-500/20';
+                             
+        // Determine necessity color
+        const tier = s.flexibility_tier || 'Flexible';
+        const tierColor = tier === 'Fixed' ? 'text-blue-400 bg-blue-500/5' :
+                          tier === 'Flexible' ? 'text-primary bg-primary/5' :
+                          tier === 'Income' ? 'text-success bg-success/5' :
+                          'text-purple-400 bg-purple-500/5';
+                          
+        // Checkboxes bulk selection disabled for Level 4
+        const cbDisabled = levelCode === 'L4' ? 'disabled title="Level 4 must be reviewed individually."' : '';
+        
+        card.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" onchange="toggleInboxSelect(${s.suggestion_id})" class="rounded border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary h-4 w-4 cursor-pointer" ${isChecked} ${cbDisabled}>
+                    <div class="flex flex-col text-left">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-white">${s.suggested_display_name}</span>
+                            <span class="px-1.5 py-0.5 rounded text-[8px] font-mono border ${lvlBadgeColor}">${levelCode}: AI Guess</span>
+                            <span class="bg-primary/5 text-primary text-[10px] px-2 py-0.5 rounded font-bold">${s.suggested_category}</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${tierColor}">${tier}</span>
+                        </div>
+                        <p class="text-[10px] text-on-surface-variant font-mono mt-0.5">Phrase matches: <strong class="text-zinc-300">${s.pattern_string}</strong> (from "${s.merchant_name}")</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <div class="text-right font-mono">
+                        <p class="text-xs text-white/90 font-bold">${s.transaction_count} times • Saves ${s.effort_saved} reviews/yr</p>
+                        <p class="text-[9px] text-on-surface-variant">Frequency: ${s.frequency || 'Infrequent'}</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <button onclick="confirmInboxSuggestion(${s.suggestion_id})" class="bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 rounded-lg p-1.5 transition-all" title="Confirm Memory">
+                            <span class="material-symbols-outlined text-sm block">check</span>
+                        </button>
+                        <button onclick="rejectInboxSuggestion(${s.suggestion_id})" class="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-lg p-1.5 transition-all" title="Reject Suggestion">
+                            <span class="material-symbols-outlined text-sm block">close</span>
+                        </button>
+                        <button onclick="openInboxDetailDrawer(${s.suggestion_id})" class="bg-white/5 hover:bg-white/10 border border-border-subtle/80 text-white rounded-lg p-1.5 transition-all" title="View details">
+                            <span class="material-symbols-outlined text-sm block">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        listContainer.appendChild(card);
+    });
+    
+    updateInboxBulkFooter();
+}
+
+function toggleInboxSelectAll(cb) {
+    const suggestions = miInboxSuggestions[miInboxActiveLevel] || [];
+    miInboxSelectedIds.clear();
+    if (cb.checked) {
+        suggestions.forEach(s => {
+            const isL4OrL3 = miInboxActiveLevel.includes('Level 3') || miInboxActiveLevel.includes('Level 4');
+            if (!isL4OrL3) {
+                miInboxSelectedIds.add(s.suggestion_id);
+            }
+        });
+    }
+    renderMiInboxSuggestions();
+}
+
+function toggleInboxSelect(id) {
+    if (miInboxSelectedIds.has(id)) {
+        miInboxSelectedIds.delete(id);
+    } else {
+        miInboxSelectedIds.add(id);
+    }
+    
+    // Update select-all state
+    const suggestions = miInboxSuggestions[miInboxActiveLevel] || [];
+    const selectAllCb = document.getElementById('inbox-select-all-cb');
+    if (selectAllCb) {
+        selectAllCb.checked = (suggestions.length > 0 && miInboxSelectedIds.size === suggestions.length);
+    }
+    
+    updateInboxBulkFooter();
+}
+
+function updateInboxBulkFooter() {
+    const footer = document.getElementById('inbox-bulk-footer');
+    if (!footer) return;
+    
+    if (miInboxSelectedIds.size > 0) {
+        footer.classList.remove('translate-y-24');
+        footer.classList.remove('opacity-0');
+        document.getElementById('inbox-bulk-count').textContent = `${miInboxSelectedIds.size} suggestion(s) selected`;
+    } else {
+        footer.classList.add('translate-y-24');
+        footer.classList.add('opacity-0');
+    }
+}
+
+async function confirmInboxSuggestion(sugId) {
+    const suggestions = miInboxSuggestions[miInboxActiveLevel] || [];
+    const item = suggestions.find(s => s.suggestion_id === sugId);
+    if (!item) return;
+    
+    const resolution = {
+        suggestion_id: item.suggestion_id,
+        action: 'approve',
+        pattern_string: item.pattern_string,
+        match_type: item.match_type,
+        category: item.suggested_category,
+        display_name: item.suggested_display_name,
+        flexibility: item.flexibility_tier,
+        amount_min: item.amount_min,
+        amount_max: item.amount_max,
+        priority: 0
+    };
+    
+    try {
+        const res = await fetch('/api/merchant-intelligence/suggestions/resolve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolutions: [resolution] })
+        });
+        if (!res.ok) throw new Error('Network error');
+        
+        lastApprovedResolutions = [resolution];
+        showLearningConfirmationToast(item.pattern_string, item.suggested_category);
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("confirmInboxSuggestion failed:", e);
+        showToast("Failed to confirm suggestion.", "error");
+    }
+}
+
+async function rejectInboxSuggestion(sugId) {
+    try {
+        const res = await fetch('/api/merchant-intelligence/suggestions/resolve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolutions: [{ suggestion_id: sugId, action: 'reject' }] })
+        });
+        if (!res.ok) throw new Error('Network error');
+        
+        showToast("Suggestion rejected. Sent back to Cluster Workbench.");
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("rejectInboxSuggestion failed:", e);
+        showToast("Failed to reject suggestion.", "error");
+    }
+}
+
+function showLearningConfirmationToast(pattern, category) {
+    // Render feedback loop confirmation banner
+    const toast = document.createElement('div');
+    toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-[300] glass-card p-4 rounded-xl border border-emerald-500/30 flex items-center justify-between gap-4 animate-fade-in shadow-2xl';
+    toast.style.background = 'rgba(10, 25, 15, 0.85)';
+    toast.style.boxShadow = '0 10px 40px -10px rgba(16,185,129,0.3)';
+    
+    toast.innerHTML = `
+        <div class="flex items-center gap-3 text-left">
+            <div class="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold shrink-0">
+                <span class="material-symbols-outlined text-sm">lock</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-emerald-400">Learned.</p>
+                <p class="text-[10px] text-zinc-300 mt-0.5">Future matching transactions will now auto-resolve through Merchant Memory.</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            ${lastApprovedResolutions ? `<button onclick="undoLastApprovedInboxAction(this)" class="text-emerald-400 hover:text-emerald-300 text-[10px] font-bold tracking-wider uppercase px-2.5 py-1.5 hover:bg-emerald-500/10 rounded-lg transition-all">Undo</button>` : ''}
+            <button onclick="this.closest('.fixed').remove()" class="text-zinc-500 hover:text-white p-1 rounded-full"><span class="material-symbols-outlined text-xs">close</span></button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.classList.remove('animate-fade-in');
+            toast.classList.add('animate-fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 6000);
+}
+
+async function undoLastApprovedInboxAction(btn) {
+    if (!lastApprovedResolutions) return;
+    btn.disabled = true;
+    btn.textContent = "Undoing...";
+    
+    try {
+        const res = await fetch('/api/merchant-intelligence/suggestions/resolve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                resolutions: lastApprovedResolutions.map(r => ({
+                    suggestion_id: r.suggestion_id,
+                    action: 'reset_pending'
+                }))
+            })
+        });
+        
+        showToast("Action undone. Suggestion returned to Inbox.");
+        btn.closest('.fixed').remove();
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("Undo failed:", e);
+        showToast("Failed to undo last action.", "error");
+    }
+}
+
+function openInboxDetailDrawer(sugId) {
+    const suggestions = miInboxSuggestions[miInboxActiveLevel] || [];
+    const item = suggestions.find(s => s.suggestion_id === sugId);
+    if (!item) return;
+    
+    activeDetailSuggestion = item;
+    
+    document.getElementById('inbox-drawer-title').textContent = item.suggested_display_name;
+    document.getElementById('inbox-drawer-merchant-name').textContent = `Raw key: ${item.merchant_name}`;
+    
+    // Identity tab fields
+    document.getElementById('inbox-detail-name-input').value = item.suggested_display_name;
+    
+    // Set category dropdown
+    const catSel = document.getElementById('inbox-detail-category-select');
+    if (catSel) {
+        catSel.innerHTML = '';
+        miAllCategories.forEach(cat => {
+            catSel.innerHTML += `<option value="${cat}">${cat}</option>`;
+        });
+        catSel.value = item.suggested_category;
+    }
+    
+    // Set priority control
+    const tier = item.flexibility_tier || 'Flexible';
+    const radios = document.getElementsByName('inbox-detail-priority');
+    radios.forEach(r => {
+        r.checked = (r.value === tier);
+    });
+    
+    // Confidence section
+    const scorePct = Math.round((item.confidence_score || 0.0) * 100);
+    document.getElementById('inbox-detail-score').textContent = `${scorePct}% Confidence`;
+    
+    // Explainable signals
+    const explanation = item.confidence_explanation || {
+        reason: "Matched description patterns.",
+        supporting_signals: ["Consistent transaction frequency."],
+        conflict_indicators: []
+    };
+    
+    document.getElementById('inbox-detail-reason').textContent = explanation.reason;
+    
+    const signalsList = document.getElementById('inbox-detail-signals');
+    signalsList.innerHTML = '';
+    explanation.supporting_signals.forEach(sig => {
+        signalsList.innerHTML += `
+            <li class="flex items-center gap-1.5 text-emerald-400 font-mono text-[10px]">
+                <span class="material-symbols-outlined text-xs">check</span>
+                <span>${sig}</span>
+            </li>
+        `;
+    });
+    
+    const conflictsList = document.getElementById('inbox-detail-conflicts');
+    conflictsList.innerHTML = '';
+    if (explanation.conflict_indicators && explanation.conflict_indicators.length > 0) {
+        document.getElementById('inbox-detail-conflicts-container').classList.remove('hidden');
+        explanation.conflict_indicators.forEach(conf => {
+            conflictsList.innerHTML += `
+                <li class="flex items-center gap-1.5 text-rose-400 font-mono text-[10px]">
+                    <span class="material-symbols-outlined text-xs">warning</span>
+                    <span>${conf}</span>
+                </li>
+            `;
+        });
+    } else {
+        document.getElementById('inbox-detail-conflicts-container').classList.add('hidden');
+    }
+    
+    // Load Transactions Tab
+    const txnList = document.getElementById('inbox-detail-txn-list');
+    txnList.innerHTML = '<div class="text-[10px] text-zinc-500 font-mono">Loading transactions...</div>';
+    
+    // Fetch ledger and filter transactions locally that match the pattern string
+    fetch('/api/ledger')
+        .then(res => res.json())
+        .then(data => {
+            txnList.innerHTML = '';
+            const matches = data.filter(t => t.description.toLowerCase().includes(item.pattern_string.toLowerCase()) || (t.display_name && t.display_name.toLowerCase().includes(item.pattern_string.toLowerCase())));
+            if (matches.length === 0) {
+                txnList.innerHTML = '<div class="text-[10px] text-zinc-500 font-mono">No recent transactions located in this cluster.</div>';
+            } else {
+                matches.slice(0, 8).forEach(t => {
+                    const dateStr = new Date(t.date).toLocaleDateString();
+                    txnList.innerHTML += `
+                        <div class="flex justify-between items-center text-xs py-1.5 border-b border-white/5 font-mono">
+                            <span class="text-zinc-500">${dateStr}</span>
+                            <span class="text-white truncate max-w-[180px]">${t.description}</span>
+                            <span class="text-primary font-bold">${t.amount < 0 ? '-' : ''}€${Math.abs(t.amount).toFixed(2)}</span>
+                        </div>
+                    `;
+                });
+            }
+        })
+        .catch(err => {
+            console.warn("Failed to load transactions for drawer:", err);
+            txnList.innerHTML = '<div class="text-[10px] text-error font-mono">Error loading transactions.</div>';
+        });
+        
+    // Recognition tab fields
+    document.getElementById('inbox-detail-pattern-input').value = item.pattern_string;
+    const matchTypeRadios = document.getElementsByName('inbox-detail-match-type');
+    matchTypeRadios.forEach(r => {
+        r.checked = (r.value === item.match_type);
+    });
+    
+    // Developer Settings fields
+    document.getElementById('inbox-dev-suggested-name').textContent = item.suggested_display_name;
+    document.getElementById('inbox-dev-pattern').textContent = item.pattern_string;
+    document.getElementById('inbox-dev-score').textContent = item.confidence_score;
+    document.getElementById('inbox-dev-count').textContent = item.transaction_count;
+    
+    // Default tab
+    switchInboxDetailTab('identity');
+    
+    // Expose developer settings panel state
+    toggleDeveloperMode(developerMode);
+    
+    // Show drawer
+    const drawer = document.getElementById('inbox-detail-drawer');
+    drawer.classList.remove('translate-x-full');
+    
+    // Load merge autocomplete
+    initCombineAutocomplete();
+}
+
+function switchInboxDetailTab(tabName) {
+    const tabs = ['identity', 'transactions', 'recognition'];
+    tabs.forEach(t => {
+        const pane = document.getElementById(`inbox-drawer-pane-${t}`);
+        if (pane) pane.classList.add('hidden');
+        
+        const btn = document.getElementById(`inbox-drawer-btn-${t}`);
+        if (btn) {
+            if (t === tabName) {
+                btn.className = 'px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs font-bold';
+            } else {
+                btn.className = 'px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-white text-xs font-medium';
+            }
+        }
+    });
+    
+    document.getElementById(`inbox-drawer-pane-${tabName}`).classList.remove('hidden');
+}
+
+function closeInboxDetailDrawer() {
+    const drawer = document.getElementById('inbox-detail-drawer');
+    if (drawer) drawer.classList.add('translate-x-full');
+    activeDetailSuggestion = null;
+}
+
+function toggleDeveloperMode(enabled) {
+    developerMode = enabled;
+    const sw = document.getElementById('inbox-dev-mode-switch');
+    if (sw) sw.checked = enabled;
+    
+    const profileSw = document.getElementById('library-profile-dev-mode-switch');
+    if (profileSw) profileSw.checked = enabled;
+    
+    const devPanels = document.querySelectorAll('.dev-mode-only');
+    devPanels.forEach(p => {
+        if (enabled) {
+            p.classList.remove('hidden');
+        } else {
+            p.classList.add('hidden');
+        }
+    });
+}
+
+async function saveInboxDetail() {
+    if (!activeDetailSuggestion) return;
+    
+    const name = document.getElementById('inbox-detail-name-input').value.trim();
+    const category = document.getElementById('inbox-detail-category-select').value;
+    
+    // Fetch priority Necessity
+    let flexibility = 'Flexible';
+    const radios = document.getElementsByName('inbox-detail-priority');
+    radios.forEach(r => {
+        if (r.checked) flexibility = r.value;
+    });
+    
+    // Recognition pattern
+    const pattern = document.getElementById('inbox-detail-pattern-input').value.trim();
+    let matchType = 'substring';
+    const matchRadios = document.getElementsByName('inbox-detail-match-type');
+    matchRadios.forEach(r => {
+        if (r.checked) matchType = r.value;
+    });
+    
+    if (!name || !pattern) {
+        showToast("Name and recognition phrase are required.", "error");
+        return;
+    }
+    
+    const resolution = {
+        suggestion_id: activeDetailSuggestion.suggestion_id,
+        action: 'approve',
+        pattern_string: pattern,
+        match_type: matchType,
+        category: category,
+        display_name: name,
+        flexibility: flexibility,
+        amount_min: activeDetailSuggestion.amount_min,
+        amount_max: activeDetailSuggestion.amount_max,
+        priority: 0
+    };
+    
+    try {
+        const res = await fetch('/api/merchant-intelligence/suggestions/resolve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolutions: [resolution] })
+        });
+        if (!res.ok) throw new Error('Save failed');
+        
+        lastApprovedResolutions = [resolution];
+        closeInboxDetailDrawer();
+        showLearningConfirmationToast(pattern, category);
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("saveInboxDetail failed:", e);
+        showToast("Failed to save and confirm suggestion.", "error");
+    }
+}
+
+async function bulkConfirmInbox() {
+    const suggestions = miInboxSuggestions[miInboxActiveLevel] || [];
+    const resolutions = [];
+    
+    suggestions.forEach(s => {
+        if (miInboxSelectedIds.has(s.suggestion_id)) {
+            resolutions.push({
+                suggestion_id: s.suggestion_id,
+                action: 'approve',
+                pattern_string: s.pattern_string,
+                match_type: s.match_type,
+                category: s.suggested_category,
+                display_name: s.suggested_display_name,
+                flexibility: s.flexibility_tier,
+                amount_min: s.amount_min,
+                amount_max: s.amount_max,
+                priority: 0
+            });
+        }
+    });
+    
+    if (resolutions.length === 0) return;
+    
+    // Check if there are high value items >= 100 EUR in batch for Safety Warnings
+    const highValueItems = resolutions.filter(r => (r.amount_min || 0) >= 100 || (r.amount_max || 0) >= 100);
+    if (highValueItems.length > 0) {
+        const confirmed = confirm(`Safety check: Your batch contains ${highValueItems.length} high value transactions (>= EUR 100). Do you still wish to proceed?`);
+        if (!confirmed) return;
+    }
+    
+    try {
+        const res = await fetch('/api/merchant-intelligence/suggestions/resolve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolutions: resolutions })
+        });
+        if (!res.ok) throw new Error('Bulk confirm failed');
+        
+        lastApprovedResolutions = resolutions;
+        showLearningConfirmationToast(`${resolutions.length} pattern(s)`, "their categories");
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("bulkConfirmInbox failed:", e);
+        showToast("Failed to confirm selected suggestions.", "error");
+    }
+}
+
+async function bulkRejectInbox() {
+    const resolutions = Array.from(miInboxSelectedIds).map(id => ({
+        suggestion_id: id,
+        action: 'reject'
+    }));
+    
+    if (resolutions.length === 0) return;
+    
+    try {
+        const res = await fetch('/api/merchant-intelligence/suggestions/resolve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolutions: resolutions })
+        });
+        if (!res.ok) throw new Error('Bulk reject failed');
+        
+        showToast(`${resolutions.length} suggestion(s) rejected.`);
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("bulkRejectInbox failed:", e);
+        showToast("Failed to reject selected suggestions.", "error");
+    }
+}
+
+async function autoApproveAllLevel1() {
+    const suggestions = miInboxSuggestions['Level 1 (High Confidence)'] || [];
+    if (suggestions.length === 0) return;
+    
+    const resolutions = suggestions.map(s => ({
+        suggestion_id: s.suggestion_id,
+        action: 'approve',
+        pattern_string: s.pattern_string,
+        match_type: s.match_type,
+        category: s.suggested_category,
+        display_name: s.suggested_display_name,
+        flexibility: s.flexibility_tier,
+        amount_min: s.amount_min,
+        amount_max: s.amount_max,
+        priority: 0
+    }));
+    
+    try {
+        const res = await fetch('/api/merchant-intelligence/suggestions/resolve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolutions: resolutions })
+        });
+        if (!res.ok) throw new Error('Auto approve failed');
+        
+        lastApprovedResolutions = resolutions;
+        showLearningConfirmationToast("Level 1 suggestions", "auto-pilot");
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("autoApproveAllLevel1 failed:", e);
+        showToast("Auto-approval failed.", "error");
+    }
+}
+
+function initCombineAutocomplete() {
+    const input = document.getElementById('inbox-combine-search');
+    const list = document.getElementById('inbox-combine-results');
+    if (!input || !list) return;
+    
+    input.value = '';
+    list.innerHTML = '';
+    
+    input.oninput = () => {
+        const text = input.value.toLowerCase().trim();
+        list.innerHTML = '';
+        if (!text) return;
+        
+        const matches = miMerchants.filter(m => !m.parent_merchant_id && m.name.toLowerCase().includes(text));
+        matches.slice(0, 5).forEach(m => {
+            const li = document.createElement('li');
+            li.className = 'p-2 text-xs text-white hover:bg-white/10 cursor-pointer font-bold border-b border-white/5 flex items-center justify-between';
+            li.innerHTML = `
+                <span>${m.name}</span>
+                <span class="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded font-mono">${m.category || 'No Category'}</span>
+            `;
+            li.onclick = () => {
+                combineActiveSuggestionWith(m.merchant_id, m.name);
+            };
+            list.appendChild(li);
+        });
+    };
+}
+
+async function combineActiveSuggestionWith(targetId, targetName) {
+    if (!activeDetailSuggestion) return;
+    
+    const confirmed = confirm(`Combine this suggestion's phrase with "${targetName}"? Transactions in this cluster will be reassigned.`);
+    if (!confirmed) return;
+    
+    const resolution = {
+        suggestion_id: activeDetailSuggestion.suggestion_id,
+        action: 'combine',
+        target_merchant_id: targetId,
+        pattern_string: activeDetailSuggestion.pattern_string,
+        match_type: activeDetailSuggestion.match_type
+    };
+    
+    try {
+        const res = await fetch('/api/merchant-intelligence/suggestions/resolve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ resolutions: [resolution] })
+        });
+        if (!res.ok) throw new Error('Combine action failed');
+        
+        closeInboxDetailDrawer();
+        showToast(`Combined suggestion with ${targetName}.`);
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("combineActiveSuggestionWith failed:", e);
+        showToast("Failed to combine merchants.", "error");
+    }
+}
+
 // Expose functions globally for onclick inline attributes
 window.loadMerchantIntelligenceData = loadMerchantIntelligenceData;
 window.setMiSubTab = setMiSubTab;
@@ -7760,6 +8549,24 @@ window.openMerchantProfileModal = openMerchantProfileModal;
 window.closeMerchantProfileModal = closeMerchantProfileModal;
 window.onProfileCategoryChange = onProfileCategoryChange;
 window.saveMerchantProfile = saveMerchantProfile;
+
+// Merchant Inbox Bindings
+window.loadMiInboxData = loadMiInboxData;
+window.setMiInboxLevel = setMiInboxLevel;
+window.toggleInboxSelectAll = toggleInboxSelectAll;
+window.toggleInboxSelect = toggleInboxSelect;
+window.confirmInboxSuggestion = confirmInboxSuggestion;
+window.rejectInboxSuggestion = rejectInboxSuggestion;
+window.openInboxDetailDrawer = openInboxDetailDrawer;
+window.switchInboxDetailTab = switchInboxDetailTab;
+window.closeInboxDetailDrawer = closeInboxDetailDrawer;
+window.toggleDeveloperMode = toggleDeveloperMode;
+window.saveInboxDetail = saveInboxDetail;
+window.bulkConfirmInbox = bulkConfirmInbox;
+window.bulkRejectInbox = bulkRejectInbox;
+window.autoApproveAllLevel1 = autoApproveAllLevel1;
+window.undoLastApprovedInboxAction = undoLastApprovedInboxAction;
+window.combineActiveSuggestionWith = combineActiveSuggestionWith;
 
 // Initializer on Dom Loaded
 document.addEventListener('DOMContentLoaded', () => {

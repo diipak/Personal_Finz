@@ -1567,13 +1567,80 @@
 
                     <!-- Navigation Pills for MI Tabs -->
                     <div class="flex space-x-2 bg-surface-container-lowest border border-border-subtle p-1 rounded-xl w-fit text-xs font-bold shrink-0">
-                        <button onclick="setMiSubTab('library')" id="btn-mi-library" class="px-4 py-2 rounded-lg bg-white/10 text-primary transition-all">Merchant Library</button>
+                        <button onclick="setMiSubTab('inbox')" id="btn-mi-inbox" class="px-4 py-2 rounded-lg bg-white/10 text-primary transition-all">Merchant Inbox <span id="badge-mi-inbox-count" class="ml-1 text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500 text-black font-bold hidden">0</span></button>
+                        <button onclick="setMiSubTab('library')" id="btn-mi-library" class="px-4 py-2 rounded-lg text-on-surface-variant hover:text-white transition-all">Merchant Library</button>
                         <button onclick="setMiSubTab('analytics')" id="btn-mi-analytics" class="px-4 py-2 rounded-lg text-on-surface-variant hover:text-white transition-all">Merchant Analytics</button>
                         <button onclick="setMiSubTab('workbench')" id="btn-mi-workbench" class="px-4 py-2 rounded-lg text-on-surface-variant hover:text-white transition-all">Cluster Workbench</button>
                     </div>
 
+                    <!-- Sub-view 0: Merchant Inbox -->
+                    <div id="sub-panel-mi-inbox" class="flex-grow flex flex-col min-h-0 space-y-4">
+                        
+                        <!-- Level 1 (High Confidence) auto-approve banner -->
+                        <div id="inbox-level-1-bar" class="hidden shrink-0 bg-emerald-500/10 border border-emerald-500/30 p-5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-emerald-500/15 flex items-center justify-center text-emerald-400 shrink-0">
+                                    <span class="material-symbols-outlined text-lg">bolt</span>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-white">⚡ High Confidence suggestions ready for promotion.</h4>
+                                    <p class="text-[10px] text-zinc-300 mt-0.5">These suggestions are computed with high semantic similarity and historical memory matches.</p>
+                                </div>
+                            </div>
+                            <button onclick="autoApproveAllLevel1()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-md shadow-emerald-600/20 whitespace-nowrap">
+                                Auto-Approve All Level 1
+                            </button>
+                        </div>
+
+                        <!-- Filter and Tab list for Inbox levels -->
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shrink-0 border-b border-border-subtle pb-2">
+                            <div class="flex space-x-6 text-xs font-bold">
+                                <button onclick="setMiInboxLevel('Level 1 (High Confidence)')" id="tab-inbox-l1" class="pb-3 border-b-2 border-primary text-white transition-all">
+                                    Level 1: High <span id="badge-mi-inbox-l1" class="ml-1 text-[9px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-500 font-bold">0</span>
+                                </button>
+                                <button onclick="setMiInboxLevel('Level 2 (Quick Approval)')" id="tab-inbox-l2" class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-white transition-all">
+                                    Level 2: Quick <span id="badge-mi-inbox-l2" class="ml-1 text-[9px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-500 font-bold">0</span>
+                                </button>
+                                <button onclick="setMiInboxLevel('Level 3 (Needs Attention)')" id="tab-inbox-l3" class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-white transition-all">
+                                    Level 3: Review <span id="badge-mi-inbox-l3" class="ml-1 text-[9px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-500 font-bold">0</span>
+                                </button>
+                                <button onclick="setMiInboxLevel('Level 4 (Ambiguous)')" id="tab-inbox-l4" class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-white transition-all">
+                                    Level 4: Ambiguous <span id="badge-mi-inbox-l4" class="ml-1 text-[9px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-500 font-bold">0</span>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-3 w-full sm:w-auto">
+                                <div class="flex items-center gap-2 text-xs text-on-surface-variant">
+                                    <input type="checkbox" id="inbox-select-all-cb" onchange="toggleInboxSelectAll(this)" class="rounded border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary">
+                                    <label for="inbox-select-all-cb">Select All</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Suggestions list container -->
+                        <div class="flex-grow overflow-y-auto scroll-zone border border-border-subtle rounded-2xl bg-zinc-950/20 p-4 min-h-0">
+                            <div id="mi-inbox-list" class="space-y-3 font-mono">
+                                <!-- Loaded dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Floating select action footer (only visible when selections exist) -->
+                        <div id="inbox-bulk-footer" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 border border-border-subtle px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-6 z-[100] transition-all transform translate-y-24 opacity-0">
+                            <span id="inbox-bulk-count" class="text-xs text-white font-mono font-bold">-</span>
+                            <div class="flex items-center gap-2">
+                                <button onclick="bulkRejectInbox()" class="px-3.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-lg text-xs font-bold transition-all">
+                                    Reject Selected
+                                </button>
+                                <button onclick="bulkConfirmInbox()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-emerald-600/10">
+                                    Confirm Selected
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
                     <!-- Sub-view 1: Merchant Library -->
-                    <div id="sub-panel-mi-library" class="flex-grow flex flex-col min-h-0 space-y-4">
+                    <div id="sub-panel-mi-library" class="hidden flex-grow flex flex-col min-h-0 space-y-4">
                         <!-- Search and filter bar -->
                         <div class="flex flex-col sm:flex-row gap-4 shrink-0">
                             <div class="relative flex-grow">
@@ -1792,7 +1859,7 @@
                     <!-- Automation Navigation Pills -->
                     <div class="flex space-x-2 bg-surface-container-lowest border border-border-subtle p-1 rounded-xl w-fit text-xs font-bold">
                         <button onclick="setAutomationSubTab('review')" id="btn-auto-review" class="px-4 py-2 rounded-lg bg-surface-variant text-primary transition-all">Review Queue</button>
-                        <button onclick="setAutomationSubTab('rules')" id="btn-auto-rules" class="px-4 py-2 rounded-lg text-on-surface-variant hover:text-white transition-all">Rules Manager</button>
+                        <button onclick="setAutomationSubTab('rules')" id="btn-auto-rules" class="px-4 py-2 rounded-lg text-on-surface-variant hover:text-white transition-all">Classification Policies</button>
                         <button onclick="setAutomationSubTab('import')" id="btn-auto-import" class="px-4 py-2 rounded-lg text-on-surface-variant hover:text-white transition-all">Statement Uploader</button>
                     </div>
 
@@ -2349,6 +2416,208 @@
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Merchant Inbox Detail Drawer -->
+    <div id="inbox-detail-drawer" class="fixed inset-y-0 right-0 w-full max-w-2xl bg-zinc-950/95 border-l border-border-subtle h-full flex flex-col shadow-2xl z-[120] transform translate-x-full transition-transform duration-300 ease-in-out">
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b border-border-subtle p-6 shrink-0">
+            <div>
+                <h3 id="inbox-drawer-title" class="text-lg font-bold text-white">Merchant Suggestion Detail</h3>
+                <p id="inbox-drawer-merchant-name" class="text-xs text-on-surface-variant font-mono">Raw key: -</p>
+            </div>
+            <button onclick="closeInboxDetailDrawer()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors">
+                <span class="material-symbols-outlined text-sm">close</span>
+            </button>
+        </div>
+
+        <!-- Responsive drawer tabs selector -->
+        <div class="flex space-x-2 bg-surface-container-lowest border-b border-border-subtle px-6 py-2 w-full text-xs font-bold shrink-0">
+            <button onclick="switchInboxDetailTab('identity')" id="inbox-drawer-btn-identity" class="px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs font-bold">Identity</button>
+            <button onclick="switchInboxDetailTab('transactions')" id="inbox-drawer-btn-transactions" class="px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-white text-xs font-medium">Transactions</button>
+            <button onclick="switchInboxDetailTab('recognition')" id="inbox-drawer-btn-recognition" class="px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-white text-xs font-medium">Recognition</button>
+        </div>
+
+        <!-- Scrollable Drawer Body -->
+        <div class="flex-grow overflow-y-auto scroll-zone p-6 space-y-6">
+            
+            <!-- Tab 1: Identity & Classification -->
+            <div id="inbox-drawer-pane-identity" class="space-y-6">
+                <!-- Name and Category -->
+                <div class="glass-card p-5 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Name & Classification</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Suggested Display Name</label>
+                            <input type="text" id="inbox-detail-name-input" class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Category</label>
+                            <select id="inbox-detail-category-select" class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary cursor-pointer">
+                                <!-- Loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Spend Necessity / Priority</label>
+                            <div class="flex flex-wrap gap-4 mt-1">
+                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-priority" value="Fixed" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                    Fixed
+                                </label>
+                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-priority" value="Flexible" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                    Flexible
+                                </label>
+                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-priority" value="Discretionary" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                    Discretionary
+                                </label>
+                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-priority" value="Income" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                    Income
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Explainable Confidence -->
+                <div class="glass-card p-5 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-white">Explainable Confidence</h4>
+                        <span id="inbox-detail-score" class="text-xs font-bold font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">-</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <span class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Primary Reason</span>
+                            <p id="inbox-detail-reason" class="text-xs text-zinc-300 italic">No explanation generated.</p>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Supporting Signals</span>
+                            <ul id="inbox-detail-signals" class="space-y-1.5 mt-1">
+                                <!-- Dynamic -->
+                            </ul>
+                        </div>
+                        <div id="inbox-detail-conflicts-container" class="hidden">
+                            <span class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Conflict Indicators</span>
+                            <ul id="inbox-detail-conflicts" class="space-y-1.5 mt-1">
+                                <!-- Dynamic -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Transactions -->
+            <div id="inbox-drawer-pane-transactions" class="space-y-6 hidden">
+                <div class="glass-card p-5 space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-white">Recent Transactions in Cluster</h4>
+                    <div id="inbox-detail-txn-list" class="space-y-2 max-h-96 overflow-y-auto scroll-zone">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Recognition & Pattern Matching (Progressive Disclosure) -->
+            <div id="inbox-drawer-pane-recognition" class="space-y-6 hidden">
+                <div class="glass-card p-5 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-white">Recognition & Matching</h4>
+                        <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
+                            <input type="checkbox" id="inbox-dev-mode-switch" onchange="toggleDeveloperMode(this.checked)" class="rounded border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                            ⚙️ Developer Mode
+                        </label>
+                    </div>
+                    
+                    <p class="text-[11px] text-on-surface-variant leading-relaxed">
+                        These parameters dictate how future statement imports are auto-resolved through the Memory Engine.
+                    </p>
+
+                    <!-- Advanced parameters hidden unless in Developer Mode -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Recognition Phrase / Pattern</label>
+                            <input type="text" id="inbox-detail-pattern-input" class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary font-mono">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Match Type</label>
+                            <div class="flex flex-wrap gap-4 mt-1">
+                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-match-type" value="substring" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                    Contains
+                                </label>
+                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-match-type" value="prefix" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                    Starts with
+                                </label>
+                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-match-type" value="exact" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                    Is exactly
+                                </label>
+                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none dev-mode-only hidden">
+                                    <input type="radio" name="inbox-detail-match-type" value="regex" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                    Regex (Pattern)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Developer Mode Details -->
+                        <div class="dev-mode-only hidden border-t border-border-subtle/30 pt-4 space-y-3 font-mono text-[10px] text-on-surface-variant">
+                            <h5 class="font-bold text-white uppercase tracking-wider text-[9px]">Advanced System Telemetry</h5>
+                            <div class="flex justify-between">
+                                <span>Suggested display name:</span>
+                                <span id="inbox-dev-suggested-name" class="text-white">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Regex/Substring:</span>
+                                <span id="inbox-dev-pattern" class="text-white">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Base Confidence:</span>
+                                <span id="inbox-dev-score" class="text-white">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Cluster transactions:</span>
+                                <span id="inbox-dev-count" class="text-white">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Combine/Merge Section -->
+            <div class="glass-card p-5 space-y-4">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-xs">merge</span> Combine with Existing Brand
+                </h4>
+                <p class="text-[10px] text-on-surface-variant">
+                    If this is a secondary outlet or alternate spelling for an established brand in your library, search for and combine them here.
+                </p>
+                <div class="relative">
+                    <input type="text" id="inbox-combine-search" placeholder="Type parent merchant name..." class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary">
+                    <ul id="inbox-combine-results" class="absolute left-0 right-0 mt-1 bg-zinc-900 border border-border-subtle rounded-xl max-h-40 overflow-y-auto z-[130] divide-y divide-white/5">
+                        <!-- Autocomplete matches -->
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Floating action footer -->
+        <div class="border-t border-border-subtle p-6 bg-zinc-950 flex flex-wrap justify-between items-center gap-3 shrink-0">
+            <button onclick="rejectInboxSuggestion(activeDetailSuggestion.suggestion_id)" class="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-bold transition-all active:scale-95">
+                Reject Suggestion
+            </button>
+            <div class="flex gap-2">
+                <button onclick="closeInboxDetailDrawer()" class="px-4 py-2 border border-border-subtle hover:bg-white/5 text-white rounded-xl text-xs font-bold transition-all active:scale-95">
+                    Cancel
+                </button>
+                <button onclick="saveInboxDetail()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-lg shadow-emerald-600/20">
+                    Confirm Memory
+                </button>
             </div>
         </div>
     </div>

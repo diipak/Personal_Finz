@@ -56,6 +56,10 @@ Respond with a JSON object containing a key "rules" which is a list of objects, 
 - suggested_display_name: the suggested display name
 - flexibility_tier: the suggested flexibility tier
 - confidence_score: a confidence value between 0.0 and 1.0 (float)
+- confidence_reason: a natural language explanation of why this name/category was suggested (e.g. "Recognized international streaming service brand.")
+- supporting_signals: a list of positive matching strings (e.g. ["Description contains netflix", "Standard subscription pricing"])
+- conflict_indicators: a list of warning strings or conflicts, if any (e.g. ["Higher transaction amount than usual"])
+- frequency: the estimated frequency of the transaction (must be one of: "Weekly", "Monthly", "Quarterly", "Infrequent")
 
 Do not return any explanations or conversational text. Return ONLY the raw JSON object.
 """
@@ -131,13 +135,21 @@ Do not return any explanations or conversational text. Return ONLY the raw JSON 
                 )
                 
                 # 4. Insert new suggestion as PENDING
+                explanation_data = {
+                    "reason": rule.get("confidence_reason") or "Suggested by classification heuristics.",
+                    "supporting_signals": rule.get("supporting_signals") or ["New transaction cluster matching standard patterns."],
+                    "conflict_indicators": rule.get("conflict_indicators") or [],
+                    "frequency": rule.get("frequency") or "Infrequent"
+                }
+                explanation_json = json.dumps(explanation_data)
+
                 cursor.execute(
                     """
                     INSERT INTO ai_suggested_rules (
                         merchant_name, pattern_string, match_type, suggested_category,
                         suggested_display_name, flexibility_tier, amount_min, amount_max,
-                        confidence_score, status, transaction_count, sample_descriptions
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?)
+                        confidence_score, status, transaction_count, sample_descriptions, explanation_json
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)
                     """,
                     (
                         merchant_name,
@@ -150,7 +162,8 @@ Do not return any explanations or conversational text. Return ONLY the raw JSON 
                         None, # default amount_max
                         confidence,
                         tx_count,
-                        sample_desc
+                        sample_desc,
+                        explanation_json
                     )
                 )
                 total_suggestions += 1
