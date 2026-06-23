@@ -11,13 +11,62 @@ CREATE TABLE IF NOT EXISTS accounts (
     last_synchronized   TEXT NOT NULL          -- ISO timestamp of last execution loop
 );
 
--- 2. Transactions table (Core master ledger)
+-- 2. Relational Categories & Subcategories
+CREATE TABLE IF NOT EXISTS categories (
+    category_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    name             TEXT NOT NULL UNIQUE,
+    flexibility_tier TEXT NOT NULL DEFAULT 'Flexible',
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS subcategories (
+    subcategory_id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    category_id      INTEGER NOT NULL,
+    name             TEXT NOT NULL,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE CASCADE,
+    UNIQUE (category_id, name)
+);
+
+-- 3. Merchants and Merchant Clusters
+CREATE TABLE IF NOT EXISTS merchants (
+    merchant_id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name                 TEXT NOT NULL UNIQUE,
+    parent_merchant_id   INTEGER,
+    category_id          INTEGER,
+    subcategory_id       INTEGER,
+    confidence_score     REAL DEFAULT 1.0,
+    is_verified          BOOLEAN DEFAULT 0,
+    is_system            BOOLEAN DEFAULT 0, -- 1 for system transfer merchants
+    created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_merchant_id) REFERENCES merchants(merchant_id) ON DELETE SET NULL,
+    FOREIGN KEY (category_id) REFERENCES categories(category_id) ON DELETE SET NULL,
+    FOREIGN KEY (subcategory_id) REFERENCES subcategories(subcategory_id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS merchant_clusters (
+    cluster_id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    cluster_name         TEXT NOT NULL UNIQUE, -- e.g. 'PAYPAL NETFLIX'
+    merchant_id          INTEGER,
+    confidence_score     REAL DEFAULT 0.0,
+    is_locked            BOOLEAN DEFAULT 0,
+    is_user_verified     BOOLEAN DEFAULT 0,
+    sample_descriptions   TEXT,                 -- JSON list of sample descriptions
+    created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (merchant_id) REFERENCES merchants(merchant_id) ON DELETE SET NULL
+);
+
+-- 4. Transactions table (Core master ledger)
 CREATE TABLE IF NOT EXISTS transactions (
     transaction_id      TEXT PRIMARY KEY,      -- Unique SHA-256 fingerprint matching document bytes or API ID
     account_id          TEXT NOT NULL,         -- Link to accounts
     booking_date        TEXT NOT NULL,         -- YYYY-MM-DD
     description         TEXT NOT NULL,         -- Raw description
     display_name        TEXT,                  -- Normalized display name
+    normalized_merchant TEXT,                  -- Clean primary merchant name for clustering
+    normalized_pattern  TEXT,                  -- Detailed pattern preserving behavior
     category            TEXT DEFAULT 'Unsorted',
     flexibility_tier    TEXT NOT NULL,         -- 'Fixed', 'Flexible', 'Discretionary', 'Income'
     amount              REAL NOT NULL,         -- Float amount (negative for expense, positive for income)
@@ -27,10 +76,12 @@ CREATE TABLE IF NOT EXISTS transactions (
     is_ignored          BOOLEAN DEFAULT 0,     -- 1 if user ignored/deleted from calculations
     status              TEXT DEFAULT 'SETTLED',-- 'SETTLED' or 'PENDING'
     ez_synced           BOOLEAN DEFAULT 0,     -- 1 if pushed to ezBookkeeping
+    transfer_subtype    TEXT,
+    cluster_id          INTEGER REFERENCES merchant_clusters(cluster_id) ON DELETE SET NULL,
     FOREIGN KEY(account_id) REFERENCES accounts(account_id)
 );
 
--- 3. Daily snapshots table (For net worth graph reconstruction)
+-- 5. Daily snapshots table (For net worth graph reconstruction)
 CREATE TABLE IF NOT EXISTS daily_snapshots (
     snapshot_date               TEXT NOT NULL,  -- YYYY-MM-DD
     account_id                  TEXT NOT NULL,
@@ -39,7 +90,7 @@ CREATE TABLE IF NOT EXISTS daily_snapshots (
     FOREIGN KEY(account_id) REFERENCES accounts(account_id)
 );
 
--- 4. Exchange rates table
+-- 6. Exchange rates table
 CREATE TABLE IF NOT EXISTS exchange_rates (
     source_currency     TEXT NOT NULL,         -- 'EUR'
     target_currency     TEXT NOT NULL,         -- 'INR'
@@ -48,7 +99,7 @@ CREATE TABLE IF NOT EXISTS exchange_rates (
     PRIMARY KEY (source_currency, target_currency)
 );
 
--- 5. Regex Rules table (Regex matching engine parameters)
+-- 7. Regex Rules table (Regex matching engine parameters)
 CREATE TABLE IF NOT EXISTS regex_rules (
     rule_id             INTEGER PRIMARY KEY AUTOINCREMENT,
     pattern_string      TEXT NOT NULL UNIQUE,  -- Regex or substring pattern
@@ -58,16 +109,18 @@ CREATE TABLE IF NOT EXISTS regex_rules (
     flexibility_tier    TEXT NOT NULL,         -- 'Fixed', 'Flexible', 'Discretionary', 'Income'
     amount_min          REAL,
     amount_max          REAL,
-    priority            INTEGER DEFAULT 0
+    priority            INTEGER DEFAULT 0,
+    target_merchant_id  INTEGER REFERENCES merchants(merchant_id) ON DELETE CASCADE,
+    target_cluster_id   INTEGER REFERENCES merchant_clusters(cluster_id) ON DELETE CASCADE
 );
 
--- 6. Settings table
+-- 8. Settings table
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT
 );
 
--- 7. Sync logs table (For rate-limit checks)
+-- 9. Sync logs table (For rate-limit checks)
 CREATE TABLE IF NOT EXISTS sync_logs (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     account_id    TEXT NOT NULL,
@@ -78,7 +131,7 @@ CREATE TABLE IF NOT EXISTS sync_logs (
     timestamp     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 8. Sync history table (For audit logs UI)
+-- 10. Sync history table (For audit logs UI)
 CREATE TABLE IF NOT EXISTS sync_history (
     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
     executed_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -88,9 +141,90 @@ CREATE TABLE IF NOT EXISTS sync_history (
     error_details        TEXT
 );
 
+-- 11. LLM Cache table for normalized merchant categories
+CREATE TABLE IF NOT EXISTS llm_cache (
+    merchant_key      TEXT PRIMARY KEY,  -- Normalized description
+    category          TEXT NOT NULL,
+    flexibility_tier  TEXT NOT NULL,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 12. Merchant stats table (Avoids repeatedly scanning transactions)
+CREATE TABLE IF NOT EXISTS merchant_stats (
+    merchant_key TEXT PRIMARY KEY,          -- The normalized pattern (e.g. 'PAYPAL NETFLIX', 'REWE')
+    parent_merchant TEXT,                   -- The normalized merchant (e.g. 'NETFLIX')
+    transaction_count INTEGER DEFAULT 0,
+    total_amount REAL DEFAULT 0.0,
+    avg_amount REAL DEFAULT 0.0,
+    first_seen TEXT,
+    last_seen TEXT,
+    known_category TEXT,
+    transfer_subtype TEXT,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 13. Merchant stats cache table (Optimized for new structure)
+CREATE TABLE IF NOT EXISTS merchant_stats_new (
+    merchant_id          INTEGER PRIMARY KEY,
+    transaction_count    INTEGER DEFAULT 0,
+    total_spend          REAL DEFAULT 0.0,
+    total_income         REAL DEFAULT 0.0,
+    first_seen           TEXT,
+    last_seen            TEXT,
+    updated_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (merchant_id) REFERENCES merchants(merchant_id) ON DELETE CASCADE
+);
+
+-- 14. AI suggested rules table (For review and rule promotion)
+CREATE TABLE IF NOT EXISTS ai_suggested_rules (
+    suggestion_id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    merchant_name         TEXT NOT NULL,         -- Normalized merchant name
+    pattern_string        TEXT NOT NULL,         -- Suggested pattern string
+    match_type            TEXT DEFAULT 'substring', -- 'regex', 'substring', 'exact'
+    suggested_category    TEXT NOT NULL,
+    suggested_display_name TEXT,
+    flexibility_tier      TEXT NOT NULL,         -- 'Fixed', 'Flexible', 'Discretionary', 'Income'
+    amount_min            REAL,
+    amount_max            REAL,
+    confidence_score      REAL DEFAULT 0.0,
+    status                TEXT DEFAULT 'PENDING',-- 'PENDING', 'APPROVED', 'REJECTED', 'SUPERSEDED'
+    transaction_count     INTEGER DEFAULT 0,     -- Number of transactions in cluster
+    sample_descriptions   TEXT,                  -- JSON array or comma-separated list of raw descriptions
+    created_at            TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. Unified Resolved View
+CREATE VIEW IF NOT EXISTS v_transactions_resolved AS
+SELECT 
+    t.transaction_id,
+    t.account_id,
+    t.booking_date,
+    t.description,
+    t.amount,
+    t.currency,
+    t.is_guess,
+    t.is_pinned,
+    t.is_ignored,
+    t.status,
+    t.cluster_id,
+    c.cluster_name,
+    m.merchant_id,
+    COALESCE(m.name, t.display_name, t.description) AS resolved_merchant_name,
+    parent.name AS parent_merchant_name,
+    m.is_system AS is_system_merchant,
+    COALESCE(cat.name, t.category, 'Unsorted') AS category,
+    sc.name AS subcategory,
+    COALESCE(cat.flexibility_tier, t.flexibility_tier, 'Flexible') AS flexibility_tier
+FROM transactions t
+LEFT JOIN merchant_clusters c ON t.cluster_id = c.cluster_id
+LEFT JOIN merchants m ON c.merchant_id = m.merchant_id
+LEFT JOIN merchants parent ON m.parent_merchant_id = parent.merchant_id
+LEFT JOIN categories cat ON m.category_id = cat.category_id
+LEFT JOIN subcategories sc ON m.subcategory_id = sc.subcategory_id;
+
 -- Seeding Default Settings & Rates
 INSERT OR IGNORE INTO settings (key, value) VALUES ('auto_sync_enabled', 'true');
-INSERT OR IGNORE INTO settings (key, value) VALUES ('vault_passcode_hash', NULL); -- NULL means no vault passcode set up yet
+INSERT OR IGNORE INTO settings (key, value) VALUES ('vault_passcode_hash', NULL);
 INSERT OR IGNORE INTO settings (key, value) VALUES ('vault_locked', 'false');
 
 INSERT OR IGNORE INTO exchange_rates (source_currency, target_currency, spot_rate, last_api_update)

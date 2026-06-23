@@ -6,7 +6,7 @@ import sys
 import asyncio
 from pathlib import Path
 from datetime import datetime
-from fastapi import FastAPI, UploadFile, File, Form, Body, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, Body, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse
 
@@ -174,7 +174,7 @@ def rules_ui():
 
 @app.get("/review")
 def review_ui():
-    return FileResponse(FRONTEND_DIR / "dashboard.html")
+    return FileResponse(FRONTEND_DIR / "unknown_merchant_review.html")
 
 # Rules API Endpoint: Retrieve rules from SQLite
 @app.get("/api/rules")
@@ -313,7 +313,7 @@ def import_file(
             return {
                 "status": "ambiguous",
                 "message": str(detect_err),
-                "options": ["Revolut", "Commerzbank", "Advanzia Bank credit card", "HDFC"]
+                "options": ["Revolut", "Commerzbank", "Advanzia Bank credit card", "HDFC", "Amazon Visa", "Trade Republic"]
             }
 
     # Query accounts for the detected bank to find matched display name
@@ -416,12 +416,12 @@ def get_ledger():
                 t.account_id,
                 a.account_name,
                 t.description,
-                t.display_name,
+                COALESCE(t.resolved_merchant_name, t.description) as display_name,
                 t.flexibility_tier as flexibility,
-                t.category,
+                COALESCE(t.category, 'Unsorted') as category,
                 t.amount,
                 t.currency
-            FROM transactions t
+            FROM v_transactions_resolved t
             LEFT JOIN accounts a ON t.account_id = a.account_id
             WHERE t.is_ignored = 0
             ORDER BY t.booking_date DESC, t.transaction_id DESC
@@ -500,6 +500,74 @@ def delete_transaction(transaction_id: str):
         logger.error(f"Error deleting transaction: {e}")
         conn.rollback()
         raise HTTPException(status_code=500, detail="Database error deleting transaction")
+    finally:
+        conn.close()
+
+@app.get("/api/transactions")
+def get_transactions(cluster_id: Optional[int] = None, merchant_id: Optional[int] = None):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        if cluster_id is not None:
+            cursor.execute("""
+                SELECT 
+                    transaction_id,
+                    account_id,
+                    booking_date,
+                    description,
+                    amount,
+                    currency,
+                    is_guess,
+                    is_pinned,
+                    is_ignored,
+                    status,
+                    cluster_id
+                FROM transactions
+                WHERE cluster_id = ? AND is_ignored = 0
+                ORDER BY booking_date DESC, transaction_id DESC
+            """, (cluster_id,))
+        elif merchant_id is not None:
+            cursor.execute("""
+                SELECT 
+                    t.transaction_id,
+                    t.account_id,
+                    t.booking_date,
+                    t.description,
+                    t.amount,
+                    t.currency,
+                    t.is_guess,
+                    t.is_pinned,
+                    t.is_ignored,
+                    t.status,
+                    t.cluster_id
+                FROM transactions t
+                JOIN merchant_clusters c ON t.cluster_id = c.cluster_id
+                WHERE c.merchant_id = ? AND t.is_ignored = 0
+                ORDER BY t.booking_date DESC, t.transaction_id DESC
+            """, (merchant_id,))
+        else:
+            cursor.execute("""
+                SELECT 
+                    transaction_id,
+                    account_id,
+                    booking_date,
+                    description,
+                    amount,
+                    currency,
+                    is_guess,
+                    is_pinned,
+                    is_ignored,
+                    status,
+                    cluster_id
+                FROM transactions
+                WHERE is_ignored = 0
+                ORDER BY booking_date DESC, transaction_id DESC
+            """)
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"Error fetching transactions: {e}")
+        raise HTTPException(status_code=500, detail="Database error fetching transactions")
     finally:
         conn.close()
 
@@ -632,7 +700,12 @@ async def vault_middleware(request: Request, call_next):
     if request.url.path.startswith("/api/") and not any(p in request.url.path for p in ["/vault/status", "/vault/unlock"]):
         if is_vault_locked():
             return JSONResponse(status_code=401, content={"detail": "Vault is locked"})
-    return await call_next(request)
+    response = await call_next(request)
+    # Prevent browser caching for development
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 @app.get("/api/vault/status")
 def get_vault_status():
@@ -1113,24 +1186,24 @@ def get_unknown_transactions():
         cursor.execute(
             """
             SELECT 
-                transaction_id as id, 
-                account_id as account, 
-                booking_date as date, 
-                description, 
-                display_name, 
-                category, 
-                flexibility_tier as flexibility, 
-                amount, 
-                currency, 
-                is_guess, 
-                is_pinned, 
-                is_ignored, 
-                status 
-            FROM transactions
-            WHERE (is_guess = 1 OR category IS NULL OR category = '' OR category = 'Uncategorized' OR category = 'Unsorted')
-              AND is_pinned = 0
-              AND is_ignored = 0
-            ORDER BY booking_date DESC, transaction_id DESC
+                t.transaction_id as id, 
+                t.account_id as account, 
+                t.booking_date as date, 
+                t.description, 
+                COALESCE(t.resolved_merchant_name, t.description) as display_name, 
+                COALESCE(t.category, 'Unsorted') as category, 
+                t.flexibility_tier as flexibility, 
+                t.amount, 
+                t.currency, 
+                t.is_guess, 
+                t.is_pinned, 
+                t.is_ignored, 
+                t.status 
+            FROM v_transactions_resolved t
+            WHERE (t.is_guess = 1 OR t.category IS NULL OR t.category = '' OR t.category = 'Uncategorized' OR t.category = 'Unsorted')
+              AND t.is_pinned = 0
+              AND t.is_ignored = 0
+            ORDER BY t.booking_date DESC, t.transaction_id DESC
             """
         )
         rows = cursor.fetchall()
@@ -1229,6 +1302,916 @@ def resolve_unknown_transactions(payload: dict = Body(...)):
         "updated_count": updated_count,
         "rules_created": rules_created
     }
+
+# --- MERCHANT INTELLIGENCE ENGINE ENDPOINTS ---
+
+@app.get("/api/merchant-intelligence/suggestions")
+def get_merchant_suggestions():
+    import json
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT 
+                suggestion_id, merchant_name, pattern_string, match_type, 
+                suggested_category, suggested_display_name, flexibility_tier, 
+                amount_min, amount_max, confidence_score, status, 
+                transaction_count, sample_descriptions, created_at
+            FROM ai_suggested_rules
+            WHERE status = 'PENDING'
+            ORDER BY transaction_count DESC, confidence_score DESC
+            """
+        )
+        rows = cursor.fetchall()
+        
+        levels = {
+            "Level 1 (High Confidence)": [],
+            "Level 2 (Quick Approval)": [],
+            "Level 3 (Needs Attention)": [],
+            "Level 4 (Ambiguous)": []
+        }
+        
+        known_keywords = [
+            "netflix", "spotify", "google", "youtube", "icloud", "github", 
+            "microsoft", "amazon", "aws", "apple", "disney", "adobe", 
+            "chatgpt", "openai", "dropbox", "heroku", "slack", "zoom"
+        ]
+        
+        for r in rows:
+            sug = dict(r)
+            # Parse sample descriptions from JSON string
+            try:
+                sug["sample_descriptions"] = json.loads(sug["sample_descriptions"])
+            except Exception:
+                sug["sample_descriptions"] = [sug["sample_descriptions"]] if sug["sample_descriptions"] else []
+                
+            conf = sug["confidence_score"] or 0.0
+            name = sug["merchant_name"].lower()
+            pattern = sug["pattern_string"].lower()
+            
+            is_known = any(kw in name or kw in pattern for kw in known_keywords)
+            
+            if conf >= 0.95 or (conf >= 0.90 and is_known):
+                level = "Level 1 (High Confidence)"
+            elif conf >= 0.85:
+                level = "Level 2 (Quick Approval)"
+            elif conf >= 0.60:
+                level = "Level 3 (Needs Attention)"
+            else:
+                level = "Level 4 (Ambiguous)"
+                
+            levels[level].append(sug)
+            
+        return levels
+    except Exception as e:
+        logger.error(f"Error fetching merchant suggestions: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error fetching suggestions: {e}")
+    finally:
+        conn.close()
+
+@app.post("/api/merchant-intelligence/suggestions/resolve")
+def resolve_merchant_suggestions(payload: dict = Body(...)):
+    resolutions = payload.get("resolutions", [])
+    if not resolutions:
+        raise HTTPException(status_code=400, detail="No resolutions provided")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    rules_created = 0
+    suggestions_approved = 0
+    suggestions_rejected = 0
+    
+    try:
+        for res in resolutions:
+            sug_id = res.get("suggestion_id")
+            action = res.get("action", "approve").lower()
+            
+            if not sug_id:
+                continue
+                
+            if action == "approve":
+                pattern = res.get("pattern_string")
+                match_type = res.get("match_type", "substring")
+                category = res.get("category")
+                display_name = res.get("display_name")
+                flexibility = res.get("flexibility", "Flexible")
+                amount_min = res.get("amount_min")
+                amount_max = res.get("amount_max")
+                priority = res.get("priority", 0)
+                
+                if not pattern or not category:
+                    continue
+                
+                # Fetch merchant name from suggestion
+                cursor.execute("SELECT merchant_name FROM ai_suggested_rules WHERE suggestion_id = ?", (sug_id,))
+                sug_row = cursor.fetchone()
+                merchant_name = sug_row["merchant_name"] if sug_row else (display_name or pattern.upper())
+                
+                # Resolve category_id
+                cursor.execute("SELECT category_id FROM categories WHERE name = ?", (category,))
+                cat_row = cursor.fetchone()
+                if cat_row:
+                    cat_id = cat_row["category_id"]
+                else:
+                    cursor.execute("INSERT INTO categories (name, flexibility_tier) VALUES (?, ?)", (category, flexibility))
+                    cat_id = cursor.lastrowid
+                
+                # Create or update merchant in the merchants table
+                cursor.execute(
+                    """
+                    INSERT INTO merchants (name, category_id, is_verified, confidence_score)
+                    VALUES (?, ?, 1, 1.0)
+                    ON CONFLICT(name) DO UPDATE SET category_id = excluded.category_id, is_verified = 1
+                    """,
+                    (merchant_name, cat_id)
+                )
+                cursor.execute("SELECT merchant_id FROM merchants WHERE name = ?", (merchant_name,))
+                merchant_id = cursor.fetchone()["merchant_id"]
+                
+                # Check if identical rule already exists in regex_rules
+                cursor.execute(
+                    "SELECT rule_id FROM regex_rules WHERE pattern_string = ? AND match_type = ?",
+                    (pattern, match_type)
+                )
+                if not cursor.fetchone():
+                    cursor.execute(
+                        """
+                        INSERT INTO regex_rules (
+                            pattern_string, match_type, target_category, display_name, flexibility_tier, 
+                            amount_min, amount_max, priority, target_merchant_id
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (pattern, match_type, category, display_name, flexibility, amount_min, amount_max, priority, merchant_id)
+                    )
+                    rules_created += 1
+                
+                # Update merchant_clusters matching this pattern or merchant to point to new merchant
+                cursor.execute(
+                    """
+                    UPDATE merchant_clusters SET
+                        merchant_id = ?,
+                        confidence_score = 1.0,
+                        is_locked = 1,
+                        is_user_verified = 1,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE cluster_name = ? OR (merchant_id IS NULL AND cluster_name LIKE ?)
+                    """,
+                    (merchant_id, pattern, f"%{pattern}%")
+                )
+                    
+                cursor.execute(
+                    "UPDATE ai_suggested_rules SET status = 'APPROVED' WHERE suggestion_id = ?",
+                    (sug_id,)
+                )
+                suggestions_approved += 1
+                
+            else:
+                cursor.execute(
+                    "UPDATE ai_suggested_rules SET status = 'REJECTED' WHERE suggestion_id = ?",
+                    (sug_id,)
+                )
+                suggestions_rejected += 1
+                
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error resolving merchant suggestions: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error during resolution: {e}")
+    finally:
+        conn.close()
+        
+    # Propagate the rules to unpinned transactions and update stats
+    updated_txns = 0
+    if rules_created > 0:
+        try:
+            from engine.rules import apply_rules_to_unpinned_transactions
+            updated_txns = apply_rules_to_unpinned_transactions()
+            
+            # Incrementally sync the known_category on merchant_stats
+            conn = get_db()
+            cursor = conn.cursor()
+            try:
+                cursor.execute(
+                    """
+                    UPDATE merchant_stats SET 
+                        known_category = (
+                            SELECT category FROM transactions 
+                            WHERE transactions.normalized_pattern = merchant_stats.merchant_key 
+                              AND category IS NOT NULL 
+                              AND category NOT IN ('Unsorted', 'Uncategorized', '')
+                            ORDER BY booking_date DESC LIMIT 1
+                        )
+                        WHERE known_category IS NULL 
+                           OR known_category = 'Unsorted' 
+                           OR known_category = 'Uncategorized' 
+                           OR known_category = ''
+                    """
+                )
+                conn.commit()
+            except Exception as stat_err:
+                logger.error(f"Failed to update known_categories in merchant_stats: {stat_err}")
+            finally:
+                conn.close()
+                
+        except Exception as e:
+            logger.error(f"Failed to apply new rules or update stats: {e}")
+            
+    return {
+        "status": "success",
+        "rules_created": rules_created,
+        "suggestions_approved": suggestions_approved,
+        "suggestions_rejected": suggestions_rejected,
+        "transactions_updated": updated_txns
+    }
+
+@app.post("/api/merchant-intelligence/run")
+def run_merchant_intelligence(background_tasks: BackgroundTasks):
+    def run_bg():
+        logger.info("Starting background execution of Merchant Intelligence Engine.")
+        conn = get_db()
+        try:
+            from engine.cluster_ai_review import run_cluster_ai_review
+            run_cluster_ai_review(conn)
+        except Exception as e:
+            logger.error(f"Background Merchant Intelligence Engine error: {e}")
+        finally:
+            conn.close()
+            
+    background_tasks.add_task(run_bg)
+    return {
+        "status": "running",
+        "message": "Merchant Intelligence Engine triggered in background."
+    }
+
+@app.get("/api/merchant-intelligence/stats")
+def get_merchant_intelligence_stats():
+    """Return dashboard-level counters for the Merchant Intelligence Review Queue card."""
+    conn = get_db()
+    try:
+        cursor = conn.cursor()
+
+        # Pending clusters = distinct parent_merchant groups with unknown_category in merchant_stats
+        cursor.execute(
+            """
+            SELECT COUNT(DISTINCT COALESCE(parent_merchant, merchant_key))
+            FROM merchant_stats
+            WHERE known_category IS NULL OR known_category = '' OR known_category = 'Unsorted'
+            """
+        )
+        pending_clusters = cursor.fetchone()[0] or 0
+
+        # Uncategorised transactions = is_guess=1 OR category IS NULL
+        cursor.execute(
+            """
+            SELECT COUNT(*) FROM transactions
+            WHERE is_guess = 1 OR category IS NULL OR category = 'Unsorted'
+            """
+        )
+        uncategorised_txns = cursor.fetchone()[0] or 0
+
+        # AI suggestions ready for review (PENDING status)
+        cursor.execute(
+            "SELECT COUNT(*) FROM ai_suggested_rules WHERE status = 'PENDING'"
+        )
+        ai_suggestions = cursor.fetchone()[0] or 0
+
+        # Active rules count (regex_rules has no is_active column — all rows are active)
+        cursor.execute("SELECT COUNT(*) FROM regex_rules")
+        active_rules = cursor.fetchone()[0] or 0
+
+        return {
+            "pending_clusters": pending_clusters,
+            "uncategorised_txns": uncategorised_txns,
+            "ai_suggestions": ai_suggestions,
+            "active_rules": active_rules
+        }
+    except Exception as e:
+        logger.error(f"Error fetching merchant intelligence stats: {e}")
+        return {"pending_clusters": 0, "uncategorised_txns": 0, "ai_suggestions": 0, "active_rules": 0}
+    finally:
+        conn.close()
+
+
+# --- RELATIONAL MERCHANT INTELLIGENCE ENDPOINTS ---
+
+@app.get("/api/categories")
+def get_categories_new():
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT c.category_id, c.name as category_name, c.flexibility_tier,
+                   s.subcategory_id, s.name as subcategory_name
+            FROM categories c
+            LEFT JOIN subcategories s ON s.category_id = c.category_id
+            ORDER BY c.name, s.name
+        """)
+        rows = cursor.fetchall()
+        tree = {}
+        for r in rows:
+            cat_name = r["category_name"]
+            if cat_name not in tree:
+                tree[cat_name] = {
+                    "category_id": r["category_id"],
+                    "flexibility_tier": r["flexibility_tier"],
+                    "subcategories": []
+                }
+            if r["subcategory_name"]:
+                tree[cat_name]["subcategories"].append({
+                    "subcategory_id": r["subcategory_id"],
+                    "name": r["subcategory_name"]
+                })
+        return tree
+    except Exception as e:
+        logger.error(f"Error fetching categories: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.post("/api/categories/{category_id}/subcategories")
+def create_subcategory(category_id: int, payload: dict = Body(...)):
+    name = payload.get("name")
+    if not name:
+        raise HTTPException(status_code=400, detail="Subcategory name is required")
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO subcategories (category_id, name)
+            VALUES (?, ?)
+            ON CONFLICT(category_id, name) DO UPDATE SET name = name
+        """, (category_id, name))
+        conn.commit()
+        cursor.execute("SELECT subcategory_id FROM subcategories WHERE category_id = ? AND name = ?", (category_id, name))
+        sub_id = cursor.fetchone()["subcategory_id"]
+        return {"status": "success", "subcategory_id": sub_id, "name": name}
+    except Exception as e:
+        logger.error(f"Error creating subcategory: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        conn.close()
+
+@app.get("/api/merchants")
+def get_merchants():
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT 
+                m.merchant_id, m.name, m.parent_merchant_id, m.confidence_score, m.is_verified, m.is_system,
+                p.name as parent_name,
+                c.name as category,
+                s.name as subcategory,
+                COALESCE(st.transaction_count, 0) as transaction_count,
+                COALESCE(st.total_spend, 0.0) as total_spend,
+                COALESCE(st.total_income, 0.0) as total_income,
+                st.first_seen, st.last_seen
+            FROM merchants m
+            LEFT JOIN merchants p ON m.parent_merchant_id = p.merchant_id
+            LEFT JOIN categories c ON m.category_id = c.category_id
+            LEFT JOIN subcategories s ON m.subcategory_id = s.subcategory_id
+            LEFT JOIN merchant_stats_new st ON m.merchant_id = st.merchant_id
+            ORDER BY m.is_system ASC, transaction_count DESC, m.name ASC
+        """)
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"Error fetching merchants: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.get("/api/merchants/{merchant_id}")
+def get_merchant_profile(merchant_id: int):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # Basic details
+        cursor.execute("""
+            SELECT 
+                m.merchant_id, m.name, m.parent_merchant_id, m.confidence_score, m.is_verified, m.is_system,
+                p.name as parent_name,
+                c.name as category,
+                s.name as subcategory
+            FROM merchants m
+            LEFT JOIN merchants p ON m.parent_merchant_id = p.merchant_id
+            LEFT JOIN categories c ON m.category_id = c.category_id
+            LEFT JOIN subcategories s ON m.subcategory_id = s.subcategory_id
+            WHERE m.merchant_id = ?
+        """, (merchant_id,))
+        m_row = cursor.fetchone()
+        if not m_row:
+            raise HTTPException(status_code=404, detail="Merchant not found")
+        merchant = dict(m_row)
+
+        # Monthly spend and count trend (last 12 months)
+        cursor.execute("""
+            SELECT 
+                strftime('%Y-%m', t.booking_date) as month,
+                COUNT(t.transaction_id) as transaction_count,
+                SUM(CASE WHEN t.amount < 0 THEN t.amount ELSE 0 END) as total_spend,
+                SUM(CASE WHEN t.amount > 0 THEN t.amount ELSE 0 END) as total_income
+            FROM transactions t
+            JOIN merchant_clusters c ON t.cluster_id = c.cluster_id
+            WHERE c.merchant_id = ?
+            GROUP BY month
+            ORDER BY month DESC
+            LIMIT 12
+        """, (merchant_id,))
+        trends = [dict(row) for row in cursor.fetchall()]
+        
+        # Accounts used
+        cursor.execute("""
+            SELECT 
+                a.account_name,
+                COUNT(t.transaction_id) as transaction_count,
+                SUM(t.amount) as total_amount
+            FROM transactions t
+            JOIN merchant_clusters c ON t.cluster_id = c.cluster_id
+            JOIN accounts a ON t.account_id = a.account_id
+            WHERE c.merchant_id = ?
+            GROUP BY a.account_name
+        """, (merchant_id,))
+        accounts = [dict(row) for row in cursor.fetchall()]
+
+        # Child services (sub-merchants)
+        cursor.execute("""
+            SELECT merchant_id, name, confidence_score, is_verified
+            FROM merchants
+            WHERE parent_merchant_id = ?
+        """, (merchant_id,))
+        child_merchants = [dict(row) for row in cursor.fetchall()]
+
+        # Example transactions (recent 10)
+        cursor.execute("""
+            SELECT 
+                t.transaction_id, t.booking_date as date, t.description, t.amount, t.currency, t.is_pinned, a.account_name
+            FROM transactions t
+            JOIN merchant_clusters c ON t.cluster_id = c.cluster_id
+            JOIN accounts a ON t.account_id = a.account_id
+            WHERE c.merchant_id = ?
+            ORDER BY t.booking_date DESC
+            LIMIT 10
+        """, (merchant_id,))
+        transactions = [dict(row) for row in cursor.fetchall()]
+
+        # Rules history / matched regex
+        cursor.execute("""
+            SELECT rule_id, pattern_string, match_type, priority
+            FROM regex_rules
+            WHERE target_merchant_id = ?
+        """, (merchant_id,))
+        rules = [dict(row) for row in cursor.fetchall()]
+
+        return {
+            "merchant": merchant,
+            "trends": trends,
+            "accounts": accounts,
+            "child_merchants": child_merchants,
+            "transactions": transactions,
+            "rules": rules
+        }
+    except Exception as e:
+        logger.error(f"Error fetching merchant profile: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.post("/api/merchants")
+def save_merchant(payload: dict = Body(...)):
+    merchant_id = payload.get("merchant_id")
+    name = payload.get("name")
+    parent_merchant_id = payload.get("parent_merchant_id")
+    category_name = payload.get("category")
+    subcategory_name = payload.get("subcategory")
+    is_verified = payload.get("is_verified", False)
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="Merchant name is required")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # Resolve category_id
+        cat_id = None
+        if category_name:
+            cursor.execute("SELECT category_id FROM categories WHERE name = ?", (category_name,))
+            cat_row = cursor.fetchone()
+            if cat_row:
+                cat_id = cat_row["category_id"]
+                
+        # Resolve subcategory_id
+        sub_id = None
+        if subcategory_name and cat_id:
+            cursor.execute("""
+                INSERT OR IGNORE INTO subcategories (category_id, name)
+                VALUES (?, ?)
+            """, (cat_id, subcategory_name))
+            conn.commit()
+            cursor.execute("SELECT subcategory_id FROM subcategories WHERE category_id = ? AND name = ?", (cat_id, subcategory_name))
+            sub_row = cursor.fetchone()
+            if sub_row:
+                sub_id = sub_row["subcategory_id"]
+                
+        if merchant_id:
+            cursor.execute("""
+                UPDATE merchants SET
+                    name = ?,
+                    parent_merchant_id = ?,
+                    category_id = ?,
+                    subcategory_id = ?,
+                    is_verified = ?,
+                    confidence_score = 1.0,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE merchant_id = ?
+            """, (name, parent_merchant_id, cat_id, sub_id, 1 if is_verified else 0, merchant_id))
+            m_id = merchant_id
+        else:
+            cursor.execute("""
+                INSERT INTO merchants (name, parent_merchant_id, category_id, subcategory_id, is_verified, confidence_score)
+                VALUES (?, ?, ?, ?, ?, 1.0)
+            """, (name, parent_merchant_id, cat_id, sub_id, 1 if is_verified else 0))
+            m_id = cursor.lastrowid
+            
+        # Propagate changes to transactions physically
+        cursor.execute("""
+            SELECT c.cluster_id FROM merchant_clusters c WHERE c.merchant_id = ?
+        """, (m_id,))
+        cluster_rows = cursor.fetchall()
+        cluster_ids = [r["cluster_id"] for r in cluster_rows]
+        
+        if cluster_ids:
+            for c_id in cluster_ids:
+                cursor.execute("""
+                    UPDATE transactions SET
+                        category = ?,
+                        display_name = ?
+                    WHERE cluster_id = ?
+                """, (category_name or 'Unsorted', name, c_id))
+                
+        # Recalculate stats cache
+        from db.database import update_merchant_stats_new
+        update_merchant_stats_new(conn, m_id)
+        
+        conn.commit()
+        return {"status": "success", "merchant_id": m_id}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error saving merchant: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        conn.close()
+
+@app.delete("/api/merchants/{merchant_id}")
+def delete_merchant(merchant_id: int):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE merchants SET parent_merchant_id = NULL WHERE parent_merchant_id = ?", (merchant_id,))
+        cursor.execute("UPDATE merchant_clusters SET merchant_id = NULL WHERE merchant_id = ?", (merchant_id,))
+        cursor.execute("DELETE FROM merchants WHERE merchant_id = ?", (merchant_id,))
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error deleting merchant: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.get("/api/merchant-clusters/workbench")
+def get_workbench_clusters():
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT 
+                c.cluster_id, c.cluster_name, c.confidence_score, c.is_locked, c.is_user_verified, c.sample_descriptions,
+                COUNT(t.transaction_id) as transaction_count,
+                SUM(t.amount) as total_amount,
+                m.name as resolved_merchant_name,
+                m.merchant_id
+            FROM merchant_clusters c
+            LEFT JOIN transactions t ON t.cluster_id = c.cluster_id
+            LEFT JOIN merchants m ON c.merchant_id = m.merchant_id
+            GROUP BY c.cluster_id, c.cluster_name, c.confidence_score, c.is_locked, c.is_user_verified, c.sample_descriptions, m.name, m.merchant_id
+            ORDER BY transaction_count DESC
+        """)
+        rows = cursor.fetchall()
+        clusters = []
+        for r in rows:
+            sug = dict(r)
+            try:
+                sug["sample_descriptions"] = json.loads(sug["sample_descriptions"])
+            except Exception:
+                sug["sample_descriptions"] = [sug["sample_descriptions"]] if sug["sample_descriptions"] else []
+            clusters.append(sug)
+        return clusters
+    except Exception as e:
+        logger.error(f"Error fetching workbench clusters: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.post("/api/merchant-clusters/merge")
+def merge_merchant_clusters(payload: dict = Body(...)):
+    source_ids = payload.get("source_cluster_ids", [])
+    target_id = payload.get("target_cluster_id")
+    
+    if not source_ids or not target_id:
+        raise HTTPException(status_code=400, detail="source_cluster_ids and target_cluster_id are required")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT cluster_name, merchant_id FROM merchant_clusters WHERE cluster_id = ?", (target_id,))
+        target_row = cursor.fetchone()
+        if not target_row:
+            raise HTTPException(status_code=404, detail="Target cluster not found")
+            
+        target_merchant_id = target_row["merchant_id"]
+
+        for src_id in source_ids:
+            cursor.execute("UPDATE transactions SET cluster_id = ? WHERE cluster_id = ?", (target_id, src_id))
+            cursor.execute("DELETE FROM merchant_clusters WHERE cluster_id = ?", (src_id,))
+            
+        if target_merchant_id:
+            from db.database import update_merchant_stats_new
+            update_merchant_stats_new(conn, target_merchant_id)
+            
+        conn.commit()
+        return {"status": "success", "target_cluster_id": target_id}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error merging clusters: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.post("/api/merchant-clusters/split")
+def split_merchant_cluster(payload: dict = Body(...)):
+    source_cluster_id = payload.get("source_cluster_id")
+    transaction_ids = payload.get("transaction_ids", [])
+    new_cluster_name = payload.get("new_cluster_name")
+    
+    if not source_cluster_id or not transaction_ids or not new_cluster_name:
+        raise HTTPException(status_code=400, detail="source_cluster_id, transaction_ids, and new_cluster_name are required")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT merchant_id FROM merchant_clusters WHERE cluster_id = ?", (source_cluster_id,))
+        src_row = cursor.fetchone()
+        src_merchant_id = src_row["merchant_id"] if src_row else None
+        
+        cursor.execute("""
+            INSERT INTO merchant_clusters (cluster_name, merchant_id, confidence_score, is_locked, is_user_verified)
+            VALUES (?, ?, 1.0, 1, 1)
+        """, (new_cluster_name, src_merchant_id))
+        new_cluster_id = cursor.lastrowid
+        
+        for tx_id in transaction_ids:
+            cursor.execute("UPDATE transactions SET cluster_id = ? WHERE transaction_id = ?", (new_cluster_id, tx_id))
+            
+        if src_merchant_id:
+            from db.database import update_merchant_stats_new
+            update_merchant_stats_new(conn, src_merchant_id)
+            
+        conn.commit()
+        return {"status": "success", "new_cluster_id": new_cluster_id}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error splitting cluster: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.post("/api/merchant-clusters/move-transaction")
+def move_cluster_transaction(payload: dict = Body(...)):
+    transaction_ids = payload.get("transaction_ids", [])
+    target_cluster_id = payload.get("target_cluster_id")
+    
+    if not transaction_ids or not target_cluster_id:
+        raise HTTPException(status_code=400, detail="transaction_ids and target_cluster_id are required")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT DISTINCT c.merchant_id 
+            FROM transactions t
+            JOIN merchant_clusters c ON t.cluster_id = c.cluster_id
+            WHERE t.transaction_id IN ({})
+        """.format(",".join("?" for _ in transaction_ids)), transaction_ids)
+        old_merchants = [r["merchant_id"] for r in cursor.fetchall() if r["merchant_id"]]
+        
+        for tx_id in transaction_ids:
+            cursor.execute("UPDATE transactions SET cluster_id = ? WHERE transaction_id = ?", (target_cluster_id, tx_id))
+            
+        cursor.execute("SELECT merchant_id FROM merchant_clusters WHERE cluster_id = ?", (target_cluster_id,))
+        t_row = cursor.fetchone()
+        target_merchant_id = t_row["merchant_id"] if t_row else None
+        
+        from db.database import update_merchant_stats_new
+        for m_id in old_merchants:
+            update_merchant_stats_new(conn, m_id)
+        if target_merchant_id:
+            update_merchant_stats_new(conn, target_merchant_id)
+            
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error moving transactions: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.post("/api/merchant-clusters/promote")
+def promote_merchant_cluster(payload: dict = Body(...)):
+    cluster_id = payload.get("cluster_id")
+    merchant_name = payload.get("merchant_name")
+    category_name = payload.get("category")
+    subcategory_name = payload.get("subcategory")
+    parent_merchant_id = payload.get("parent_merchant_id")
+    
+    if not cluster_id or not merchant_name:
+        raise HTTPException(status_code=400, detail="cluster_id and merchant_name are required")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cat_id = None
+        if category_name:
+            cursor.execute("SELECT category_id FROM categories WHERE name = ?", (category_name,))
+            cat_row = cursor.fetchone()
+            if cat_row:
+                cat_id = cat_row["category_id"]
+                
+        sub_id = None
+        if subcategory_name and cat_id:
+            cursor.execute("INSERT OR IGNORE INTO subcategories (category_id, name) VALUES (?, ?)", (cat_id, subcategory_name))
+            conn.commit()
+            cursor.execute("SELECT subcategory_id FROM subcategories WHERE category_id = ? AND name = ?", (cat_id, subcategory_name))
+            sub_row = cursor.fetchone()
+            if sub_row:
+                sub_id = sub_row["subcategory_id"]
+                
+        cursor.execute("""
+            INSERT INTO merchants (name, parent_merchant_id, category_id, subcategory_id, is_verified, confidence_score)
+            VALUES (?, ?, ?, ?, 1, 1.0)
+            ON CONFLICT(name) DO UPDATE SET is_verified = 1
+        """, (merchant_name, parent_merchant_id, cat_id, sub_id))
+        
+        cursor.execute("SELECT merchant_id FROM merchants WHERE name = ?", (merchant_name,))
+        merchant_id = cursor.fetchone()["merchant_id"]
+        
+        cursor.execute("""
+            UPDATE merchant_clusters SET
+                merchant_id = ?,
+                confidence_score = 1.0,
+                is_locked = 1,
+                is_user_verified = 1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE cluster_id = ?
+        """, (merchant_id, cluster_id))
+        
+        cursor.execute("""
+            UPDATE transactions SET
+                category = ?,
+                display_name = ?
+            WHERE cluster_id = ?
+        """, (category_name or 'Unsorted', merchant_name, cluster_id))
+        
+        from db.database import update_merchant_stats_new
+        update_merchant_stats_new(conn, merchant_id)
+        
+        conn.commit()
+        return {"status": "success", "merchant_id": merchant_id}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error promoting cluster: {e}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        conn.close()
+
+@app.post("/api/merchant-clusters/lock")
+def lock_merchant_cluster(payload: dict = Body(...)):
+    cluster_id = payload.get("cluster_id")
+    is_locked = payload.get("is_locked", True)
+    
+    if not cluster_id:
+        raise HTTPException(status_code=400, detail="cluster_id is required")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE merchant_clusters SET
+                is_locked = ?,
+                is_user_verified = 1,
+                confidence_score = 1.0,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE cluster_id = ?
+        """, (1 if is_locked else 0, cluster_id))
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Error locking cluster: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.get("/api/merchant-intelligence/dashboard")
+def get_merchant_dashboard_metrics():
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT COUNT(*) FROM merchants WHERE is_system = 0")
+        total_merchants = cursor.fetchone()[0] or 0
+        
+        cursor.execute("SELECT COUNT(*) FROM merchant_clusters")
+        total_clusters = cursor.fetchone()[0] or 0
+        
+        cursor.execute("""
+            SELECT COUNT(*) FROM merchants 
+            WHERE is_system = 0 AND (category_id IS NULL OR category_id IN (SELECT category_id FROM categories WHERE name IN ('Unsorted', 'Other')))
+        """)
+        uncategorized_merchants = cursor.fetchone()[0] or 0
+        
+        cursor.execute("""
+            SELECT m.name, SUM(ABS(t.amount)) as total_spend
+            FROM transactions t
+            JOIN merchant_clusters c ON t.cluster_id = c.cluster_id
+            JOIN merchants m ON c.merchant_id = m.merchant_id
+            WHERE t.amount < 0 AND m.is_system = 0 AND t.booking_date >= date('now', '-30 days')
+            GROUP BY m.merchant_id
+            ORDER BY total_spend DESC
+            LIMIT 5
+        """)
+        largest_by_spend = [dict(row) for row in cursor.fetchall()]
+        
+        cursor.execute("""
+            SELECT m.name, COUNT(t.transaction_id) as count
+            FROM transactions t
+            JOIN merchant_clusters c ON t.cluster_id = c.cluster_id
+            JOIN merchants m ON c.merchant_id = m.merchant_id
+            WHERE m.is_system = 0
+            GROUP BY m.merchant_id
+            ORDER BY count DESC
+            LIMIT 5
+        """)
+        largest_by_count = [dict(row) for row in cursor.fetchall()]
+
+        cursor.execute("""
+            SELECT 
+                SUM(CASE WHEN confidence_score >= 0.9 THEN 1 ELSE 0 END) as high,
+                SUM(CASE WHEN confidence_score >= 0.6 AND confidence_score < 0.9 THEN 1 ELSE 0 END) as medium,
+                SUM(CASE WHEN confidence_score < 0.6 THEN 1 ELSE 0 END) as low,
+                COUNT(*) as total
+            FROM merchant_clusters
+        """)
+        conf_row = cursor.fetchone()
+        confidence_distribution = dict(conf_row) if conf_row else {"high": 0, "medium": 0, "low": 0, "total": 0}
+
+        cursor.execute("""
+            SELECT 
+                SUM(CASE WHEN is_user_verified = 1 OR is_locked = 1 THEN 1 ELSE 0 END) as verified,
+                COUNT(*) as total
+            FROM merchant_clusters
+        """)
+        quality_row = cursor.fetchone()
+        quality_score = round((quality_row["verified"] / quality_row["total"]) * 100, 2) if quality_row and quality_row["total"] > 0 else 100.0
+
+        cursor.execute("""
+            SELECT strftime('%Y-%m', created_at) as month, COUNT(*) as new_merchants
+            FROM merchants
+            WHERE is_system = 0
+            GROUP BY month
+            ORDER BY month DESC
+            LIMIT 6
+        """)
+        growth_trends = [dict(row) for row in cursor.fetchall()]
+
+        return {
+            "total_merchants": total_merchants,
+            "total_clusters": total_clusters,
+            "uncategorized_merchants": uncategorized_merchants,
+            "largest_by_spend": largest_by_spend,
+            "largest_by_count": largest_by_count,
+            "confidence_distribution": confidence_distribution,
+            "cluster_quality_score": quality_score,
+            "growth_trends": growth_trends
+        }
+    except Exception as e:
+        logger.error(f"Error fetching dashboard metrics: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
 
 if __name__ == "__main__":
     import uvicorn

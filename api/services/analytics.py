@@ -16,7 +16,7 @@ def get_normalized_sum(cursor, where_clause: str, params: tuple = ()) -> float:
     query = f"""
         SELECT 
             SUM(CASE WHEN currency = 'INR' THEN amount / {EUR_INR_RATE} ELSE amount END) as total
-        FROM transactions
+        FROM v_transactions_resolved
         WHERE {where_clause}
     """
     cursor.execute(query, params)
@@ -35,10 +35,10 @@ def get_financial_summary() -> dict:
         total_balance = get_normalized_sum(cursor, "is_ignored = 0 AND status = 'SETTLED'")
         
         # Total Income (all time)
-        total_income = get_normalized_sum(cursor, "amount > 0 AND is_ignored = 0 AND status = 'SETTLED'")
+        total_income = get_normalized_sum(cursor, "amount > 0 AND is_ignored = 0 AND status = 'SETTLED' AND COALESCE(is_system_merchant, 0) = 0")
         
         # Total Expenses (all time)
-        total_expenses = abs(get_normalized_sum(cursor, "amount < 0 AND is_ignored = 0 AND status = 'SETTLED'"))
+        total_expenses = abs(get_normalized_sum(cursor, "amount < 0 AND is_ignored = 0 AND status = 'SETTLED' AND COALESCE(is_system_merchant, 0) = 0"))
         
         # Category Breakdown
         cursor.execute(
@@ -46,8 +46,8 @@ def get_financial_summary() -> dict:
             SELECT 
                 category,
                 SUM(CASE WHEN currency = 'INR' THEN amount / {EUR_INR_RATE} ELSE amount END) as total
-            FROM transactions
-            WHERE amount < 0 AND is_ignored = 0 AND status = 'SETTLED'
+            FROM v_transactions_resolved
+            WHERE amount < 0 AND is_ignored = 0 AND status = 'SETTLED' AND COALESCE(is_system_merchant, 0) = 0
             GROUP BY category
             ORDER BY total ASC
             """
@@ -60,8 +60,8 @@ def get_financial_summary() -> dict:
             SELECT 
                 flexibility_tier,
                 SUM(CASE WHEN currency = 'INR' THEN amount / {EUR_INR_RATE} ELSE amount END) as total
-            FROM transactions
-            WHERE amount < 0 AND is_ignored = 0 AND status = 'SETTLED'
+            FROM v_transactions_resolved
+            WHERE amount < 0 AND is_ignored = 0 AND status = 'SETTLED' AND COALESCE(is_system_merchant, 0) = 0
             GROUP BY flexibility_tier
             """
         )
@@ -103,7 +103,7 @@ def get_health_metrics() -> dict:
         # Monthly fixed + flexible expense average
         fixed_flex_sum = abs(get_normalized_sum(
             cursor, 
-            "amount < 0 AND flexibility_tier IN ('Fixed', 'Flexible') AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED'",
+            "amount < 0 AND flexibility_tier IN ('Fixed', 'Flexible') AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED' AND COALESCE(is_system_merchant, 0) = 0",
             (cut_date,)
         ))
         avg_monthly_essential = fixed_flex_sum / 3.0 if fixed_flex_sum > 0 else 0.0
@@ -112,12 +112,12 @@ def get_health_metrics() -> dict:
         runway_months = cash_reserves / avg_monthly_essential if avg_monthly_essential > 0 else 999.0
         
         # Savings Rate in the last 90 days
-        income_90d = get_normalized_sum(cursor, "amount > 0 AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED'", (cut_date,))
-        expense_90d = abs(get_normalized_sum(cursor, "amount < 0 AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED'", (cut_date,)))
+        income_90d = get_normalized_sum(cursor, "amount > 0 AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED' AND COALESCE(is_system_merchant, 0) = 0", (cut_date,))
+        expense_90d = abs(get_normalized_sum(cursor, "amount < 0 AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED' AND COALESCE(is_system_merchant, 0) = 0", (cut_date,)))
         savings_rate = (1.0 - (expense_90d / income_90d)) * 100.0 if income_90d > 0 else 0.0
         
         # FIRE Targets (based on average monthly expenses of all types in last 90 days)
-        total_exp_90d = abs(get_normalized_sum(cursor, "amount < 0 AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED'", (cut_date,)))
+        total_exp_90d = abs(get_normalized_sum(cursor, "amount < 0 AND booking_date >= ? AND is_ignored = 0 AND status = 'SETTLED' AND COALESCE(is_system_merchant, 0) = 0", (cut_date,)))
         avg_monthly_exp = total_exp_90d / 3.0
         annual_exp = avg_monthly_exp * 12.0
         

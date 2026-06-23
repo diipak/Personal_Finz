@@ -41,7 +41,7 @@ Respond with ONLY the exact category name from the list, and nothing else. Do no
                 "stream": False,
                 "options": {
                     "temperature": 0.0,
-                    "num_predict": 512
+                    "num_predict": 5
                 }
             },
             timeout=30

@@ -154,13 +154,13 @@ function switchTab(tab) {
     
     // Update nav links styling
     document.querySelectorAll('#sidebar-nav button').forEach(el => {
-        const isAutomation = el.id === 'nav-automation';
-        el.className = `w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium${isAutomation ? ' relative' : ''}`;
+        const isRelative = el.id === 'nav-automation' || el.id === 'nav-merchant-intelligence';
+        el.className = `w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium${isRelative ? ' relative' : ''}`;
     });
     const activeNavBtn = document.getElementById(`nav-${tab}`);
     if (activeNavBtn) {
-        const isAutomation = activeNavBtn.id === 'nav-automation';
-        activeNavBtn.className = `w-full flex items-center gap-3 bg-primary-container text-on-primary-container rounded-lg px-4 py-2.5 mx-2 active-nav-glow scale-[0.98] transition-transform text-left font-semibold${isAutomation ? ' relative' : ''}`;
+        const isRelative = activeNavBtn.id === 'nav-automation' || activeNavBtn.id === 'nav-merchant-intelligence';
+        activeNavBtn.className = `w-full flex items-center gap-3 bg-primary-container text-on-primary-container rounded-lg px-4 py-2.5 mx-2 active-nav-glow scale-[0.98] transition-transform text-left font-semibold${isRelative ? ' relative' : ''}`;
     }
 
     // Sync Path in Address Bar
@@ -171,6 +171,7 @@ function switchTab(tab) {
     else if (tab === 'goals') newPath = '/goals';
     else if (tab === 'insights') newPath = '/insights';
     else if (tab === 'automation') newPath = '/automation';
+    else if (tab === 'merchant-intelligence') newPath = '/merchant-intelligence';
     else if (tab === 'overview') newPath = '/overview';
     window.history.pushState({}, '', newPath);
 
@@ -185,6 +186,7 @@ function switchTab(tab) {
     else if (tab === 'goals') loadGoalsData();
     else if (tab === 'insights') loadInsightsData();
     else if (tab === 'automation') loadAutomationData();
+    else if (tab === 'merchant-intelligence') loadMerchantIntelligenceData();
 }
 
 function initRouter() {
@@ -196,6 +198,7 @@ function initRouter() {
     else if (path.includes('goals')) targetTab = 'goals';
     else if (path.includes('insights') || path.includes('stats')) targetTab = 'insights';
     else if (path.includes('automation') || path.includes('rules') || path.includes('review') || path.includes('import-ui')) targetTab = 'automation';
+    else if (path.includes('merchant-intelligence') || path.includes('merchant-intel')) targetTab = 'merchant-intelligence';
     switchTab(targetTab);
 }
 
@@ -3256,23 +3259,86 @@ async function handleFileUpload(file, bankType = null) {
     formData.append('file', file);
     if (bankType) formData.append('bank_type', bankType);
 
+    const dropZone = document.getElementById('drop-zone');
+    const statusContainer = document.getElementById('status-container');
+    const statusIcon = document.getElementById('status-icon');
+    const statusSym = document.getElementById('status-sym');
+    const statusTitle = document.getElementById('status-title');
+    const statusDesc = document.getElementById('status-desc');
+    const doneActions = document.getElementById('done-actions');
+
+    if (statusContainer && dropZone) {
+        statusContainer.classList.remove('hidden');
+        dropZone.classList.add('hidden');
+        
+        statusIcon.className = "w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary animate-bounce";
+        statusSym.textContent = "autorenew";
+        statusTitle.textContent = "Uploading File...";
+        statusDesc.textContent = "Processing transactions, running rules, and matching categories.";
+        doneActions.classList.add('hidden');
+        
+        const prevRetry = statusContainer.querySelector('.retry-btn');
+        if (prevRetry) prevRetry.remove();
+    }
+
     try {
         const res = await fetch('/import', {
             method: 'POST',
             body: formData
         });
+        
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || errData.message || `Server responded with ${res.status}`);
+        }
+        
         const data = await res.json();
         
         if (data.status === 'ambiguous') {
+            if (statusContainer && dropZone) {
+                statusContainer.classList.add('hidden');
+                dropZone.classList.remove('hidden');
+            }
             showAmbiguousModal(data.options);
         } else if (data.status === 'success') {
-            alert(`Statement processed successfully! Imported ${data.inserted_count} transactions.`);
+            if (statusContainer) {
+                statusIcon.className = "w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500";
+                statusSym.textContent = "check_circle";
+                statusTitle.textContent = "Import Complete!";
+                statusDesc.textContent = `Successfully detected as ${data.detected_bank}. Imported ${data.inserted_count} transactions into "${data.account_name}".`;
+                doneActions.classList.remove('hidden');
+            } else {
+                alert(`Statement processed successfully! Imported ${data.inserted_count} transactions.`);
+            }
             loadImportHistory();
         } else {
-            alert(`Error: ${data.details || data.message || "Failed to process statement file"}`);
+            throw new Error(data.details || data.message || "Failed to process statement file");
         }
     } catch (err) {
         console.error("Upload error:", err);
+        if (statusContainer) {
+            statusIcon.className = "w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500";
+            statusSym.textContent = "error";
+            statusTitle.textContent = "Import Failed";
+            statusDesc.textContent = err.message || err;
+            
+            const retryBtn = document.createElement('button');
+            retryBtn.className = "retry-btn mt-4 px-6 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-bold rounded-xl transition-all";
+            retryBtn.textContent = "Upload Again";
+            retryBtn.onclick = () => resetUploader();
+            doneActions.parentElement.appendChild(retryBtn);
+        } else {
+            alert(`Error: ${err.message || err}`);
+        }
+    }
+}
+
+function resetUploader() {
+    const dropZone = document.getElementById('drop-zone');
+    const statusContainer = document.getElementById('status-container');
+    if (dropZone && statusContainer) {
+        dropZone.classList.remove('hidden');
+        statusContainer.classList.add('hidden');
     }
 }
 
@@ -5334,11 +5400,51 @@ function setAutomationSubTab(subTab) {
     });
     
     if (subTab === 'review') {
-        loadReviewQueueData();
+        loadMerchantIntelligenceStats();
     } else if (subTab === 'rules') {
         loadRulesData();
     } else if (subTab === 'import') {
         loadImportHistory();
+    }
+}
+
+// ─── Merchant Intelligence Dashboard Stats ───────────────────────────────────
+async function loadMerchantIntelligenceStats() {
+    try {
+        const res = await fetch('/api/merchant-intelligence/stats');
+        if (!res.ok) throw new Error('Stats API error');
+        const d = await res.json();
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        set('rq-pending-clusters',   d.pending_clusters  ?? '—');
+        set('rq-uncategorised-txns', d.uncategorised_txns ?? '—');
+        set('rq-ai-suggestions',     d.ai_suggestions    ?? '—');
+        set('rq-active-rules',       d.active_rules      ?? '—');
+    } catch (e) {
+        console.warn('loadMerchantIntelligenceStats failed:', e);
+    }
+}
+
+async function triggerMerchantIntelligence() {
+    const log = document.getElementById('mi-log');
+    const appendLog = (msg, cls = '') => {
+        if (!log) return;
+        const line = document.createElement('div');
+        line.className = cls;
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        log.innerHTML = log.innerHTML.includes('No pipeline') ? '' : log.innerHTML;
+        log.appendChild(line);
+        log.scrollTop = log.scrollHeight;
+    };
+    appendLog('Triggering Merchant Intelligence pipeline…');
+    try {
+        const res = await fetch('/api/merchant-intelligence/run', { method: 'POST' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const d = await res.json();
+        appendLog(d.message || 'Pipeline started in background.', 'text-primary');
+        // Refresh stats after a short delay to show updated numbers
+        setTimeout(loadMerchantIntelligenceStats, 4000);
+    } catch (e) {
+        appendLog(`Error: ${e.message}`, 'text-error');
     }
 }
 
@@ -6548,6 +6654,949 @@ function showIncomeExpensesTooltip(event, d) {
     chartTooltip.style.top = `${top}px`;
 }
 
+// ─── Merchant Intelligence Subsystem ──────────────────────────────────────────
+let miActiveSubTab = 'library';
+let miMerchants = [];
+let miWorkbenchClusters = [];
+let miCategoriesTree = {};
+let miSelectedClusterId = null;
+let miSelectedMerchantId = null;
+let miAllCategories = [];
+
+async function loadMerchantIntelligenceData() {
+    await checkVaultStatus();
+    await loadMiDashboardMetrics();
+    await loadMiCategories();
+    setMiSubTab(miActiveSubTab);
+}
+
+async function loadMiCategories() {
+    try {
+        const res = await fetch('/api/categories');
+        if (!res.ok) throw new Error('Categories fetch error');
+        miCategoriesTree = await res.json();
+        miAllCategories = Object.keys(miCategoriesTree);
+        
+        // Populate library filter dropdown
+        const filterSel = document.getElementById('mi-library-category-filter');
+        if (filterSel) {
+            filterSel.innerHTML = '<option value="">All Categories</option>';
+            miAllCategories.forEach(cat => {
+                filterSel.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+        }
+        
+        // Populate profile edit category select
+        const editCatSel = document.getElementById('mi-profile-edit-category');
+        if (editCatSel) {
+            editCatSel.innerHTML = '<option value="">No Category</option>';
+            miAllCategories.forEach(cat => {
+                editCatSel.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+        }
+    } catch (e) {
+        console.error("loadMiCategories failed:", e);
+    }
+}
+
+async function loadMiDashboardMetrics() {
+    try {
+        const res = await fetch('/api/merchant-intelligence/dashboard');
+        if (!res.ok) throw new Error('Dashboard API error');
+        const d = await res.json();
+        
+        document.getElementById('mi-summary-total-merchants').textContent = d.total_merchants ?? '0';
+        document.getElementById('mi-summary-unlinked-clusters').textContent = d.total_clusters ?? '0';
+        document.getElementById('mi-summary-uncategorized').textContent = d.uncategorized_merchants ?? '0';
+        document.getElementById('mi-summary-quality-score').textContent = `${d.cluster_quality_score ?? 100}%`;
+        
+        const badge = document.getElementById('mi-badge');
+        if (badge) {
+            const count = d.total_clusters ?? 0;
+            if (count > 0) {
+                badge.textContent = count.toString();
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    } catch (e) {
+        console.warn("loadMiDashboardMetrics failed:", e);
+    }
+}
+
+function setMiSubTab(tab) {
+    miActiveSubTab = tab;
+    
+    document.getElementById('sub-panel-mi-library').classList.add('hidden');
+    document.getElementById('sub-panel-mi-analytics').classList.add('hidden');
+    document.getElementById('sub-panel-mi-workbench').classList.add('hidden');
+    
+    document.getElementById(`sub-panel-mi-${tab}`).classList.remove('hidden');
+    
+    const btns = ['library', 'analytics', 'workbench'];
+    btns.forEach(b => {
+        const btn = document.getElementById(`btn-mi-${b}`);
+        if (btn) {
+            if (b === tab) {
+                btn.className = 'px-4 py-2 rounded-lg bg-white/10 text-primary transition-all';
+            } else {
+                btn.className = 'px-4 py-2 rounded-lg text-on-surface-variant hover:text-white transition-all';
+            }
+        }
+    });
+    
+    if (tab === 'library') {
+        loadMiLibraryData();
+    } else if (tab === 'analytics') {
+        loadMiAnalyticsData();
+    } else if (tab === 'workbench') {
+        loadMiWorkbenchData();
+    }
+}
+
+async function loadMiLibraryData() {
+    const listContainer = document.getElementById('mi-library-list');
+    if (listContainer) {
+        listContainer.innerHTML = '<div class="text-center py-8 text-on-surface-variant font-mono text-xs">Loading Merchant Library...</div>';
+    }
+    try {
+        const res = await fetch('/api/merchants');
+        if (!res.ok) throw new Error('Merchants API error');
+        miMerchants = await res.json();
+        renderMerchantLibrary();
+    } catch (e) {
+        console.error("loadMiLibraryData failed:", e);
+        if (listContainer) {
+            listContainer.innerHTML = `<div class="text-center py-8 text-error font-mono text-xs">Error loading merchants: ${e.message}</div>`;
+        }
+    }
+}
+
+function renderMerchantLibrary() {
+    const listContainer = document.getElementById('mi-library-list');
+    if (!listContainer) return;
+    
+    const searchVal = (document.getElementById('mi-library-search')?.value || '').toLowerCase().trim();
+    const catVal = document.getElementById('mi-library-category-filter')?.value || '';
+    const showSystem = document.getElementById('mi-library-system-toggle')?.checked || false;
+    
+    // Group merchants by parent
+    const parents = [];
+    const childrenMap = {};
+    
+    miMerchants.forEach(m => {
+        if (m.parent_merchant_id) {
+            if (!childrenMap[m.parent_merchant_id]) {
+                childrenMap[m.parent_merchant_id] = [];
+            }
+            childrenMap[m.parent_merchant_id].push(m);
+        } else {
+            parents.push(m);
+        }
+    });
+    
+    // Filter parents and children
+    const filterFn = m => {
+        // Name check
+        const matchName = m.name.toLowerCase().includes(searchVal);
+        // Category check
+        const matchCat = !catVal || m.category === catVal;
+        // System check
+        const matchSys = showSystem || !m.is_system;
+        
+        return matchName && matchCat && matchSys;
+    };
+    
+    const filteredParents = parents.filter(filterFn);
+    
+    if (filteredParents.length === 0) {
+        listContainer.innerHTML = '<div class="text-center py-8 text-on-surface-variant font-mono text-xs">No merchants match the filter criteria.</div>';
+        return;
+    }
+    
+    listContainer.innerHTML = '';
+    
+    filteredParents.forEach(p => {
+        const children = childrenMap[p.merchant_id] || [];
+        const hasChildren = children.length > 0;
+        
+        const card = document.createElement('div');
+        card.className = 'glass-card border border-border-subtle/50 p-4 hover:border-primary/40 transition-all flex flex-col gap-2.5';
+        
+        const verifiedBadge = p.is_verified ? '<span class="material-symbols-outlined text-[14px] text-success" title="User Verified">verified</span>' : '';
+        const systemBadge = p.is_system ? '<span class="bg-zinc-800 text-on-surface-variant text-[9px] px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">System</span>' : '';
+        const catText = p.category ? `<span class="bg-primary/5 text-primary text-[10px] px-2 py-0.5 rounded font-bold">${p.category}${p.subcategory ? ' / ' + p.subcategory : ''}</span>` : '<span class="bg-error/5 text-error text-[10px] px-2 py-0.5 rounded font-bold">Uncategorized</span>';
+        
+        let childHtml = '';
+        if (hasChildren) {
+            childHtml = `
+                <div class="mt-2 pl-6 border-l border-border-subtle/60 space-y-2">
+                    <p class="text-[9px] font-mono uppercase tracking-wider text-on-surface-variant/60">Sub-Services / Intents</p>
+                    ${children.map(c => `
+                        <div class="flex items-center justify-between text-xs py-1.5 hover:bg-white/5 px-2 rounded-lg transition-all">
+                            <div class="flex items-center gap-1.5 text-white/90">
+                                <span class="material-symbols-outlined text-xs text-on-surface-variant">subdirectory_arrow_right</span>
+                                <span>${c.name}</span>
+                                ${c.is_verified ? '<span class="material-symbols-outlined text-[12px] text-success">verified</span>' : ''}
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-on-surface-variant/80 font-mono">${c.transaction_count} Tx</span>
+                                <span class="text-white/80 font-mono font-bold">${c.total_spend < 0 ? '€' + Math.abs(c.total_spend).toFixed(2) : '€0.00'}</span>
+                                <button onclick="openMerchantProfileModal(${c.merchant_id})" class="text-primary text-[11px] font-bold hover:underline flex items-center gap-0.5">
+                                    <span>Profile</span>
+                                    <span class="material-symbols-outlined text-xs">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        card.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-lg">storefront</span>
+                    <span class="text-sm font-bold text-white">${p.name}</span>
+                    ${verifiedBadge}
+                    ${systemBadge}
+                    ${catText}
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right">
+                        <p class="text-xs text-white/90 font-mono font-bold">${p.total_spend < 0 ? '€' + Math.abs(p.total_spend).toFixed(2) : '€0.00'}</p>
+                        <p class="text-[10px] text-on-surface-variant font-mono">${p.transaction_count} Transactions</p>
+                    </div>
+                    <button onclick="openMerchantProfileModal(${p.merchant_id})" class="bg-white/5 hover:bg-white/10 border border-border-subtle/60 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-all">
+                        Edit Profile
+                    </button>
+                </div>
+            </div>
+            ${childHtml}
+        `;
+        listContainer.appendChild(card);
+    });
+}
+
+function filterMerchantLibrary() {
+    renderMerchantLibrary();
+}
+
+async function loadMiAnalyticsData() {
+    try {
+        const res = await fetch('/api/merchant-intelligence/dashboard');
+        if (!res.ok) throw new Error('Analytics API error');
+        const d = await res.json();
+        
+        // Render Spend Leaderboard
+        const spendContainer = document.getElementById('mi-analytics-spend-leaderboard');
+        if (spendContainer) {
+            spendContainer.innerHTML = '';
+            if (!d.largest_by_spend || d.largest_by_spend.length === 0) {
+                spendContainer.innerHTML = '<div class="text-center py-12 text-on-surface-variant text-xs">No spending data available.</div>';
+            } else {
+                d.largest_by_spend.forEach((m, i) => {
+                    const pct = Math.min(100, Math.round((m.total_spend / d.largest_by_spend[0].total_spend) * 100));
+                    spendContainer.innerHTML += `
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="font-bold text-white">${i + 1}. ${m.name}</span>
+                                <span class="font-mono text-primary font-bold">€${Math.abs(m.total_spend).toFixed(2)}</span>
+                            </div>
+                            <div class="h-1.5 rounded-full bg-zinc-900 border border-border-subtle overflow-hidden">
+                                <div class="h-full bg-primary rounded-full" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+        // Render Count Leaderboard
+        const countContainer = document.getElementById('mi-analytics-count-leaderboard');
+        if (countContainer) {
+            countContainer.innerHTML = '';
+            if (!d.largest_by_count || d.largest_by_count.length === 0) {
+                countContainer.innerHTML = '<div class="text-center py-12 text-on-surface-variant text-xs">No transaction count data available.</div>';
+            } else {
+                d.largest_by_count.forEach((m, i) => {
+                    const pct = Math.min(100, Math.round((m.count / d.largest_by_count[0].count) * 100));
+                    countContainer.innerHTML += `
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="font-bold text-white">${i + 1}. ${m.name}</span>
+                                <span class="font-mono text-success font-bold">${m.count} Tx</span>
+                            </div>
+                            <div class="h-1.5 rounded-full bg-zinc-900 border border-border-subtle overflow-hidden">
+                                <div class="h-full bg-success rounded-full" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+        // Confidence distribution
+        const cd = d.confidence_distribution || { high: 0, medium: 0, low: 0, total: 0 };
+        const total = cd.total || 1;
+        const hp = Math.round((cd.high / total) * 100);
+        const mp = Math.round((cd.medium / total) * 100);
+        const lp = Math.round((cd.low / total) * 100);
+        
+        document.getElementById('mi-conf-high').textContent = `${cd.high} (${hp}%)`;
+        document.getElementById('mi-conf-high-bar').style.width = `${hp}%`;
+        document.getElementById('mi-conf-med').textContent = `${cd.medium} (${mp}%)`;
+        document.getElementById('mi-conf-med-bar').style.width = `${mp}%`;
+        document.getElementById('mi-conf-low').textContent = `${cd.low} (${lp}%)`;
+        document.getElementById('mi-conf-low-bar').style.width = `${lp}%`;
+        
+        // Growth trend
+        const growthContainer = document.getElementById('mi-analytics-growth-trend');
+        if (growthContainer) {
+            growthContainer.innerHTML = '';
+            if (!d.growth_trends || d.growth_trends.length === 0) {
+                growthContainer.innerHTML = '<div class="text-center py-12 text-on-surface-variant text-xs">No ingestion trend data.</div>';
+            } else {
+                d.growth_trends.forEach(g => {
+                    growthContainer.innerHTML += `
+                        <div class="flex justify-between items-center text-xs py-1.5 border-b border-border-subtle/30 font-mono">
+                            <span class="text-on-surface-variant">${g.month}</span>
+                            <span class="text-white font-bold">+${g.new_merchants} New Merchants</span>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+    } catch (e) {
+        console.error("loadMiAnalyticsData failed:", e);
+    }
+}
+
+async function loadMiWorkbenchData() {
+    const listContainer = document.getElementById('mi-workbench-list');
+    if (listContainer) {
+        listContainer.innerHTML = '<div class="text-center py-12 text-on-surface-variant font-mono text-xs">Loading Workbench Queue...</div>';
+    }
+    
+    // Clear details pane
+    const detailsContainer = document.getElementById('mi-workbench-detail-pane');
+    if (detailsContainer) {
+        detailsContainer.innerHTML = `
+            <div class="text-center py-20 text-on-surface-variant">
+                <span class="material-symbols-outlined text-4xl block mb-2 opacity-40">construction</span>
+                <p class="text-xs font-mono">Select a cluster from the list to begin workbench actions.</p>
+            </div>
+        `;
+    }
+    
+    try {
+        const res = await fetch('/api/merchant-clusters/workbench');
+        if (!res.ok) throw new Error('Workbench API error');
+        miWorkbenchClusters = await res.json();
+        
+        if (!listContainer) return;
+        listContainer.innerHTML = '';
+        
+        const unlinkedClusters = miWorkbenchClusters.filter(c => !c.is_user_verified);
+        
+        if (unlinkedClusters.length === 0) {
+            listContainer.innerHTML = `
+                <div class="text-center py-16 text-on-surface-variant">
+                    <span class="material-symbols-outlined text-3xl text-success block mb-2">check_circle</span>
+                    <p class="text-xs font-bold text-white">All clusters are verified!</p>
+                    <p class="text-[10px] text-on-surface-variant/80 mt-1">Excellent work. Run the pipeline to find more.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        unlinkedClusters.forEach(c => {
+            const confidencePct = Math.round((c.confidence_score || 0.0) * 100);
+            const verifiedBadge = c.is_user_verified ? '<span class="material-symbols-outlined text-xs text-success" title="Verified">verified</span>' : '';
+            const lockIcon = c.is_locked ? 'lock' : 'lock_open';
+            
+            const card = document.createElement('div');
+            card.className = `p-3 rounded-xl border transition-all cursor-pointer text-left ${
+                miSelectedClusterId === c.cluster_id 
+                ? 'bg-primary/5 border-primary/50 text-white' 
+                : 'bg-zinc-950/40 border-border-subtle hover:border-white/20'
+            }`;
+            
+            card.onclick = () => {
+                miSelectedClusterId = c.cluster_id;
+                loadMiWorkbenchData(); // Redraw selection
+                selectMiWorkbenchCluster(c.cluster_id);
+            };
+            
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-1">
+                    <div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-xs text-primary">hub</span>
+                        <span class="text-xs font-bold truncate max-w-[180px]">${c.cluster_name}</span>
+                        ${verifiedBadge}
+                    </div>
+                    <span class="text-[9px] font-mono text-on-surface-variant font-bold">${c.transaction_count} Tx</span>
+                </div>
+                <div class="flex justify-between items-center text-[10px]">
+                    <span class="text-on-surface-variant font-mono">Confidence: ${confidencePct}%</span>
+                    <span class="material-symbols-outlined text-xs text-on-surface-variant/60">${lockIcon}</span>
+                </div>
+            `;
+            
+            listContainer.appendChild(card);
+        });
+        
+    } catch (e) {
+        console.error("loadMiWorkbenchData failed:", e);
+        if (listContainer) {
+            listContainer.innerHTML = `<div class="text-center py-12 text-error font-mono text-xs">Error: ${e.message}</div>`;
+        }
+    }
+}
+
+async function selectMiWorkbenchCluster(clusterId) {
+    const detailsContainer = document.getElementById('mi-workbench-detail-pane');
+    if (!detailsContainer) return;
+    
+    detailsContainer.innerHTML = '<div class="text-center py-12 text-on-surface-variant text-xs">Fetching details...</div>';
+    
+    const cluster = miWorkbenchClusters.find(c => c.cluster_id === clusterId);
+    if (!cluster) return;
+    
+    try {
+        const merchantsRes = await fetch('/api/merchants');
+        const merchants = await merchantsRes.json();
+        const parentOptions = merchants.filter(m => !m.parent_merchant_id && !m.is_system).map(m => `<option value="${m.merchant_id}">${m.name}</option>`).join('');
+        const catOptions = miAllCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        const otherClustersOptions = miWorkbenchClusters.filter(c => c.cluster_id !== clusterId).map(c => `<option value="${c.cluster_id}">${c.cluster_name}</option>`).join('');
+        
+        // Fetch actual transactions in this cluster
+        const txnsRes = await fetch(`/api/transactions?cluster_id=${clusterId}`);
+        let txns = [];
+        if (txnsRes.ok) {
+            txns = await txnsRes.json();
+        }
+        
+        const txCheckboxes = txns.map(t => `
+            <label class="flex items-start gap-2 text-xs text-white/90 hover:bg-white/5 p-1.5 rounded cursor-pointer select-none">
+                <input type="checkbox" value="${t.transaction_id}" class="workbench-txn-select rounded border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mt-0.5">
+                <div class="flex-grow">
+                    <p class="font-bold font-mono">${t.booking_date} — €${Math.abs(t.amount).toFixed(2)}</p>
+                    <p class="text-[10px] text-on-surface-variant/80 truncate max-w-xs">${t.description}</p>
+                </div>
+            </label>
+        `).join('');
+        
+        detailsContainer.innerHTML = `
+            <div class="space-y-6">
+                <!-- Header Info -->
+                <div class="border-b border-border-subtle pb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-base">hub</span>
+                        ${cluster.cluster_name}
+                    </h3>
+                    <p class="text-[10px] text-on-surface-variant mt-1">Confidence Score: ${Math.round(cluster.confidence_score * 100)}% | User Verified: ${cluster.is_user_verified ? 'Yes' : 'No'}</p>
+                </div>
+
+                <!-- 1. Promote to Merchant -->
+                <div class="p-4 rounded-xl border border-border-subtle bg-zinc-950/30 space-y-3">
+                    <h4 class="text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">publish</span>
+                        Promote to Core Merchant
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2">
+                            <label class="block text-[9px] uppercase font-bold text-on-surface-variant mb-1">Merchant Name</label>
+                            <input type="text" id="wb-promote-name" value="${cluster.cluster_name}" class="w-full bg-zinc-950/60 border border-border-subtle rounded-lg px-2.5 py-1.5 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] uppercase font-bold text-on-surface-variant mb-1">Category</label>
+                            <select id="wb-promote-category" class="w-full bg-zinc-950/60 border border-border-subtle rounded-lg px-2.5 py-1.5 text-xs text-white">
+                                <option value="">No Category</option>
+                                ${catOptions}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[9px] uppercase font-bold text-on-surface-variant mb-1">Parent Link</label>
+                            <select id="wb-promote-parent" class="w-full bg-zinc-950/60 border border-border-subtle rounded-lg px-2.5 py-1.5 text-xs text-white">
+                                <option value="">None (Is Parent)</option>
+                                ${parentOptions}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex justify-end pt-1">
+                        <button onclick="workbenchPromote(${clusterId})" class="bg-primary text-black px-3.5 py-1.5 rounded-lg text-[11px] font-bold hover:brightness-110 active:scale-95 transition-all">
+                            Promote & Link
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Merge into Another Cluster -->
+                <div class="p-4 rounded-xl border border-border-subtle bg-zinc-950/30 space-y-3">
+                    <h4 class="text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">merge</span>
+                        Merge with Another Cluster
+                    </h4>
+                    <div class="flex gap-2">
+                        <select id="wb-merge-target" class="flex-grow bg-zinc-950/60 border border-border-subtle rounded-lg px-2.5 py-1.5 text-xs text-white">
+                            <option value="">Select target cluster...</option>
+                            ${otherClustersOptions}
+                        </select>
+                        <button onclick="workbenchMerge(${clusterId})" class="bg-white/5 hover:bg-white/10 border border-border-subtle text-white px-4 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition-all">
+                            Merge
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Transaction Actions (Split / Move) -->
+                <div class="p-4 rounded-xl border border-border-subtle bg-zinc-950/30 space-y-3">
+                    <h4 class="text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">splitscreen</span>
+                        Split or Move Transactions
+                    </h4>
+                    <div class="max-h-40 overflow-y-auto scroll-zone border border-border-subtle/50 rounded-lg p-2 space-y-1 mb-2 bg-zinc-950/20">
+                        ${txCheckboxes || '<p class="text-[10px] text-on-surface-variant p-2 text-center">No transactions loaded.</p>'}
+                    </div>
+                    
+                    <div class="space-y-3 pt-2 border-t border-border-subtle/30">
+                        <!-- Split Form -->
+                        <div class="flex flex-col gap-2">
+                            <label class="text-[9px] uppercase font-bold text-on-surface-variant">Split selected into new cluster:</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="wb-split-name" placeholder="New cluster name..." class="flex-grow bg-zinc-950/60 border border-border-subtle rounded-lg px-2.5 py-1 text-[11px] text-white">
+                                <button onclick="workbenchSplit(${clusterId})" class="bg-white/5 hover:bg-white/10 border border-border-subtle text-white px-3 py-1 rounded-lg text-[11px] font-bold active:scale-95 transition-all">
+                                    Split
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Move Form -->
+                        <div class="flex flex-col gap-2 pt-2 border-t border-border-subtle/30">
+                            <label class="text-[9px] uppercase font-bold text-on-surface-variant">Move selected to existing cluster:</label>
+                            <div class="flex gap-2">
+                                <select id="wb-move-target" class="flex-grow bg-zinc-950/60 border border-border-subtle rounded-lg px-2.5 py-1 text-[11px] text-white">
+                                    <option value="">Select target cluster...</option>
+                                    ${otherClustersOptions}
+                                </select>
+                                <button onclick="workbenchMove(${clusterId})" class="bg-white/5 hover:bg-white/10 border border-border-subtle text-white px-3 py-1 rounded-lg text-[11px] font-bold active:scale-95 transition-all">
+                                    Move
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Lock/Unlock Toggle -->
+                <div class="flex items-center justify-between p-3 rounded-lg border border-border-subtle/50 bg-zinc-950/40">
+                    <span class="text-xs text-on-surface-variant font-mono">Prevent AI modifications to this cluster</span>
+                    <button onclick="workbenchToggleLock(${clusterId}, ${cluster.is_locked ? 'false' : 'true'})" class="bg-white/5 hover:bg-white/10 border border-border-subtle text-white px-4 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition-all flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-xs">${cluster.is_locked ? 'lock_open' : 'lock'}</span>
+                        <span>${cluster.is_locked ? 'Unlock' : 'Lock'}</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        console.error("selectMiWorkbenchCluster failed:", e);
+        detailsContainer.innerHTML = `<div class="text-center py-12 text-error font-mono text-xs">Error loading details: ${e.message}</div>`;
+    }
+}
+
+async function workbenchPromote(clusterId) {
+    const name = document.getElementById('wb-promote-name')?.value;
+    const category = document.getElementById('wb-promote-category')?.value;
+    const parentId = document.getElementById('wb-promote-parent')?.value;
+    
+    if (!name) {
+        showToast('Merchant Name is required to promote.', 'error');
+        return;
+    }
+    
+    try {
+        const payload = {
+            cluster_id: clusterId,
+            merchant_name: name,
+            category: category || null,
+            parent_merchant_id: parentId ? parseInt(parentId) : null
+        };
+        const res = await fetch('/api/merchant-clusters/promote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        showToast('Cluster successfully promoted and linked to core merchant!');
+        miSelectedClusterId = null;
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("workbenchPromote failed:", e);
+        showToast(`Failed to promote cluster: ${e.message}`, 'error');
+    }
+}
+
+async function workbenchMerge(clusterId) {
+    const targetId = document.getElementById('wb-merge-target')?.value;
+    if (!targetId) {
+        showToast('Please select a target cluster to merge into.', 'error');
+        return;
+    }
+    
+    try {
+        const payload = {
+            source_cluster_ids: [clusterId],
+            target_cluster_id: parseInt(targetId)
+        };
+        const res = await fetch('/api/merchant-clusters/merge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        showToast('Clusters merged successfully.');
+        miSelectedClusterId = null;
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("workbenchMerge failed:", e);
+        showToast(`Failed to merge clusters: ${e.message}`, 'error');
+    }
+}
+
+function getSelectedWorkbenchTxns() {
+    const checkeds = document.querySelectorAll('.workbench-txn-select:checked');
+    return Array.from(checkeds).map(cb => cb.value);
+}
+
+async function workbenchSplit(clusterId) {
+    const txIds = getSelectedWorkbenchTxns();
+    const newName = document.getElementById('wb-split-name')?.value;
+    
+    if (txIds.length === 0) {
+        showToast('Please select at least one transaction to split.', 'error');
+        return;
+    }
+    if (!newName) {
+        showToast('Please enter a new cluster name.', 'error');
+        return;
+    }
+    
+    try {
+        const payload = {
+            source_cluster_id: clusterId,
+            transaction_ids: txIds,
+            new_cluster_name: newName
+        };
+        const res = await fetch('/api/merchant-clusters/split', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        showToast('Selected transactions split into new cluster.');
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("workbenchSplit failed:", e);
+        showToast(`Failed to split cluster: ${e.message}`, 'error');
+    }
+}
+
+async function workbenchMove(clusterId) {
+    const txIds = getSelectedWorkbenchTxns();
+    const targetId = document.getElementById('wb-move-target')?.value;
+    
+    if (txIds.length === 0) {
+        showToast('Please select at least one transaction to move.', 'error');
+        return;
+    }
+    if (!targetId) {
+        showToast('Please select a target cluster.', 'error');
+        return;
+    }
+    
+    try {
+        const payload = {
+            transaction_ids: txIds,
+            target_cluster_id: parseInt(targetId)
+        };
+        const res = await fetch('/api/merchant-clusters/move-transaction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        showToast('Transactions moved successfully.');
+        selectMiWorkbenchCluster(clusterId);
+    } catch (e) {
+        console.error("workbenchMove failed:", e);
+        showToast(`Failed to move transactions: ${e.message}`, 'error');
+    }
+}
+
+async function workbenchToggleLock(clusterId, lockVal) {
+    try {
+        const res = await fetch('/api/merchant-clusters/lock', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cluster_id: clusterId, is_locked: lockVal })
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        showToast(lockVal ? 'Cluster locked successfully.' : 'Cluster unlocked successfully.');
+        loadMiWorkbenchData();
+        selectMiWorkbenchCluster(clusterId);
+    } catch (e) {
+        console.error("workbenchToggleLock failed:", e);
+        showToast(`Failed to lock/unlock cluster: ${e.message}`, 'error');
+    }
+}
+
+async function runMiPipelineWorkbench() {
+    const btn = document.getElementById('btn-mi-run-pipeline');
+    if (!btn) return;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span class="material-symbols-outlined text-sm animate-spin">sync</span> Running...`;
+    showToast('Triggering AI Merchant normalizer sweeps in background...');
+    try {
+        const res = await fetch('/api/merchant-intelligence/run', { method: 'POST' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            showToast('Sweep completed. Refreshing Workbench.');
+            loadMerchantIntelligenceData();
+        }, 5000);
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        showToast(`Pipeline run error: ${e.message}`, 'error');
+    }
+}
+
+// ─── Merchant Profile Drawer Details ──────────────────────────────────────────
+async function openMerchantProfileModal(merchantId) {
+    miSelectedMerchantId = merchantId;
+    
+    const titleEl = document.getElementById('mi-profile-title');
+    const subtitleEl = document.getElementById('mi-profile-subtitle');
+    
+    if (titleEl) titleEl.textContent = 'Loading Profile...';
+    document.getElementById('merchant-profile-modal').classList.remove('hidden');
+    
+    try {
+        const res = await fetch(`/api/merchants/${merchantId}`);
+        if (!res.ok) throw new Error('Failed to load merchant profile');
+        const data = await res.json();
+        
+        const m = data.merchant;
+        if (titleEl) titleEl.textContent = m.name;
+        if (subtitleEl) subtitleEl.textContent = `Confidence: ${Math.round(m.confidence_score * 100)}% | System Transfer: ${m.is_system ? 'Yes' : 'No'}`;
+        
+        // Populating Edit form
+        document.getElementById('mi-profile-edit-name').value = m.name;
+        document.getElementById('mi-profile-edit-category').value = m.category || '';
+        
+        // Populate parent options
+        const parentSel = document.getElementById('mi-profile-edit-parent');
+        parentSel.innerHTML = '<option value="">None (Is Parent)</option>';
+        miMerchants.filter(item => !item.parent_merchant_id && item.merchant_id !== merchantId && !item.is_system).forEach(item => {
+            parentSel.innerHTML += `<option value="${item.merchant_id}">${item.name}</option>`;
+        });
+        parentSel.value = m.parent_merchant_id || '';
+        
+        // Trigger subcategory dropdown populate
+        onProfileCategoryChange(m.subcategory);
+        
+        // Verify Checkbox
+        document.getElementById('mi-profile-edit-verified').checked = m.is_verified ? true : false;
+        
+        // Spend Trend 12 Months
+        const trendList = document.getElementById('mi-profile-trends-list');
+        if (trendList) {
+            trendList.innerHTML = '';
+            if (data.trends.length === 0) {
+                trendList.innerHTML = '<p class="text-xs text-on-surface-variant font-mono">No historical spend entries.</p>';
+            } else {
+                data.trends.forEach(t => {
+                    const absSpend = Math.abs(t.total_spend || 0);
+                    trendList.innerHTML += `
+                        <div class="flex justify-between items-center text-xs py-1.5 font-mono">
+                            <span class="text-on-surface-variant">${t.month}</span>
+                            <div class="flex items-center gap-4">
+                                <span class="text-on-surface-variant/80">${t.transaction_count} Tx</span>
+                                <span class="font-bold text-white">€${absSpend.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+        // Accounts used
+        const accountsContainer = document.getElementById('mi-profile-accounts');
+        if (accountsContainer) {
+            accountsContainer.innerHTML = '';
+            if (data.accounts.length === 0) {
+                accountsContainer.innerHTML = '<p class="text-xs text-on-surface-variant font-mono p-2">None detected.</p>';
+            } else {
+                data.accounts.forEach(a => {
+                    accountsContainer.innerHTML += `
+                        <div class="flex justify-between items-center text-xs py-2 font-mono">
+                            <span class="text-white">${a.account_name}</span>
+                            <div class="flex items-center gap-4">
+                                <span class="text-on-surface-variant">${a.transaction_count} Tx</span>
+                                <span class="font-bold text-primary">€${Math.abs(a.total_amount).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+        // Child Services
+        const childrenContainer = document.getElementById('mi-profile-children');
+        if (childrenContainer) {
+            childrenContainer.innerHTML = '';
+            if (data.child_merchants.length === 0) {
+                childrenContainer.innerHTML = '<p class="text-xs text-on-surface-variant font-mono">None linked.</p>';
+            } else {
+                data.child_merchants.forEach(c => {
+                    childrenContainer.innerHTML += `
+                        <span class="inline-flex items-center gap-1 bg-zinc-900 border border-border-subtle rounded-lg px-2.5 py-1 text-xs text-white/95 cursor-pointer hover:border-primary/50 transition-all" onclick="openMerchantProfileModal(${c.merchant_id})">
+                            <span>${c.name}</span>
+                            <span class="text-[9px] font-mono opacity-60">(${Math.round(c.confidence_score*100)}%)</span>
+                        </span>
+                    `;
+                });
+            }
+        }
+        
+        // Rules matched
+        const rulesContainer = document.getElementById('mi-profile-rules');
+        if (rulesContainer) {
+            rulesContainer.innerHTML = '';
+            if (data.rules.length === 0) {
+                rulesContainer.innerHTML = '<p class="text-xs text-on-surface-variant font-mono">No active classification rules linked.</p>';
+            } else {
+                data.rules.forEach(r => {
+                    rulesContainer.innerHTML += `
+                        <div class="flex justify-between items-center text-[11px] bg-zinc-950/60 border border-border-subtle/50 rounded-lg p-2 font-mono">
+                            <div class="flex items-center gap-1.5">
+                                <span class="bg-primary/20 text-primary px-1.5 py-0.5 rounded text-[9px] uppercase font-bold">${r.match_type}</span>
+                                <span class="text-white font-bold">${r.pattern_string}</span>
+                            </div>
+                            <span class="text-on-surface-variant">Priority: ${r.priority}</span>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+        // Recent Transactions
+        const txTbody = document.getElementById('mi-profile-transactions-tbody');
+        if (txTbody) {
+            txTbody.innerHTML = '';
+            if (data.transactions.length === 0) {
+                txTbody.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-on-surface-variant text-[11px]">No transactions record.</td></tr>';
+            } else {
+                data.transactions.forEach(t => {
+                    txTbody.innerHTML += `
+                        <tr class="hover:bg-white/5 transition-all text-xs">
+                            <td class="py-2.5 text-on-surface-variant">${t.date}</td>
+                            <td class="py-2.5 text-white/90 max-w-xs truncate" title="${t.description}">${t.description}</td>
+                            <td class="py-2.5 text-right font-bold font-mono ${t.amount < 0 ? 'text-white' : 'text-success'}">
+                                ${t.amount < 0 ? '-' : '+'}€${Math.abs(t.amount).toFixed(2)}
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+        
+    } catch (e) {
+        console.error("openMerchantProfileModal failed:", e);
+        if (titleEl) titleEl.textContent = 'Error Loading Profile';
+        showToast(`Failed to load profile details: ${e.message}`, 'error');
+    }
+}
+
+function onProfileCategoryChange(preSelectedSubcat = null) {
+    const catName = document.getElementById('mi-profile-edit-category')?.value;
+    const subSel = document.getElementById('mi-profile-edit-subcategory');
+    if (!subSel) return;
+    
+    subSel.innerHTML = '<option value="">No Subcategory</option>';
+    
+    if (catName && miCategoriesTree[catName]) {
+        const subcats = miCategoriesTree[catName].subcategories || [];
+        subcats.forEach(sub => {
+            const selected = sub.name === preSelectedSubcat ? 'selected' : '';
+            subSel.innerHTML += `<option value="${sub.name}" ${selected}>${sub.name}</option>`;
+        });
+    }
+}
+
+function closeMerchantProfileModal() {
+    document.getElementById('merchant-profile-modal').classList.add('hidden');
+    miSelectedMerchantId = null;
+}
+
+async function saveMerchantProfile() {
+    if (!miSelectedMerchantId) return;
+    
+    const name = document.getElementById('mi-profile-edit-name')?.value;
+    const category = document.getElementById('mi-profile-edit-category')?.value;
+    const subcategory = document.getElementById('mi-profile-edit-subcategory')?.value;
+    const parentId = document.getElementById('mi-profile-edit-parent')?.value;
+    const isVerified = document.getElementById('mi-profile-edit-verified')?.checked;
+    
+    if (!name) {
+        showToast('Display Name is required.', 'error');
+        return;
+    }
+    
+    try {
+        const payload = {
+            merchant_id: miSelectedMerchantId,
+            name: name,
+            category: category || null,
+            subcategory: subcategory || null,
+            parent_merchant_id: parentId ? parseInt(parentId) : null,
+            is_verified: isVerified ? true : false
+        };
+        
+        const res = await fetch('/api/merchants', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
+        showToast('Merchant profile metadata updated successfully!');
+        closeMerchantProfileModal();
+        loadMerchantIntelligenceData();
+    } catch (e) {
+        console.error("saveMerchantProfile failed:", e);
+        showToast(`Failed to update profile: ${e.message}`, 'error');
+    }
+}
+
+// Expose functions globally for onclick inline attributes
+window.loadMerchantIntelligenceData = loadMerchantIntelligenceData;
+window.setMiSubTab = setMiSubTab;
+window.filterMerchantLibrary = filterMerchantLibrary;
+window.runMiPipelineWorkbench = runMiPipelineWorkbench;
+window.selectMiWorkbenchCluster = selectMiWorkbenchCluster;
+window.workbenchPromote = workbenchPromote;
+window.workbenchMerge = workbenchMerge;
+window.workbenchSplit = workbenchSplit;
+window.workbenchMove = workbenchMove;
+window.workbenchToggleLock = workbenchToggleLock;
+window.openMerchantProfileModal = openMerchantProfileModal;
+window.closeMerchantProfileModal = closeMerchantProfileModal;
+window.onProfileCategoryChange = onProfileCategoryChange;
+window.saveMerchantProfile = saveMerchantProfile;
+
 // Initializer on Dom Loaded
 document.addEventListener('DOMContentLoaded', () => {
     initBackgroundShader();
@@ -6574,6 +7623,21 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape' && !modalEl.classList.contains('hidden')) {
                 closeBankModal();
+            }
+        });
+    }
+
+    const miModalEl = document.getElementById('merchant-profile-modal');
+    if (miModalEl) {
+        miModalEl.addEventListener('click', (event) => {
+            if (event.target === miModalEl) {
+                closeMerchantProfileModal();
+            }
+        });
+        
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !miModalEl.classList.contains('hidden')) {
+                closeMerchantProfileModal();
             }
         });
     }

@@ -44,6 +44,10 @@ def detect_bank_type(file_path: str) -> str:
                 return "HDFC"
             elif "revolut" in first_page_text_lower or "revolt" in first_page_text_lower:
                 return "Revolut"
+            elif "openbank" in first_page_text_lower or "amazon visa" in first_page_text_lower:
+                return "Amazon Visa"
+            elif "trade republic" in first_page_text_lower:
+                return "Trade Republic"
         except Exception as e:
             raise ValueError(f"Failed to extract PDF text: {e}")
             
@@ -92,5 +96,15 @@ def parse_file(file_path: str, bank_type: str = None) -> pd.DataFrame:
             return pdf.parse_advanzia(file_path)
         else:
             raise ValueError("Advanzia statement must be a PDF file.")
+    elif bank_type == "Amazon Visa":
+        if ext == ".pdf":
+            return pdf.parse_openbank(file_path)
+        else:
+            raise ValueError("Amazon Visa statement must be a PDF file.")
+    elif bank_type == "Trade Republic":
+        if ext == ".pdf":
+            return pdf.parse_trade_republic(file_path)
+        else:
+            raise ValueError("Trade Republic statement must be a PDF file.")
     else:
         raise ValueError(f"Unsupported bank type: {bank_type}")

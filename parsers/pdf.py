@@ -11,7 +11,7 @@ def parse_date_to_iso(date_str, bank_type):
             # format 04/04/20 -> 2020-04-04
             dt = datetime.strptime(date_str, "%d/%m/%y")
             return dt.strftime("%Y-%m-%d")
-        elif bank_type in ["Commerzbank", "Advanzia"]:
+        elif bank_type in ["Commerzbank", "Advanzia", "Amazon Visa"]:
             # format 31.05.2023 -> 2023-05-31
             dt = datetime.strptime(date_str, "%d.%m.%Y")
             return dt.strftime("%Y-%m-%d")
@@ -228,21 +228,256 @@ def parse_advanzia(file_path):
                         pass
     return pd.DataFrame(rows)
 
+def parse_openbank(file_path):
+    rows = []
+    # Pattern matches Date Card Description Amount Points
+    # e.g., 08.06.2026 *********7419 GELDAUSZAHLUNG VON KARTE**7419 AUF KONTO -2.500,00 € +62
+    pattern = re.compile(
+        r'^(\d{2}\.\d{2}\.\d{4})\s+(\S+)\s+(.+?)\s+([+-]?\d{1,3}(?:\.\d{3})*(?:,\d{2}))\s*€(?:.*)$'
+    )
+    with pdfplumber.open(file_path) as pdf:
+        for page in pdf.pages:
+            # Reconstruct lines using layout coordinate grouping
+            words = page.extract_words()
+            lines = {}
+            for w in words:
+                top = round(w["top"], 1)
+                matched_top = None
+                for t in lines:
+                    if abs(t - top) < 3:
+                        matched_top = t
+                        break
+                if matched_top is None:
+                    lines[top] = [w]
+                else:
+                    lines[matched_top].append(w)
+            
+            for top in sorted(lines.keys()):
+                line_words = sorted(lines[top], key=lambda x: x["x0"])
+                line_text = " ".join([w["text"] for w in line_words]).strip()
+                
+                match = pattern.match(line_text)
+                if match:
+                    date_str = match.group(1)
+                    description = match.group(3).strip()
+                    amount_str = match.group(4).strip()
+                    
+                    if description.upper() in ["ANFANGSSALDO", "ENDSALDO"]:
+                        continue
+                    
+                    try:
+                        # Convert amount: e.g. -2.500,00 -> -2500.00
+                        clean_amt_str = amount_str.replace(".", "").replace(",", ".").replace(" ", "")
+                        val = float(clean_amt_str)
+                        
+                        # Amazon Visa: no sign inversion is needed!
+                        iso_date = parse_date_to_iso(date_str, "Amazon Visa")
+                        
+                        rows.append({
+                            "Completed Date": iso_date,
+                            "Description": description,
+                            "Amount": val,
+                            "Currency": "EUR",
+                            "Account": "Amazon Visa"
+                        })
+                    except Exception:
+                        pass
+    return pd.DataFrame(rows)
+
+def parse_trade_republic(file_path):
+    rows = []
+    
+    # State tracking for vertically stacked date
+    current_day = None
+    current_month = None
+    current_year = None
+    
+    # Track the active transaction being built
+    current_tx = None
+    
+    # German Month mappings
+    month_map = {
+        "jan": "01", "feb": "02", "mär": "03", "mrz": "03", "apr": "04",
+        "mai": "05", "jun": "06", "jul": "07", "aug": "08", "sep": "09",
+        "okt": "10", "nov": "11", "dez": "12"
+    }
+    
+    def finalize_transaction(tx):
+        if not tx:
+            return
+        # Construct date
+        d = tx.get("day")
+        m = tx.get("month")
+        y = tx.get("year")
+        
+        # Fallback date if any component is missing
+        if d and m and y:
+            d_clean = d.zfill(2)
+            m_clean = month_map.get(m.lower().replace(".", "").strip()[:3], "01")
+            date_iso = f"{y}-{m_clean}-{d_clean}"
+        else:
+            date_iso = datetime.now().strftime("%Y-%m-%d")
+            
+        desc = " ".join(tx.get("description_parts", [])).strip()
+        amt = tx.get("amount")
+        
+        if amt is not None:
+            rows.append({
+                "Completed Date": date_iso,
+                "Description": desc,
+                "Amount": amt,
+                "Currency": "EUR",
+                "Account": "Trade Republic"
+            })
+
+    with pdfplumber.open(file_path) as pdf:
+        for page in pdf.pages:
+            words = page.extract_words()
+            lines = {}
+            for w in words:
+                top = round(w["top"], 1)
+                matched_top = None
+                for t in lines:
+                    if abs(t - top) < 3:
+                        matched_top = t
+                        break
+                if matched_top is None:
+                    lines[top] = [w]
+                else:
+                    lines[matched_top].append(w)
+            
+            for top in sorted(lines.keys()):
+                line_words = sorted(lines[top], key=lambda x: x["x0"])
+                if not line_words:
+                    continue
+                
+                first_w = line_words[0]
+                first_text = first_w["text"].strip()
+                
+                # Check if this line is in the DATUM column (usually x0 < 60)
+                if first_w["x0"] < 60:
+                    # Case 1: Word is a Day (1 to 2 digits)
+                    if re.match(r'^\d{1,2}$', first_text):
+                        # Finalize previous transaction if any
+                        finalize_transaction(current_tx)
+                        
+                        current_day = first_text
+                        current_tx = {
+                            "day": current_day,
+                            "month": current_month,
+                            "year": current_year,
+                            "description_parts": [],
+                            "amount": None
+                        }
+                        
+                        # Process other columns on this same Day line
+                        typ_part = ""
+                        desc_parts = []
+                        amt_str = None
+                        
+                        for w in line_words[1:]:
+                            x0 = w["x0"]
+                            if x0 < 140:
+                                typ_part += " " + w["text"]
+                            elif x0 < 380:
+                                desc_parts.append(w["text"])
+                            elif x0 < 500:
+                                if amt_str is None:
+                                    amt_str = w["text"]
+                                else:
+                                    amt_str += w["text"]
+                        
+                        typ_clean = typ_part.strip()
+                        if typ_clean:
+                            current_tx["description_parts"].append(typ_clean + ":")
+                        if desc_parts:
+                            current_tx["description_parts"].extend(desc_parts)
+                        
+                        # Parse amount
+                        if amt_str:
+                            try:
+                                # Determine sign based on column alignment or description keyword
+                                amt_words = [w for w in line_words if 380 <= w["x0"] < 500]
+                                is_outflow = False
+                                if amt_words:
+                                    avg_x0 = sum([w["x0"] for w in amt_words]) / len(amt_words)
+                                    if avg_x0 > 430:
+                                        is_outflow = True
+                                
+                                # Fallback keyword check
+                                desc_lower = " ".join(desc_parts).lower() + " " + typ_clean.lower()
+                                if "buy" in desc_lower or "kauf" in desc_lower or "auszahlung" in desc_lower:
+                                    is_outflow = True
+                                elif "incoming" in desc_lower or "einzahlung" in desc_lower or "zinsen" in desc_lower or "interest" in desc_lower:
+                                    is_outflow = False
+                                    
+                                clean_amt = amt_str.replace("€", "").replace(".", "").replace(",", ".").replace(" ", "").strip()
+                                val = float(clean_amt)
+                                if is_outflow:
+                                    val = -abs(val)
+                                else:
+                                    val = abs(val)
+                                current_tx["amount"] = val
+                            except Exception:
+                                pass
+                                
+                    # Case 2: Word is a Month (e.g. Sept., Okt.)
+                    elif first_text.lower().replace(".", "")[:3] in month_map:
+                        current_month = first_text
+                        if current_tx:
+                            current_tx["month"] = current_month
+                            desc_parts = [w["text"] for w in line_words[1:] if 140 <= w["x0"] < 380]
+                            if desc_parts:
+                                current_tx["description_parts"].extend(desc_parts)
+                                
+                    # Case 3: Word is a Year (4 digits)
+                    elif re.match(r'^\d{4}$', first_text):
+                        current_year = first_text
+                        if current_tx:
+                            current_tx["year"] = current_year
+                            desc_parts = [w["text"] for w in line_words[1:] if 140 <= w["x0"] < 380]
+                            if desc_parts:
+                                current_tx["description_parts"].extend(desc_parts)
+                else:
+                    # Description wrap
+                    if current_tx:
+                        desc_parts = [w["text"] for w in line_words if 140 <= w["x0"] < 380]
+                        if desc_parts:
+                            current_tx["description_parts"].extend(desc_parts)
+                            
+    # Finalize the last transaction of the document
+    finalize_transaction(current_tx)
+    
+    return pd.DataFrame(rows)
+
 def parse_pdf(file_path):
     # Detect bank type
     with pdfplumber.open(file_path) as pdf:
         first_page_text = pdf.pages[0].extract_text() or ""
+        first_page_text_lower = first_page_text.lower()
         
-    if "advanzia" in first_page_text.lower() or "gebührenfrei" in first_page_text.lower():
+    if "advanzia" in first_page_text_lower or "gebührenfrei" in first_page_text_lower:
         return parse_advanzia(file_path)
-    elif "hdfc" in first_page_text.lower():
+    elif "hdfc" in first_page_text_lower:
         return parse_hdfc(file_path)
-    elif "commerzbank" in first_page_text.lower():
+    elif "commerzbank" in first_page_text_lower:
         return parse_commerzbank(file_path)
-    elif "revolut" in first_page_text.lower() or "revolt" in first_page_text.lower():
+    elif "revolut" in first_page_text_lower or "revolt" in first_page_text_lower:
         return parse_revolut(file_path)
+    elif "openbank" in first_page_text_lower or "amazon visa" in first_page_text_lower:
+        return parse_openbank(file_path)
+    elif "trade republic" in first_page_text_lower:
+        return parse_trade_republic(file_path)
     else:
         # Fallback: try all and choose the one that extracts the most transactions
+        df_openbank = parse_openbank(file_path)
+        if len(df_openbank) > 0:
+            return df_openbank
+            
+        df_tr = parse_trade_republic(file_path)
+        if len(df_tr) > 0:
+            return df_tr
+            
         df_advanzia = parse_advanzia(file_path)
         if len(df_advanzia) > 0:
             return df_advanzia

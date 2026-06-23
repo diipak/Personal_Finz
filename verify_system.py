@@ -462,6 +462,228 @@ class TestPersonalFinzCore(unittest.TestCase):
         self.assertNotIn("acc-fresh", due_ids)
         self.assertEqual(len(due_ids), 2)
 
+    def test_merchant_normalizer(self):
+        """Verify merchant normalization maps and patterns are computed correctly."""
+        from engine.merchant_normalizer import normalize_merchant_name, normalize_pattern_name
+        
+        self.assertEqual(normalize_merchant_name("PAYPAL *NETFLIX 800-585-7220 CA"), "NETFLIX")
+        self.assertEqual(normalize_pattern_name("PAYPAL *NETFLIX 800-585-7220 CA"), "PAYPAL NETFLIX")
+        
+        self.assertEqual(normalize_merchant_name("REWE 1234 GMBH"), "REWE")
+        self.assertEqual(normalize_pattern_name("REWE 1234 GMBH"), "REWE")
+        
+        self.assertEqual(normalize_merchant_name("AMZN MKT DE"), "AMAZON")
+        self.assertEqual(normalize_pattern_name("AMZN MKT DE"), "AMAZON MARKETPLACE")
+
+    def test_merchant_stats_and_clustering(self):
+        """Verify merchant_stats_new is updated in real time on upsert, and clustering filters noise."""
+        from db.database import get_db, upsert_api_transaction
+        from engine.merchant_cluster_builder import build_merchant_clusters
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Seed merchant to auto-link
+        cursor.execute("INSERT OR IGNORE INTO categories (name, flexibility_tier) VALUES ('Public Transit', 'Flexible')")
+        cursor.execute("SELECT category_id FROM categories WHERE name = 'Public Transit'")
+        cat_id = cursor.fetchone()["category_id"]
+        cursor.execute("INSERT OR IGNORE INTO merchants (name, category_id, is_verified, confidence_score) VALUES ('UBER', ?, 1, 1.0)", (cat_id,))
+        conn.commit()
+        
+        # 1. Insert low value noise (should be filtered out by cluster thresholds)
+        upsert_api_transaction(conn, {
+            "transaction_id": "tx-noise-1",
+            "account": "Revolut Main",
+            "date": "2026-06-05",
+            "description": "Bakery Shop 1",
+            "category": "Unsorted",
+            "amount": -2.50
+        })
+        
+        # 2. Insert high transaction count cluster
+        for i in range(4):
+            upsert_api_transaction(conn, {
+                "transaction_id": f"tx-uber-{i}",
+                "account": "Revolut Main",
+                "date": "2026-06-05",
+                "description": "UBER TRIP",
+                "category": "Unsorted",
+                "amount": -15.00
+            })
+            
+        # 3. Check stats table
+        cursor.execute("SELECT merchant_id FROM merchant_clusters WHERE cluster_name = 'UBER TRIP'")
+        cluster_row = cursor.fetchone()
+        self.assertIsNotNone(cluster_row)
+        merchant_id = cluster_row["merchant_id"]
+        self.assertIsNotNone(merchant_id)
+        
+        cursor.execute("SELECT * FROM merchant_stats_new WHERE merchant_id = ?", (merchant_id,))
+        uber_stat = cursor.fetchone()
+        self.assertIsNotNone(uber_stat)
+        self.assertEqual(uber_stat["transaction_count"], 4)
+        self.assertEqual(uber_stat["total_spend"], -60.00)
+        
+        # 4. Run cluster builder - UBER TRIP should be included, Bakery Shop 1 should be ignored
+        clusters = build_merchant_clusters(conn)
+        merchants = [c["merchant"] for c in clusters]
+        self.assertIn("UBER", merchants)
+        self.assertNotIn("BAKERY", merchants)
+        
+        # Ensure UBER EATS (separate pattern) isn't merged
+        upsert_api_transaction(conn, {
+            "transaction_id": "tx-uber-eats",
+            "account": "Revolut Main",
+            "date": "2026-06-06",
+            "description": "UBER EATS",
+            "category": "Unsorted",
+            "amount": -45.00
+        })
+        
+        # UBER EATS only has 1 transaction of -45 (doesn't meet total count >=3 or abs(total_amount) >= 100)
+        # Let's add 2 more to meet count threshold
+        for i in range(2):
+            upsert_api_transaction(conn, {
+                "transaction_id": f"tx-uber-eats-add-{i}",
+                "account": "Revolut Main",
+                "date": "2026-06-06",
+                "description": "UBER EATS",
+                "category": "Unsorted",
+                "amount": -10.00
+            })
+            
+        clusters = build_merchant_clusters(conn)
+        uber_eats_cluster = next((c for c in clusters if c["merchant"] == "UBER" and "UBER EATS" in c["sample_patterns"]), None)
+        uber_trip_cluster = next((c for c in clusters if c["merchant"] == "UBER" and "UBER TRIP" in c["sample_patterns"]), None)
+        
+        # Both behaviors are preserved and tracked as separate clusters/patterns
+        self.assertIsNotNone(uber_eats_cluster)
+        self.assertIsNotNone(uber_trip_cluster)
+        
+        conn.close()
+
+    def test_rule_promotion_workflow(self):
+        """Verify rule suggestions are created as PENDING, and approved rules are promoted & propagated."""
+        from db.database import get_db, upsert_api_transaction
+        from fastapi.testclient import TestClient
+        from api.main import app
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # Clean suggestions and rules
+        cursor.execute("DELETE FROM ai_suggested_rules")
+        cursor.execute("DELETE FROM regex_rules")
+        conn.commit()
+        
+        # Seed transaction to trigger review queue
+        upsert_api_transaction(conn, {
+            "transaction_id": "tx-spotify-1",
+            "account": "Revolut Main",
+            "date": "2026-06-05",
+            "description": "SPOTIFY PREMIUM",
+            "category": "Unsorted",
+            "amount": -9.99
+        })
+        upsert_api_transaction(conn, {
+            "transaction_id": "tx-spotify-2",
+            "account": "Revolut Main",
+            "date": "2026-06-06",
+            "description": "SPOTIFY PREMIUM",
+            "category": "Unsorted",
+            "amount": -9.99
+        })
+        upsert_api_transaction(conn, {
+            "transaction_id": "tx-spotify-3",
+            "account": "Revolut Main",
+            "date": "2026-06-07",
+            "description": "SPOTIFY PREMIUM",
+            "category": "Unsorted",
+            "amount": -9.99
+        })
+        conn.close()
+        
+        client = TestClient(app)
+        
+        # Trigger MI Run via Endpoint
+        run_resp = client.post("/api/merchant-intelligence/run")
+        self.assertEqual(run_resp.status_code, 200)
+        self.assertEqual(run_resp.json()["status"], "running")
+        
+        # Insert suggestion manually to simulate AI run
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO ai_suggested_rules (
+                merchant_name, pattern_string, match_type, suggested_category,
+                suggested_display_name, flexibility_tier, amount_min, amount_max,
+                confidence_score, status, transaction_count, sample_descriptions
+            ) VALUES (?, ?, 'substring', ?, ?, 'Discretionary', -9.99, NULL, 0.98, 'PENDING', 3, ?)
+            """,
+            ("SPOTIFY", "spotify", "Subscription", "Spotify Premium", '["SPOTIFY PREMIUM"]')
+        )
+        sug_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        # Fetch suggestions via API
+        sug_resp = client.get("/api/merchant-intelligence/suggestions")
+        self.assertEqual(sug_resp.status_code, 200)
+        sugs_data = sug_resp.json()
+        
+        # Spotify has 98% confidence and is in known keywords list -> Level 1 (High Confidence)
+        level1 = sugs_data["Level 1 (High Confidence)"]
+        self.assertTrue(len(level1) >= 1)
+        sug_entry = next((s for s in level1 if s["suggestion_id"] == sug_id), None)
+        self.assertIsNotNone(sug_entry)
+        
+        # Resolve suggestion (Approve & Promote)
+        resolve_resp = client.post(
+            "/api/merchant-intelligence/suggestions/resolve",
+            json={
+                "resolutions": [{
+                    "suggestion_id": sug_id,
+                    "action": "approve",
+                    "pattern_string": "spotify",
+                    "match_type": "substring",
+                    "category": "Subscription",
+                    "display_name": "Spotify",
+                    "flexibility": "Discretionary",
+                    "amount_min": None,
+                    "amount_max": None,
+                    "priority": 0
+                }]
+            }
+        )
+        self.assertEqual(resolve_resp.status_code, 200)
+        res_data = resolve_resp.json()
+        self.assertEqual(res_data["rules_created"], 1)
+        self.assertEqual(res_data["suggestions_approved"], 1)
+        
+        # Verify rule is in regex_rules
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM regex_rules WHERE pattern_string = 'spotify'")
+        rule = cursor.fetchone()
+        self.assertIsNotNone(rule)
+        self.assertEqual(rule["target_category"], "Subscription")
+        
+        # Verify matching transactions are re-categorized
+        cursor.execute("SELECT category, is_guess FROM transactions WHERE transaction_id = 'tx-spotify-1'")
+        tx = cursor.fetchone()
+        self.assertEqual(tx["category"], "Subscription")
+        self.assertEqual(tx["is_guess"], 0)
+        
+        # Verify category is resolved on the merchants table
+        cursor.execute("SELECT cat.name FROM merchants m JOIN categories cat ON m.category_id = cat.category_id WHERE m.name = 'SPOTIFY'")
+        stat = cursor.fetchone()
+        self.assertIsNotNone(stat)
+        self.assertEqual(stat["name"], "Subscription")
+        
+        conn.close()
+
 if __name__ == "__main__":
     unittest.main()
+
 

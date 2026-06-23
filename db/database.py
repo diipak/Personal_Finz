@@ -5,11 +5,14 @@ import shutil
 import logging
 import re
 import hashlib
+import json
 
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import DB_PATH, DEFAULT_DB_DIR
+from engine.normalizer import normalize
+from engine.merchant_normalizer import normalize_merchant_name, normalize_pattern_name
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +45,7 @@ def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.create_function("normalize_desc", 1, normalize)
     return conn
 
 def migrate_old_data(conn):
@@ -179,10 +183,69 @@ def seed_default_accounts(conn):
             ('b941a58f-79ce-4e81-9da2-39dc370be4f1', 'Commerzbank Giro', 'Automated (PSD2)', 0.0, 'EUR', 'b941a58f-79ce-4e81-9da2-39dc370be4f1', '2026-06-07 08:02:47'),
             ('cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b', 'Revolut Personal', 'Automated (PSD2)', 0.0, 'EUR', 'cbca2eaf-fb8b-4e15-9b7e-ca8ea977a62b', '2026-06-07 08:16:11'),
             ('advanzia-manual-id', 'Advanzia Bank credit card', 'Manual Fallback', 0.0, 'EUR', 'advanzia-manual-id', '2026-06-10 00:00:00'),
-            ('hdfc-manual-id', 'HDFC Bank Account', 'Manual Fallback', 0.0, 'INR', 'hdfc-manual-id', '2026-06-10 00:00:00')
+            ('hdfc-manual-id', 'HDFC Bank Account', 'Manual Fallback', 0.0, 'INR', 'hdfc-manual-id', '2026-06-10 00:00:00'),
+            ('amazon-manual-id', 'Amazon Visa', 'Manual Fallback', 0.0, 'EUR', 'amazon-manual-id', '2026-06-10 00:00:00'),
+            ('traderepublic-manual-id', 'Trade Republic', 'Manual Fallback', 0.0, 'EUR', 'traderepublic-manual-id', '2026-06-10 00:00:00')
             """
         )
         conn.commit()
+
+def seed_merchant_stats(conn):
+    """
+    One-time seeding function to update normalized columns in the transactions table
+    and populate the merchant_stats table from existing records.
+    """
+    cursor = conn.cursor()
+    try:
+        # Check if we need to compute normalized columns on existing transactions
+        cursor.execute("SELECT COUNT(*) FROM transactions WHERE normalized_merchant IS NULL OR normalized_pattern IS NULL")
+        missing_count = cursor.fetchone()[0]
+        if missing_count > 0:
+            logger.info(f"Computing normalization columns for {missing_count} existing transactions...")
+            cursor.execute("SELECT transaction_id, description FROM transactions WHERE normalized_merchant IS NULL OR normalized_pattern IS NULL")
+            txns = cursor.fetchall()
+            for t in txns:
+                m = normalize_merchant_name(t["description"])
+                p = normalize_pattern_name(t["description"])
+                cursor.execute(
+                    "UPDATE transactions SET normalized_merchant = ?, normalized_pattern = ? WHERE transaction_id = ?",
+                    (m, p, t["transaction_id"])
+                )
+            conn.commit()
+
+        # Check if merchant_stats is empty
+        cursor.execute("SELECT COUNT(*) FROM merchant_stats")
+        stats_count = cursor.fetchone()[0]
+        if stats_count == 0:
+            logger.info("Seeding merchant_stats table from existing transactions...")
+            cursor.execute(
+                """
+                INSERT INTO merchant_stats (
+                    merchant_key, parent_merchant, transaction_count, total_amount, avg_amount, first_seen, last_seen, known_category
+                )
+                SELECT 
+                    normalized_pattern as merchant_key,
+                    normalized_merchant as parent_merchant,
+                    COUNT(*) as transaction_count,
+                    SUM(amount) as total_amount,
+                    AVG(amount) as avg_amount,
+                    MIN(booking_date) as first_seen,
+                    MAX(booking_date) as last_seen,
+                    -- known_category is set only if ALL transactions for that pattern are pinned (user-confirmed)
+                    -- is_guess=1 means AI guessed and user has not reviewed -> treat as uncategorized
+                    CASE 
+                        WHEN MIN(is_guess) = 0 AND MAX(is_pinned) = 1 THEN MAX(CASE WHEN is_pinned = 1 THEN category ELSE NULL END)
+                        ELSE NULL 
+                    END as known_category
+                FROM transactions
+                WHERE normalized_pattern IS NOT NULL AND normalized_pattern != ''
+                GROUP BY normalized_pattern, normalized_merchant
+                """
+            )
+            conn.commit()
+            logger.info("Successfully seeded merchant_stats table.")
+    except Exception as e:
+        logger.error(f"Error seeding merchant stats: {e}")
 
 def init_db():
     """Initializes the database schema using db/schema.sql and runs migration if necessary."""
@@ -231,6 +294,18 @@ def init_db():
                         logger.info("Adding ez_synced column to transactions table...")
                         cursor.execute("ALTER TABLE transactions ADD COLUMN ez_synced BOOLEAN DEFAULT 0;")
                         altered = True
+                    if "normalized_merchant" not in cols:
+                        logger.info("Adding normalized_merchant column to transactions table...")
+                        cursor.execute("ALTER TABLE transactions ADD COLUMN normalized_merchant TEXT;")
+                        altered = True
+                    if "normalized_pattern" not in cols:
+                        logger.info("Adding normalized_pattern column to transactions table...")
+                        cursor.execute("ALTER TABLE transactions ADD COLUMN normalized_pattern TEXT;")
+                        altered = True
+                    if "transfer_subtype" not in cols:
+                        logger.info("Adding transfer_subtype column to transactions table...")
+                        cursor.execute("ALTER TABLE transactions ADD COLUMN transfer_subtype TEXT;")
+                        altered = True
                     if altered:
                         conn.commit()
 
@@ -261,6 +336,27 @@ def init_db():
                     r_altered = True
                 if r_altered:
                     conn.commit()
+            
+            # Ensure merchant_stats has parent_merchant and transfer_subtype columns (added after initial table creation)
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='merchant_stats'")
+            if cursor.fetchone():
+                try:
+                    cursor.execute("PRAGMA table_info(merchant_stats)")
+                    ms_cols = [row[1] for row in cursor.fetchall()]
+                    ms_altered = False
+                    if "parent_merchant" not in ms_cols:
+                        logger.info("Adding parent_merchant column to merchant_stats table...")
+                        cursor.execute("ALTER TABLE merchant_stats ADD COLUMN parent_merchant TEXT;")
+                        ms_altered = True
+                    if "transfer_subtype" not in ms_cols:
+                        logger.info("Adding transfer_subtype column to merchant_stats table...")
+                        cursor.execute("ALTER TABLE merchant_stats ADD COLUMN transfer_subtype TEXT;")
+                        ms_altered = True
+                    if ms_altered:
+                        conn.commit()
+                except Exception as ms_err:
+                    logger.warning(f"Could not check/alter merchant_stats: {ms_err}")
+                
             conn.close()
         except Exception as check_err:
             logger.error(f"Error checking schema for migration: {check_err}")
@@ -285,6 +381,9 @@ def init_db():
             migrate_old_data(conn)
         else:
             seed_default_accounts(conn)
+            
+        # Always run the merchant stats seeder - it is idempotent and only fills gaps
+        seed_merchant_stats(conn)
             
         # Initialize passcode hash from settings if set
         cursor = conn.cursor()
@@ -316,10 +415,40 @@ def clear_pending_transactions(db_conn, account_id: str):
         logger.error(f"Error clearing pending transactions for {account_id}: {e}")
         db_conn.rollback()
 
+def update_merchant_stats_new(db_conn, merchant_id: int):
+    """Recomputes and updates the cache in merchant_stats_new for the given merchant."""
+    if not merchant_id:
+        return
+    cursor = db_conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO merchant_stats_new (merchant_id, transaction_count, total_spend, total_income, first_seen, last_seen, updated_at)
+            SELECT 
+                ? as merchant_id,
+                COUNT(t.transaction_id) as transaction_count,
+                SUM(CASE WHEN t.amount < 0 THEN t.amount ELSE 0 END) as total_spend,
+                SUM(CASE WHEN t.amount > 0 THEN t.amount ELSE 0 END) as total_income,
+                MIN(t.booking_date) as first_seen,
+                MAX(t.booking_date) as last_seen,
+                CURRENT_TIMESTAMP as updated_at
+            FROM transactions t
+            JOIN merchant_clusters c ON t.cluster_id = c.cluster_id
+            WHERE c.merchant_id = ?
+            ON CONFLICT(merchant_id) DO UPDATE SET
+                transaction_count = excluded.transaction_count,
+                total_spend = excluded.total_spend,
+                total_income = excluded.total_income,
+                first_seen = excluded.first_seen,
+                last_seen = excluded.last_seen,
+                updated_at = CURRENT_TIMESTAMP
+        """, (merchant_id, merchant_id))
+    except Exception as e:
+        logger.error(f"Error updating merchant_stats_new for merchant {merchant_id}: {e}")
+
 def upsert_api_transaction(db_conn, txn_data: dict) -> bool:
     """
-    Upsert a transaction.
-    Matches on transaction_id UNIQUE constraint.
+    Upserts a transaction and resolves its cluster_id.
+    Updates the merchant stats cache dynamically.
     """
     # Map old columns to new columns for compatibility if they are passed as old keys
     data = {
@@ -339,6 +468,10 @@ def upsert_api_transaction(db_conn, txn_data: dict) -> bool:
         "ez_synced": txn_data.get("ez_synced") or 0
     }
     
+    # Compute two-tier normalized merchant names
+    data["normalized_merchant"] = normalize_merchant_name(data["description"])
+    data["normalized_pattern"] = normalize_pattern_name(data["description"])
+    
     # Resolve account name to account_id if account_id is actually a display name
     cursor = db_conn.cursor()
     cursor.execute("SELECT account_id FROM accounts WHERE account_name = ?", (data["account_id"],))
@@ -347,26 +480,95 @@ def upsert_api_transaction(db_conn, txn_data: dict) -> bool:
         data["account_id"] = row["account_id"]
 
     try:
+        # Get old merchant_id before update to clean up stats cache later
+        cursor.execute("""
+            SELECT c.merchant_id 
+            FROM transactions t
+            LEFT JOIN merchant_clusters c ON t.cluster_id = c.cluster_id
+            WHERE t.transaction_id = ?
+        """, (data["transaction_id"],))
+        old_row = cursor.fetchone()
+        old_merchant_id = old_row["merchant_id"] if old_row else None
+
+        # Resolve cluster_id in merchant_clusters
+        cursor.execute("SELECT cluster_id, merchant_id FROM merchant_clusters WHERE cluster_name = ?", (data["normalized_pattern"],))
+        cluster_row = cursor.fetchone()
+        if cluster_row:
+            cluster_id = cluster_row["cluster_id"]
+            merchant_id = cluster_row["merchant_id"]
+        else:
+            # Check if a merchant exists with normalized_merchant name to auto-link
+            cursor.execute("SELECT merchant_id FROM merchants WHERE name = ?", (data["normalized_merchant"],))
+            merchant_row = cursor.fetchone()
+            merchant_id = merchant_row["merchant_id"] if merchant_row else None
+            
+            samples = json.dumps([data["description"]])
+            cursor.execute(
+                """
+                INSERT INTO merchant_clusters (cluster_name, merchant_id, confidence_score, is_locked, is_user_verified, sample_descriptions)
+                VALUES (?, ?, 0.1, 0, 0, ?)
+                """,
+                (data["normalized_pattern"], merchant_id, samples)
+            )
+            cluster_id = cursor.lastrowid
+            
+        data["cluster_id"] = cluster_id
+
+        # For backward compatibility, update denormalized category, display name and flexibility tier from the resolved merchant
+        if merchant_id:
+            cursor.execute("""
+                SELECT m.name as resolved_merchant_name, cat.name as category, COALESCE(cat.flexibility_tier, 'Flexible') as flexibility_tier
+                FROM merchants m
+                LEFT JOIN categories cat ON m.category_id = cat.category_id
+                WHERE m.merchant_id = ?
+            """, (merchant_id,))
+            m_info = cursor.fetchone()
+            if m_info:
+                data["category"] = m_info["category"] or data["category"]
+                data["flexibility_tier"] = m_info["flexibility_tier"] or data["flexibility_tier"]
+                data["display_name"] = m_info["resolved_merchant_name"] or data["display_name"]
+
+        # Upsert the transaction
         db_conn.execute(
             """
             INSERT INTO transactions (
-                transaction_id, account_id, booking_date, description, display_name, category, flexibility_tier, amount, currency, is_guess, is_pinned, is_ignored, status, ez_synced
+                transaction_id, account_id, booking_date, description, display_name, 
+                normalized_merchant, normalized_pattern, category, flexibility_tier, 
+                amount, currency, is_guess, is_pinned, is_ignored, status, ez_synced, cluster_id
             ) VALUES (
-                :transaction_id, :account_id, :booking_date, :description, :display_name, :category, :flexibility_tier, :amount, :currency, :is_guess, :is_pinned, :is_ignored, :status, :ez_synced
+                :transaction_id, :account_id, :booking_date, :description, :display_name, 
+                :normalized_merchant, :normalized_pattern, :category, :flexibility_tier, 
+                :amount, :currency, :is_guess, :is_pinned, :is_ignored, :status, :ez_synced, :cluster_id
             )
             ON CONFLICT(transaction_id) DO UPDATE SET
                 status = excluded.status,
                 description = COALESCE(excluded.description, description),
                 display_name = COALESCE(excluded.display_name, display_name),
+                normalized_merchant = COALESCE(excluded.normalized_merchant, normalized_merchant),
+                normalized_pattern = COALESCE(excluded.normalized_pattern, normalized_pattern),
                 category = COALESCE(excluded.category, category),
                 flexibility_tier = COALESCE(excluded.flexibility_tier, flexibility_tier),
                 is_guess = excluded.is_guess,
                 is_pinned = COALESCE(excluded.is_pinned, is_pinned),
                 is_ignored = COALESCE(excluded.is_ignored, is_ignored),
-                amount = excluded.amount
+                amount = excluded.amount,
+                cluster_id = excluded.cluster_id
             """,
             data
         )
+
+        # Update stats cache for old and new merchants
+        if old_merchant_id:
+            update_merchant_stats_new(db_conn, old_merchant_id)
+        if merchant_id:
+            update_merchant_stats_new(db_conn, merchant_id)
+
+        db_conn.commit()
+        return True
+    except Exception as e:
+        logger.error(f"Error upserting transaction: {e}")
+        db_conn.rollback()
+        return False
         db_conn.commit()
         return True
     except Exception as e:
@@ -377,3 +579,51 @@ def upsert_api_transaction(db_conn, txn_data: dict) -> bool:
 def upsert_manual_transaction(db_conn, txn_data: dict) -> bool:
     """Delegates to upsert_api_transaction after mapping legacy keys."""
     return upsert_api_transaction(db_conn, txn_data)
+
+def get_llm_cache(db_conn, normalized_key: str) -> dict:
+    """Query llm_cache for a matching category and flexibility tier."""
+    cursor = db_conn.cursor()
+    cursor.execute(
+        "SELECT category, flexibility_tier FROM llm_cache WHERE merchant_key = ?",
+        (normalized_key,)
+    )
+    row = cursor.fetchone()
+    if row:
+        return {
+            "category": row["category"],
+            "flexibility_tier": row["flexibility_tier"]
+        }
+    return None
+
+def set_llm_cache(db_conn, normalized_key: str, category: str, flexibility: str):
+    """Insert or replace a classification result in the llm_cache table."""
+    try:
+        db_conn.execute(
+            "INSERT OR REPLACE INTO llm_cache (merchant_key, category, flexibility_tier) VALUES (?, ?, ?)",
+            (normalized_key, category, flexibility)
+        )
+        db_conn.commit()
+    except Exception as e:
+        logger.error(f"Error setting LLM cache: {e}")
+        db_conn.rollback()
+
+def get_past_category_normalized(db_conn, normalized_key: str) -> dict:
+    """Finds the most recent transaction with the same normalized description."""
+    cursor = db_conn.cursor()
+    cursor.execute(
+        """
+        SELECT category, flexibility_tier, display_name, is_guess FROM transactions 
+        WHERE normalize_desc(description) = ? AND category != 'Unsorted'
+        ORDER BY booking_date DESC LIMIT 1
+        """,
+        (normalized_key,)
+    )
+    row = cursor.fetchone()
+    if row:
+        return {
+            "category": row["category"],
+            "flexibility_tier": row["flexibility_tier"],
+            "display_name": row["display_name"],
+            "is_guess": row["is_guess"]
+        }
+    return None

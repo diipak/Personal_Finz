@@ -84,6 +84,7 @@ ACCOUNT_MAP = {
     "Commerzbank Giro": "3806661791392464896",
     "Advanzia Bank credit card": "3806662012583280640",
     "Amazon Zinia credit": "3806662098482626560",
+    "Amazon Visa": "3806662098482626560",
     "Wise": "3806661937421352960",
     "Trade Republic": "3806661847227039744",
     "Statement": "3806661759180210176"    # Default to Revolut if generic "Statement"

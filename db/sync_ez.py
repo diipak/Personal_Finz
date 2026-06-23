@@ -142,7 +142,7 @@ def sync_new_transactions():
                         dest_acc_id = ACCOUNT_MAP["HDFC"]
                     elif "advanzia" in desc_lower:
                         dest_acc_id = ACCOUNT_MAP["Advanzia Bank credit card"]
-                    elif "zinia" in desc_lower:
+                    elif "zinia" in desc_lower or "amazon" in desc_lower:
                         dest_acc_id = ACCOUNT_MAP["Amazon Zinia credit"]
                         
                     if dest_acc_id and dest_acc_id != source_acc_id:
