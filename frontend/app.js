@@ -11,6 +11,34 @@ let accountsList = [];
 let resolutions = [];
 let selectedFile = null;
 
+// Reading Comfort Modes Controller
+function setComfortMode(mode) {
+    const modes = ['compact', 'comfortable', 'large'];
+    const htmlEl = document.documentElement;
+    
+    // Remove previous modes
+    modes.forEach(m => htmlEl.classList.remove(`comfort-mode-${m}`));
+    
+    // Add current mode class
+    htmlEl.classList.add(`comfort-mode-${mode}`);
+    
+    // Save to local storage
+    localStorage.setItem('personalfinz_comfort_mode', mode);
+    
+    // Update active button styling
+    modes.forEach(m => {
+        const btn = document.getElementById(`comfort-btn-${m}`);
+        if (btn) {
+            if (m === mode) {
+                btn.className = 'px-3 py-1 text-xs font-bold rounded-md bg-primary text-black transition-all';
+            } else {
+                btn.className = 'px-3 py-1 text-xs font-medium rounded-md text-on-surface hover:text-white transition-all';
+            }
+        }
+    });
+}
+window.setComfortMode = setComfortMode;
+
 // Ledger State
 let activeDateFilter = 'ALL'; // 'ALL', 'YTD', 'LAST_YEAR', 'YYYY-MM', 'CUSTOM'
 let customStartDate = '';
@@ -155,12 +183,12 @@ function switchTab(tab) {
     // Update nav links styling
     document.querySelectorAll('#sidebar-nav button').forEach(el => {
         const isRelative = el.id === 'nav-automation' || el.id === 'nav-merchant-intelligence';
-        el.className = `w-full flex items-center gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 py-2.5 mx-2 rounded-lg text-left font-medium${isRelative ? ' relative' : ''}`;
+        el.className = `w-full flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-zinc-900/60 transition-all duration-200 px-4 py-3 rounded-xl text-left font-medium text-[15px]${isRelative ? ' relative' : ''}`;
     });
     const activeNavBtn = document.getElementById(`nav-${tab}`);
     if (activeNavBtn) {
         const isRelative = activeNavBtn.id === 'nav-automation' || activeNavBtn.id === 'nav-merchant-intelligence';
-        activeNavBtn.className = `w-full flex items-center gap-3 bg-primary-container text-on-primary-container rounded-lg px-4 py-2.5 mx-2 active-nav-glow scale-[0.98] transition-transform text-left font-semibold${isRelative ? ' relative' : ''}`;
+        activeNavBtn.className = `w-full flex items-center gap-3 bg-primary text-black rounded-xl px-4 py-3 active-nav-glow scale-[0.98] transition-all text-left font-semibold text-[15px] border border-primary/20 shadow-md shadow-primary/5${isRelative ? ' relative' : ''}`;
     }
 
     // Sync Path in Address Bar
@@ -1550,6 +1578,7 @@ function handleRowCheckboxChange(cb) {
 // Toggle three-dots row action menu
 function toggleRowMenu(event, txnId) {
     event.stopPropagation();
+    hideTransactionTooltip();
     
     if (activeRowMenu) {
         activeRowMenu.remove();
@@ -1643,14 +1672,98 @@ async function changeTransactionCategory(txnId, newCategory) {
     }
 }
 
+let activeRecatTxnId = null;
+
 function promptRecategorize(txnId) {
+    hideTransactionTooltip();
     const txn = allTransactions.find(t => t.id === txnId);
     if (!txn) return;
-    const cat = prompt("Enter custom category:", txn.category || '');
-    if (cat !== null) {
-        changeTransactionCategory(txnId, cat);
+    
+    activeRecatTxnId = txnId;
+    
+    const descEl = document.getElementById('recat-txn-desc');
+    if (descEl) {
+        descEl.textContent = txn.display_name || txn.description;
+    }
+    
+    // Populate categories select
+    const selectEl = document.getElementById('recat-category-select');
+    if (selectEl) {
+        selectEl.innerHTML = '';
+        categories.forEach(cat => {
+            selectEl.innerHTML += `<option value="${cat}">${cat}</option>`;
+        });
+        selectEl.innerHTML += `<option value="__custom__">Custom Category...</option>`;
+        
+        // Match selection
+        if (categories.includes(txn.category)) {
+            selectEl.value = txn.category;
+        } else if (txn.category) {
+            selectEl.value = '__custom__';
+            const customInput = document.getElementById('recat-custom-input');
+            if (customInput) customInput.value = txn.category;
+        } else {
+            selectEl.value = categories[0] || '';
+        }
+    }
+    
+    toggleRecatCustomInput();
+    
+    const modal = document.getElementById('recategorize-transaction-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
     }
 }
+
+function toggleRecatCustomInput() {
+    const selectEl = document.getElementById('recat-category-select');
+    const container = document.getElementById('recat-custom-container');
+    if (selectEl && container) {
+        if (selectEl.value === '__custom__') {
+            container.classList.remove('hidden');
+            const customInput = document.getElementById('recat-custom-input');
+            if (customInput) {
+                customInput.focus();
+            }
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+}
+
+function closeRecategorizeModal() {
+    const modal = document.getElementById('recategorize-transaction-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    activeRecatTxnId = null;
+}
+
+async function submitRecategorizeModal() {
+    if (!activeRecatTxnId) return;
+    
+    const selectEl = document.getElementById('recat-category-select');
+    if (!selectEl) return;
+    
+    let newCategory = selectEl.value;
+    if (newCategory === '__custom__') {
+        const customInput = document.getElementById('recat-custom-input');
+        newCategory = (customInput?.value || '').trim();
+    }
+    
+    if (!newCategory) {
+        showToast('Please specify a category name', 'error');
+        return;
+    }
+    
+    closeRecategorizeModal();
+    await changeTransactionCategory(activeRecatTxnId, newCategory);
+}
+
+window.promptRecategorize = promptRecategorize;
+window.toggleRecatCustomInput = toggleRecatCustomInput;
+window.closeRecategorizeModal = closeRecategorizeModal;
+window.submitRecategorizeModal = submitRecategorizeModal;
 
 // Render Table List
 function renderLedgerTable(txns) {
@@ -1673,10 +1786,10 @@ function renderLedgerTable(txns) {
 
     txns.forEach(t => {
         const tr = document.createElement('tr');
-        tr.className = 'ledger-row transaction-row text-xs font-mono border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer';
+        tr.className = 'ledger-row transaction-row border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors cursor-pointer';
         
         const normalizedAmt = getNormalizedEur(t.amount, t.currency);
-        const amtColor = normalizedAmt > 0 ? 'text-success' : 'text-error';
+        const amtColor = normalizedAmt > 0 ? 'text-emerald-400' : 'text-rose-400';
         const prefixSign = normalizedAmt > 0 ? '+' : '';
         
         const cleanDate = formatLedgerDate(t.date);
@@ -1687,35 +1800,35 @@ function renderLedgerTable(txns) {
 
         const needsReview = t.is_guess || !t.category || t.category === 'Unsorted' || t.category === 'Uncategorized';
         const statusHtml = needsReview
-            ? `<button onclick="event.stopPropagation(); changeTransactionCategoryPrompt('${t.id}')" class="px-2.5 py-1 rounded bg-[#ffd60a]/15 text-[#ffd60a] text-[10px] font-bold uppercase tracking-tight hover:scale-105 transition-transform border border-[#ffd60a]/20">To Review</button>`
-            : `<span class="material-symbols-outlined text-success text-[20px]" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;">check_circle</span>`;
+            ? `<button onclick="event.stopPropagation(); changeTransactionCategoryPrompt('${t.id}')" class="px-2.5 py-1 rounded bg-[#ffd60a]/15 text-[#ffd60a] text-comfort-xs font-semibold uppercase tracking-tight hover:scale-105 transition-transform border border-[#ffd60a]/20">To Review</button>`
+            : `<span class="material-symbols-outlined text-emerald-400 text-[20px]" style="font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;">check_circle</span>`;
 
         const isChecked = selectedTransactionIds.has(t.id) ? 'checked' : '';
 
         tr.innerHTML = `
-            <td class="px-4 py-3 text-center w-12" onclick="event.stopPropagation();">
-                <input type="checkbox" class="tx-row-checkbox rounded bg-surface border-border-subtle focus:ring-primary-container" data-id="${t.id}" ${isChecked} onchange="handleRowCheckboxChange(this)">
+            <td class="px-4 py-comfort-table text-center w-12" onclick="event.stopPropagation();">
+                <input type="checkbox" class="tx-row-checkbox rounded bg-surface border-zinc-800 focus:ring-primary-container" data-id="${t.id}" ${isChecked} onchange="handleRowCheckboxChange(this)">
             </td>
-            <td class="px-4 py-3 text-on-surface-variant whitespace-nowrap">${cleanDate}</td>
-            <td class="px-6 py-3">
+            <td class="px-4 py-comfort-table text-zinc-400 font-sans text-comfort-xs whitespace-nowrap">${cleanDate}</td>
+            <td class="px-6 py-comfort-table">
                 <div class="flex items-center gap-3">
                     ${logoHtml}
                     <div class="flex flex-col min-w-0">
-                        <span class="font-medium text-white truncate max-w-[200px]">${t.display_name || t.description}</span>
-                        <span class="text-[10px] text-on-surface-variant truncate max-w-[200px]">${t.description}</span>
+                        <span class="font-semibold text-white text-comfort-sm truncate max-w-[200px]">${t.display_name || t.description}</span>
+                        <span class="text-comfort-xs text-zinc-500 font-sans truncate max-w-[200px] mt-0.5">${t.description}</span>
                     </div>
                 </div>
             </td>
-            <td class="px-4 py-3 whitespace-nowrap">
-                <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold ${catDetails.bg} ${catDetails.text} ${catDetails.border}">${t.category || 'Unsorted'}</span>
+            <td class="px-4 py-comfort-table whitespace-nowrap">
+                <span class="px-2.5 py-1 text-comfort-xs rounded font-medium border ${catDetails.bg} ${catDetails.text} ${catDetails.border}">${t.category || 'Unsorted'}</span>
             </td>
-            <td class="px-4 py-3 text-on-surface-variant whitespace-nowrap font-medium">${accountDisplay}</td>
-            <td class="px-4 py-3 whitespace-nowrap">
-                <span class="px-2 py-0.5 rounded border border-white/10 text-[10px] uppercase font-bold bg-white/5 text-zinc-300">${derivedType}</span>
+            <td class="px-4 py-comfort-table text-zinc-300 font-sans text-comfort-sm whitespace-nowrap font-medium">${accountDisplay}</td>
+            <td class="px-4 py-comfort-table whitespace-nowrap">
+                <span class="px-2 py-1 rounded border border-white/10 text-comfort-xs uppercase font-medium bg-white/5 text-zinc-300">${derivedType}</span>
             </td>
-            <td class="px-4 py-3 text-right font-bold whitespace-nowrap ${amtColor}">${prefixSign}${formatVal(normalizedAmt)}</td>
-            <td class="px-4 py-3 text-center whitespace-nowrap">${statusHtml}</td>
-            <td class="px-4 py-3 text-center w-12" onclick="event.stopPropagation();">
+            <td class="px-4 py-comfort-table text-right font-semibold font-mono text-comfort-base whitespace-nowrap ${amtColor}">${prefixSign}${formatVal(normalizedAmt)}</td>
+            <td class="px-4 py-comfort-table text-center whitespace-nowrap">${statusHtml}</td>
+            <td class="px-4 py-comfort-table text-center w-12" onclick="event.stopPropagation();">
                 <button onclick="toggleRowMenu(event, '${t.id}')" class="text-on-surface-variant hover:text-white transition-colors p-1">
                     <span class="material-symbols-outlined text-sm">more_vert</span>
                 </button>
@@ -3016,17 +3129,17 @@ function renderRulesList() {
 
     rulesList.forEach(r => {
         const el = document.createElement('div');
-        el.className = 'p-4 rounded-lg bg-zinc-900/40 border border-white/5 flex justify-between items-center text-xs font-mono';
+        el.className = 'p-comfort-card rounded-xl bg-[#121214] border border-zinc-800 flex justify-between items-center text-comfort-sm';
         el.innerHTML = `
-            <div class="space-y-1">
-                <div class="flex items-center space-x-2">
-                    <span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px] border border-primary/20">${r.match_type}</span>
-                    <span class="text-white font-bold">${r.display_name || 'Unnamed rule'}</span>
+            <div class="space-y-1.5 font-sans">
+                <div class="flex items-center space-x-2.5">
+                    <span class="px-2.5 py-0.5 rounded bg-primary/10 text-primary font-medium text-comfort-xs border border-primary/20">${r.match_type}</span>
+                    <span class="text-white font-semibold text-comfort-base">${r.display_name || 'Unnamed rule'}</span>
                 </div>
-                <p class="text-on-surface-variant">Pattern: <code class="bg-black/30 px-1 py-0.5 rounded">${r.pattern}</code></p>
-                <p class="text-on-surface-variant/80">Category: <span class="text-tertiary font-bold">${r.category}</span> | Tier: <span class="text-secondary font-bold">${r.flexibility}</span></p>
+                <p class="text-zinc-400">Pattern: <code class="bg-[#1c1c1f] text-zinc-300 px-2 py-1 rounded font-mono border border-zinc-800/85">${r.pattern}</code></p>
+                <p class="text-zinc-500">Category: <span class="text-primary font-semibold">${r.category}</span> | Tier: <span class="text-zinc-300 font-semibold">${r.flexibility}</span></p>
             </div>
-            <button onclick="deleteRule(${r.id})" class="text-on-surface-variant hover:text-error transition-all" title="Delete rule">
+            <button onclick="deleteRule(${r.id})" class="text-zinc-500 hover:text-rose-400 transition-all p-2" title="Delete rule">
                 <span class="material-symbols-outlined text-sm">delete</span>
             </button>
         `;
@@ -6811,6 +6924,7 @@ function renderMerchantLibrary() {
     const searchVal = (document.getElementById('mi-library-search')?.value || '').toLowerCase().trim();
     const catVal = document.getElementById('mi-library-category-filter')?.value || '';
     const showSystem = document.getElementById('mi-library-system-toggle')?.checked || false;
+    const sortVal = document.getElementById('mi-library-sort')?.value || 'spend';
     
     // Group merchants by parent
     const parents = [];
@@ -6839,7 +6953,22 @@ function renderMerchantLibrary() {
         return matchName && matchCat && matchSys;
     };
     
-    const filteredParents = parents.filter(filterFn);
+    let filteredParents = parents.filter(filterFn);
+    
+    // Apply sorting
+    if (sortVal === 'spend') {
+        filteredParents.sort((a, b) => Math.abs(b.total_spend || 0) - Math.abs(a.total_spend || 0));
+    } else if (sortVal === 'count') {
+        filteredParents.sort((a, b) => (b.transaction_count || 0) - (a.transaction_count || 0));
+    } else if (sortVal === 'last_seen') {
+        filteredParents.sort((a, b) => {
+            const da = a.last_seen ? new Date(a.last_seen) : new Date(0);
+            const db = b.last_seen ? new Date(b.last_seen) : new Date(0);
+            return db - da;
+        });
+    } else if (sortVal === 'alpha') {
+        filteredParents.sort((a, b) => a.name.localeCompare(b.name));
+    }
     
     if (filteredParents.length === 0) {
         listContainer.innerHTML = '<div class="text-center py-8 text-on-surface-variant font-mono text-xs">No merchants match the filter criteria.</div>';
@@ -6852,33 +6981,34 @@ function renderMerchantLibrary() {
         const children = childrenMap[p.merchant_id] || [];
         const hasChildren = children.length > 0;
         
+        const lastSeenStr = p.last_seen ? new Date(p.last_seen).toLocaleDateString() : 'Never';
         const card = document.createElement('div');
-        card.className = 'glass-card border border-border-subtle/50 p-4 hover:border-primary/40 transition-all flex flex-col gap-2.5';
+        card.className = 'glass-card border border-border-subtle/50 p-comfort-card hover:border-primary/40 transition-all flex flex-col gap-2.5';
         
-        const verifiedBadge = p.is_verified ? '<span class="material-symbols-outlined text-[14px] text-success" title="User Verified">verified</span>' : '';
-        const systemBadge = p.is_system ? '<span class="bg-zinc-800 text-on-surface-variant text-[9px] px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">System</span>' : '';
-        const catText = p.category ? `<span class="bg-primary/5 text-primary text-[10px] px-2 py-0.5 rounded font-bold">${p.category}${p.subcategory ? ' / ' + p.subcategory : ''}</span>` : '<span class="bg-error/5 text-error text-[10px] px-2 py-0.5 rounded font-bold">Uncategorized</span>';
+        const verifiedBadge = p.is_verified ? '<span class="material-symbols-outlined text-[16px] text-success" title="User Verified">verified</span>' : '';
+        const systemBadge = p.is_system ? '<span class="bg-zinc-800 text-zinc-400 text-comfort-xxs px-2 py-0.5 rounded font-sans uppercase tracking-wider">System</span>' : '';
+        const catText = p.category ? `<span class="bg-primary/5 text-primary text-comfort-xs px-2.5 py-0.5 rounded font-medium border border-primary/10">${p.category}${p.subcategory ? ' / ' + p.subcategory : ''}</span>` : '<span class="bg-error/5 text-error text-comfort-xs px-2.5 py-0.5 rounded font-medium border border-error/10">Uncategorized</span>';
         
         let childHtml = '';
         if (hasChildren) {
             childHtml = `
-                <div class="mt-2 pl-6 border-l border-border-subtle/60 space-y-2">
-                    <p class="text-[9px] font-mono uppercase tracking-wider text-on-surface-variant/60">Outlets & Sub-Merchants</p>
+                <div class="mt-2 pl-6 border-l border-zinc-800 space-y-2">
+                    <p class="text-comfort-xxs font-sans uppercase tracking-wider text-zinc-500 font-semibold">Outlets & Sub-Merchants</p>
                     ${children.map(c => {
-                        const lastSeen = c.last_seen ? new Date(c.last_seen).toLocaleDateString() : 'Never';
+                        const childLastSeen = c.last_seen ? new Date(c.last_seen).toLocaleDateString() : 'Never';
                         const spendStr = c.total_spend < 0 ? '€' + Math.abs(c.total_spend).toFixed(2) : '€0.00';
                         return `
-                            <div class="flex items-center justify-between text-xs py-1.5 hover:bg-white/5 px-2 rounded-lg transition-all">
-                                <div class="flex items-center gap-1.5 text-white/90">
-                                    <span class="material-symbols-outlined text-xs text-on-surface-variant">subdirectory_arrow_right</span>
-                                    <span class="font-semibold">${c.name}</span>
-                                    ${c.is_verified ? '<span class="material-symbols-outlined text-[12px] text-success">verified</span>' : ''}
+                            <div class="flex items-center justify-between py-comfort-list hover:bg-white/5 px-3 rounded-lg transition-all">
+                                <div class="flex items-center gap-1.5 text-zinc-200">
+                                    <span class="material-symbols-outlined text-sm text-zinc-500">subdirectory_arrow_right</span>
+                                    <span class="font-medium text-comfort-sm text-white">${c.name}</span>
+                                    ${c.is_verified ? '<span class="material-symbols-outlined text-[14px] text-success">verified</span>' : ''}
                                 </div>
-                                <div class="flex items-center gap-4 text-on-surface-variant">
-                                    <span class="text-[10px] font-mono">Spend: <strong class="text-white">${spendStr}</strong></span>
-                                    <span class="text-[10px] font-mono">${c.transaction_count} times</span>
-                                    <span class="text-[10px] font-mono">Last Seen: ${lastSeen}</span>
-                                    <button onclick="openMerchantProfileModal(${c.merchant_id})" class="text-primary text-[11px] font-bold hover:underline flex items-center gap-0.5">
+                                <div class="flex items-center gap-4 text-zinc-400 text-comfort-xs font-sans">
+                                    <span>Spend: <strong class="text-white font-mono font-semibold">${spendStr}</strong></span>
+                                    <span>${c.transaction_count} times</span>
+                                    <span>Last Seen: ${childLastSeen}</span>
+                                    <button onclick="openMerchantProfileModal(${c.merchant_id})" class="text-primary text-comfort-xs font-bold hover:underline flex items-center gap-0.5">
                                         <span>Profile</span>
                                         <span class="material-symbols-outlined text-xs">arrow_forward</span>
                                     </button>
@@ -6892,19 +7022,19 @@ function renderMerchantLibrary() {
         
         card.innerHTML = `
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary text-lg">storefront</span>
-                    <span class="text-sm font-bold text-white">${p.name}</span>
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary text-xl">storefront</span>
+                    <span class="text-comfort-base font-semibold text-white">${p.name}</span>
                     ${verifiedBadge}
                     ${systemBadge}
                     ${catText}
                 </div>
                 <div class="flex items-center gap-4">
                     <div class="text-right">
-                        <p class="text-xs text-white/90 font-mono font-bold">${p.total_spend < 0 ? '€' + Math.abs(p.total_spend).toFixed(2) : '€0.00'}</p>
-                        <p class="text-[10px] text-on-surface-variant font-mono">${p.transaction_count} Transactions</p>
+                        <p class="text-comfort-base text-white font-mono font-semibold">${p.total_spend < 0 ? '€' + Math.abs(p.total_spend).toFixed(2) : '€0.00'}</p>
+                        <p class="text-comfort-xs text-zinc-400 font-sans">${p.transaction_count} Txns | Last Seen: ${lastSeenStr}</p>
                     </div>
-                    <button onclick="openMerchantProfileModal(${p.merchant_id})" class="bg-white/5 hover:bg-white/10 border border-border-subtle/60 text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-all">
+                    <button onclick="openMerchantProfileModal(${p.merchant_id})" class="bg-white/5 hover:bg-white/10 border border-border-subtle/60 text-white rounded-lg px-3 py-1.5 text-comfort-xs font-bold transition-all">
                         Edit Profile
                     </button>
                 </div>
@@ -7148,9 +7278,9 @@ async function loadMiWorkbenchData() {
             }
 
             const card = document.createElement('div');
-            card.className = `p-3 rounded-xl border transition-all cursor-pointer text-left ${
+            card.className = `p-comfort-card rounded-xl border transition-all cursor-pointer text-left ${
                 miSelectedClusterId === c.cluster_id 
-                ? 'bg-primary/5 border-primary/50 text-white' 
+                ? 'bg-primary/[0.02] border-l-4 border-primary border-r-border-subtle border-t-border-subtle border-b-border-subtle text-white' 
                 : 'bg-zinc-950/40 border-border-subtle hover:border-white/20'
             }`;
             
@@ -7164,17 +7294,17 @@ async function loadMiWorkbenchData() {
                 <div class="flex justify-between items-start mb-1">
                     <div class="flex flex-col gap-1">
                         <div class="flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-xs text-primary">hub</span>
-                            <span class="text-xs font-bold truncate max-w-[180px]">${c.cluster_name}</span>
+                            <span class="material-symbols-outlined text-sm text-primary">hub</span>
+                            <span class="text-comfort-sm font-semibold truncate max-w-[180px] text-white">${c.cluster_name}</span>
                             ${verifiedBadge}
                         </div>
-                        <span class="w-fit px-1.5 py-0.5 rounded text-[8px] font-mono border ${badgeClass}">${reason}</span>
+                        <span class="w-fit px-2 py-0.5 rounded text-comfort-xxs font-sans border ${badgeClass}">${reason}</span>
                     </div>
-                    <span class="text-[9px] font-mono text-on-surface-variant font-bold">${c.transaction_count} Tx</span>
+                    <span class="text-comfort-xs font-sans text-zinc-400">${c.transaction_count} Tx</span>
                 </div>
-                <div class="flex justify-between items-center text-[10px] mt-2">
-                    <span class="text-on-surface-variant font-mono">Confidence: ${confidencePct}%</span>
-                    <span class="material-symbols-outlined text-xs text-on-surface-variant/60">${lockIcon}</span>
+                <div class="flex justify-between items-center text-comfort-xs mt-2 font-sans">
+                    <span class="text-zinc-400 font-sans">Confidence: ${confidencePct}%</span>
+                    <span class="material-symbols-outlined text-xs text-zinc-500">${lockIcon}</span>
                 </div>
             `;
             
@@ -7213,11 +7343,14 @@ async function selectMiWorkbenchCluster(clusterId) {
         }
         
         const txCheckboxes = txns.map(t => `
-            <label class="flex items-start gap-2 text-xs text-white/90 hover:bg-white/5 p-1.5 rounded cursor-pointer select-none">
-                <input type="checkbox" value="${t.transaction_id}" class="workbench-txn-select rounded border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mt-0.5">
+            <label class="flex items-start gap-3 hover:bg-white/5 py-comfort-list px-3 rounded-lg cursor-pointer select-none">
+                <input type="checkbox" value="${t.transaction_id}" class="workbench-txn-select rounded border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mt-1">
                 <div class="flex-grow">
-                    <p class="font-bold font-mono">${t.booking_date} — €${Math.abs(t.amount).toFixed(2)}</p>
-                    <p class="text-[10px] text-on-surface-variant/80 truncate max-w-xs">${t.description}</p>
+                    <p class="text-white font-sans text-comfort-sm flex justify-between">
+                        <span class="text-zinc-400 font-sans text-comfort-xs">${t.booking_date}</span>
+                        <span class="font-bold font-mono text-base text-white">€${Math.abs(t.amount).toFixed(2)}</span>
+                    </p>
+                    <p class="text-comfort-xs text-zinc-500 font-sans truncate max-w-xs mt-0.5">${t.description}</p>
                 </div>
             </label>
         `).join('');
@@ -7922,9 +8055,6 @@ function renderMiInboxSuggestions() {
     listContainer.innerHTML = '';
     
     suggestions.forEach(s => {
-        const card = document.createElement('div');
-        card.className = 'glass-card border border-border-subtle/50 p-4 hover:border-primary/40 transition-all flex flex-col gap-2.5';
-        
         const isChecked = miInboxSelectedIds.has(s.suggestion_id) ? 'checked' : '';
         const levelCode = miInboxActiveLevel.includes('Level 1') ? 'L1' :
                           miInboxActiveLevel.includes('Level 2') ? 'L2' :
@@ -7945,25 +8075,47 @@ function renderMiInboxSuggestions() {
         // Checkboxes bulk selection disabled for Level 4
         const cbDisabled = levelCode === 'L4' ? 'disabled title="Level 4 must be reviewed individually."' : '';
         
+        let conflictHtml = '';
+        if (levelCode === 'L4') {
+            const explanation = s.confidence_explanation || {};
+            const conflictMsg = explanation.conflict_indicators && explanation.conflict_indicators.length > 0 
+                ? `Conflict: ${explanation.conflict_indicators.join(', ')}` 
+                : (explanation.reason || "Ambiguous match with multiple entries");
+            conflictHtml = `
+                <div class="mt-1.5 text-amber-400 font-medium text-xs bg-amber-500/5 px-2.5 py-1.5 rounded border border-amber-500/10 flex items-center gap-1.5 font-sans">
+                    <span class="material-symbols-outlined text-sm shrink-0">warning</span>
+                    <span>${conflictMsg}</span>
+                </div>
+            `;
+        }
+
+        const borderClass = levelCode === 'L1' 
+            ? 'border-l-4 border-l-emerald-500/80 border-r-border-subtle/50 border-t-border-subtle/50 border-b-border-subtle/50 bg-emerald-500/[0.02]' 
+            : 'border border-border-subtle/50';
+
+        const card = document.createElement('div');
+        card.className = `glass-card ${borderClass} p-comfort-card hover:border-primary/40 transition-all flex flex-col gap-2.5`;
+
         card.innerHTML = `
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <input type="checkbox" onchange="toggleInboxSelect(${s.suggestion_id})" class="rounded border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary h-4 w-4 cursor-pointer" ${isChecked} ${cbDisabled}>
+                    <input type="checkbox" onchange="toggleInboxSelect(${s.suggestion_id})" class="rounded border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary h-4 w-4 cursor-pointer" ${isChecked} ${cbDisabled}>
                     <div class="flex flex-col text-left">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-bold text-white">${s.suggested_display_name}</span>
-                            <span class="px-1.5 py-0.5 rounded text-[8px] font-mono border ${lvlBadgeColor}">${levelCode}: AI Guess</span>
-                            <span class="bg-primary/5 text-primary text-[10px] px-2 py-0.5 rounded font-bold">${s.suggested_category}</span>
-                            <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${tierColor}">${tier}</span>
+                        <div class="flex items-center flex-wrap gap-2">
+                            <span class="text-comfort-base font-semibold text-white">${s.suggested_display_name}</span>
+                            <span class="px-2 py-0.5 rounded text-comfort-xxs font-sans border ${lvlBadgeColor}">${levelCode}: AI Guess</span>
+                            <span class="bg-primary/5 text-primary text-comfort-sm px-2.5 py-1 rounded-lg font-medium border border-primary/10">${s.suggested_category}</span>
+                            <span class="text-comfort-xs px-2 py-0.5 rounded font-semibold ${tierColor}">${tier}</span>
                         </div>
-                        <p class="text-[10px] text-on-surface-variant font-mono mt-0.5">Phrase matches: <strong class="text-zinc-300">${s.pattern_string}</strong> (from "${s.merchant_name}")</p>
+                        <p class="text-comfort-xs text-zinc-400 font-sans mt-1">Phrase matches: <strong class="text-zinc-300 font-sans">${s.pattern_string}</strong> (from "${s.merchant_name}")</p>
+                        ${conflictHtml}
                     </div>
                 </div>
                 
                 <div class="flex items-center gap-6">
-                    <div class="text-right font-mono">
-                        <p class="text-xs text-white/90 font-bold">${s.transaction_count} times • Saves ${s.effort_saved} reviews/yr</p>
-                        <p class="text-[9px] text-on-surface-variant">Frequency: ${s.frequency || 'Infrequent'}</p>
+                    <div class="text-right font-sans">
+                        <p class="text-comfort-sm text-white font-semibold">${s.transaction_count} times • Saves ${s.effort_saved} reviews/yr</p>
+                        <p class="text-comfort-xs text-zinc-400">Frequency: ${s.frequency || 'Infrequent'}</p>
                     </div>
                     
                     <div class="flex items-center gap-2">
@@ -8570,6 +8722,10 @@ window.combineActiveSuggestionWith = combineActiveSuggestionWith;
 
 // Initializer on Dom Loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Restore persisted Reading Comfort Mode
+    const savedComfort = localStorage.getItem('personalfinz_comfort_mode') || 'compact';
+    setComfortMode(savedComfort);
+
     initBackgroundShader();
     initRouter();
     bindDragDropEvents();

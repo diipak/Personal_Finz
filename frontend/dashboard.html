@@ -81,28 +81,77 @@
                         "element-stack": "0.75rem"
                     },
                     "fontFamily": {
-                        "display-lg": ["Inter"],
-                        "data-sm": ["JetBrains Mono"],
-                        "headline-md": ["Inter"],
-                        "body-base": ["Inter"],
-                        "data-md": ["JetBrains Mono"],
-                        "data-lg": ["JetBrains Mono"],
-                        "label-sm": ["Inter"]
+                        "sans": ["Inter", "SF Pro", "Segoe UI", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
                     },
                     "fontSize": {
-                        "display-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "600" }],
-                        "data-sm": ["12px", { "lineHeight": "1.1", "fontWeight": "400" }],
-                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-sm": ["15px", { "lineHeight": "1.45", "fontWeight": "400" }],
+                        "body-default": ["16px", { "lineHeight": "1.45", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "1.45", "fontWeight": "400" }],
+                        "heading-sm": ["20px", { "lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "heading-md": ["24px", { "lineHeight": "1.4", "letterSpacing": "-0.015em", "fontWeight": "600" }],
+                        "heading-lg": ["32px", { "lineHeight": "1.3", "letterSpacing": "-0.020em", "fontWeight": "700" }],
+                        "display-lg": ["48px", { "lineHeight": "1.15", "letterSpacing": "-0.025em", "fontWeight": "700" }],
+                        "label-xs": ["11px", { "lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "label-sm": ["13px", { "lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        
+                        // Legacy mappings for backwards compatibility
                         "body-base": ["15px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "data-sm": ["12px", { "lineHeight": "1.1", "fontWeight": "400" }],
                         "data-md": ["14px", { "lineHeight": "1.2", "fontWeight": "400" }],
-                        "data-lg": ["20px", { "lineHeight": "1.2", "fontWeight": "500" }],
-                        "label-sm": ["13px", { "lineHeight": "1.4", "letterSpacing": "0.01em", "fontWeight": "500" }]
+                        "data-lg": ["20px", { "lineHeight": "1.2", "fontWeight": "500" }]
                     }
                 },
             },
         }
     </script>
     <style>
+        /* Density adjustments */
+        html {
+            --comfort-font-adj: 0px;
+            --comfort-spacing-adj: 0px;
+        }
+        html.comfort-mode-comfortable {
+            --comfort-font-adj: 1px;
+            --comfort-spacing-adj: 4px;
+        }
+        html.comfort-mode-large {
+            --comfort-font-adj: 2px;
+            --comfort-spacing-adj: 8px;
+        }
+
+        /* Responsive Comfort Typography */
+        .text-comfort-2xl { font-size: calc(24px + var(--comfort-font-adj)); }
+        .text-comfort-xl { font-size: calc(20px + var(--comfort-font-adj)); }
+        .text-comfort-lg { font-size: calc(18px + var(--comfort-font-adj)); }
+        .text-comfort-base { font-size: calc(16px + var(--comfort-font-adj)); }
+        .text-comfort-sm { font-size: calc(15px + var(--comfort-font-adj)); }
+        .text-comfort-xs { font-size: calc(13px + var(--comfort-font-adj)); }
+        .text-comfort-xxs { font-size: calc(11px + var(--comfort-font-adj)); }
+
+        /* Responsive Comfort Spacing */
+        .py-comfort-table {
+            padding-top: calc(14px + var(--comfort-spacing-adj) / 2);
+            padding-bottom: calc(14px + var(--comfort-spacing-adj) / 2);
+        }
+        .py-comfort-list {
+            padding-top: calc(10px + var(--comfort-spacing-adj) / 2);
+            padding-bottom: calc(10px + var(--comfort-spacing-adj) / 2);
+        }
+        .p-comfort-card {
+            padding: calc(20px + var(--comfort-spacing-adj));
+        }
+        .gap-comfort-grid {
+            gap: calc(16px + var(--comfort-spacing-adj));
+        }
+        .space-y-comfort-section > :not([hidden]) ~ :not([hidden]) {
+            margin-top: calc(24px + var(--comfort-spacing-adj));
+        }
+        .space-y-comfort-item > :not([hidden]) ~ :not([hidden]) {
+            margin-top: calc(12px + var(--comfort-spacing-adj) / 2);
+        }
+
         body {
             background-color: #09090b;
             color: #e4e1ed;
@@ -258,41 +307,41 @@
                 <p class="text-label-sm font-label-sm text-on-surface-variant/60 md:hidden lg:block">Premium OS</p>
             </div>
             
-            <nav class="flex-1 space-y-1 px-3 md:px-2 lg:px-3" id="sidebar-nav">
+            <nav class="flex-1 space-y-1.5 px-3" id="sidebar-nav">
                 <!-- Nav items styled as buttons with consistent look -->
-                <button onclick="switchTab('overview'); closeMobileSidebar();" id="nav-overview" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 bg-primary-container text-on-primary-container rounded-lg px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start active-nav-glow scale-[0.98] transition-transform text-left font-semibold">
+                <button onclick="switchTab('overview'); closeMobileSidebar();" id="nav-overview" class="w-full flex items-center gap-3 bg-primary text-black rounded-xl px-4 py-3 active-nav-glow scale-[0.98] transition-all text-left font-semibold text-[15px] border border-primary/20 shadow-md shadow-primary/5">
                     <span class="material-symbols-outlined text-[20px]">dashboard</span>
-                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Overview</span>
+                    <span class="text-[15px] md:hidden lg:inline">Overview</span>
                 </button>
-                <button onclick="switchTab('transactions'); closeMobileSidebar();" id="nav-transactions" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium">
+                <button onclick="switchTab('transactions'); closeMobileSidebar();" id="nav-transactions" class="w-full flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-zinc-900/60 transition-all duration-200 px-4 py-3 rounded-xl text-left font-medium text-[15px]">
                     <span class="material-symbols-outlined text-[20px]">payments</span>
-                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Transactions</span>
+                    <span class="text-[15px] md:hidden lg:inline">Transactions</span>
                 </button>
-                <button onclick="switchTab('budgets'); closeMobileSidebar();" id="nav-budgets" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium">
+                <button onclick="switchTab('budgets'); closeMobileSidebar();" id="nav-budgets" class="w-full flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-zinc-900/60 transition-all duration-200 px-4 py-3 rounded-xl text-left font-medium text-[15px]">
                     <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Budgets</span>
+                    <span class="text-[15px] md:hidden lg:inline">Budgets</span>
                 </button>
-                <button onclick="switchTab('investments'); closeMobileSidebar();" id="nav-investments" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium">
+                <button onclick="switchTab('investments'); closeMobileSidebar();" id="nav-investments" class="w-full flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-zinc-900/60 transition-all duration-200 px-4 py-3 rounded-xl text-left font-medium text-[15px]">
                     <span class="material-symbols-outlined text-[20px]">account_balance</span>
-                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Investments</span>
+                    <span class="text-[15px] md:hidden lg:inline">Investments</span>
                 </button>
-                <button onclick="switchTab('goals'); closeMobileSidebar();" id="nav-goals" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium">
+                <button onclick="switchTab('goals'); closeMobileSidebar();" id="nav-goals" class="w-full flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-zinc-900/60 transition-all duration-200 px-4 py-3 rounded-xl text-left font-medium text-[15px]">
                     <span class="material-symbols-outlined text-[20px]">flag</span>
-                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Goals</span>
+                    <span class="text-[15px] md:hidden lg:inline">Goals</span>
                 </button>
-                <button onclick="switchTab('insights'); closeMobileSidebar();" id="nav-insights" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium">
+                <button onclick="switchTab('insights'); closeMobileSidebar();" id="nav-insights" class="w-full flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-zinc-900/60 transition-all duration-200 px-4 py-3 rounded-xl text-left font-medium text-[15px]">
                     <span class="material-symbols-outlined text-[20px]">insights</span>
-                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Insights</span>
+                    <span class="text-[15px] md:hidden lg:inline">Insights</span>
                 </button>
-                <button onclick="switchTab('merchant-intelligence'); closeMobileSidebar();" id="nav-merchant-intelligence" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium relative">
+                <button onclick="switchTab('merchant-intelligence'); closeMobileSidebar();" id="nav-merchant-intelligence" class="w-full flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-zinc-900/60 transition-all duration-200 px-4 py-3 rounded-xl text-left font-medium text-[15px] relative">
                     <span class="material-symbols-outlined text-[20px]">storefront</span>
-                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Merchant Intel</span>
-                    <span id="mi-badge" class="hidden absolute right-6 md:right-1 lg:right-6 top-1/2 -translate-y-1/2 bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
+                    <span class="text-[15px] md:hidden lg:inline">Merchant Intel</span>
+                    <span id="mi-badge" class="hidden absolute right-6 md:right-1 lg:right-6 top-1/2 -translate-y-1/2 bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold border border-primary/10">0</span>
                 </button>
-                <button onclick="switchTab('automation'); closeMobileSidebar();" id="nav-automation" class="w-full flex items-center gap-3 md:gap-0 lg:gap-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-colors duration-200 px-4 md:px-0 lg:px-4 py-2.5 justify-start md:justify-center lg:justify-start rounded-lg text-left font-medium relative">
+                <button onclick="switchTab('automation'); closeMobileSidebar();" id="nav-automation" class="w-full flex items-center gap-3 text-zinc-400 hover:text-white hover:bg-zinc-900/60 transition-all duration-200 px-4 py-3 rounded-xl text-left font-medium text-[15px] relative">
                     <span class="material-symbols-outlined text-[20px]">robot_2</span>
-                    <span class="text-label-sm font-label-sm md:hidden lg:inline">Automation</span>
-                    <span id="review-badge" class="hidden absolute right-6 md:right-1 lg:right-6 top-1/2 -translate-y-1/2 bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
+                    <span class="text-[15px] md:hidden lg:inline">Automation</span>
+                    <span id="review-badge" class="hidden absolute right-6 md:right-1 lg:right-6 top-1/2 -translate-y-1/2 bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full font-bold border border-primary/10">0</span>
                 </button>
             </nav>
 
@@ -336,6 +385,13 @@
                     <div class="flex items-center space-x-3 bg-surface-container-low border border-border-subtle p-0.5 rounded-lg">
                         <button onclick="setBaseCurrency('EUR')" id="currency-eur" class="px-3 py-1 text-xs font-bold rounded-md bg-primary text-black transition-all">EUR</button>
                         <button onclick="setBaseCurrency('INR')" id="currency-inr" class="px-3 py-1 text-xs font-medium rounded-md text-on-surface hover:text-white transition-all">INR</button>
+                    </div>
+
+                    <!-- Reading Comfort Mode Switcher -->
+                    <div class="flex items-center space-x-1 bg-surface-container-low border border-border-subtle p-0.5 rounded-lg ml-3">
+                        <button onclick="setComfortMode('compact')" id="comfort-btn-compact" class="px-3 py-1 text-xs font-bold rounded-md bg-primary text-black transition-all" title="Compact density">Compact</button>
+                        <button onclick="setComfortMode('comfortable')" id="comfort-btn-comfortable" class="px-3 py-1 text-xs font-medium rounded-md text-on-surface hover:text-white transition-all" title="Comfortable: +1px text, +4px padding">Comfortable</button>
+                        <button onclick="setComfortMode('large')" id="comfort-btn-large" class="px-3 py-1 text-xs font-medium rounded-md text-on-surface hover:text-white transition-all" title="Large: +2px text, +8px padding">Large</button>
                     </div>
 
                     <!-- Spot Rate Simulation Slider -->
@@ -395,13 +451,13 @@
                     <!-- Bento Grid Layout -->
                     <div class="grid grid-cols-12 gap-panel-gap">
                         <!-- Card 1: Net Worth -->
-                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-6 flex items-center justify-between">
+                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-comfort-card flex items-center justify-between">
                             <div>
-                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Net Worth</span>
-                                <h2 id="reserves-display" class="text-headline-md font-headline-md font-bold text-white">€ 0.00</h2>
+                                <span class="text-comfort-sm font-medium text-zinc-400 block mb-1">Net Worth</span>
+                                <h2 id="reserves-display" class="text-[36px] font-bold text-white font-mono">€ 0.00</h2>
                                 <div class="flex items-center gap-1 mt-1.5">
                                     <span id="reserves-trend-arrow" class="material-symbols-outlined text-[14px] text-success">arrow_upward</span>
-                                    <span id="reserves-change-display" class="text-data-sm font-data-sm text-success">+0.0% vs last month</span>
+                                    <span id="reserves-change-display" class="text-comfort-xs text-success font-medium">+0.0% vs last month</span>
                                 </div>
                             </div>
                             <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
@@ -410,13 +466,13 @@
                         </div>
 
                         <!-- Card 2: Cash Available -->
-                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-6 flex items-center justify-between">
+                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-comfort-card flex items-center justify-between">
                             <div>
-                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Cash Available</span>
-                                <h2 id="reserves-cash-display" class="text-headline-md font-headline-md font-bold text-white">€ 0.00</h2>
+                                <span class="text-comfort-sm font-medium text-zinc-400 block mb-1">Cash Available</span>
+                                <h2 id="reserves-cash-display" class="text-[36px] font-bold text-white font-mono">€ 0.00</h2>
                                 <div class="flex items-center gap-1 mt-1.5">
                                     <span id="reserves-cash-trend-arrow" class="material-symbols-outlined text-[14px] text-success">arrow_upward</span>
-                                    <span id="reserves-cash-change-display" class="text-data-sm font-data-sm text-success">+0.0% vs last month</span>
+                                    <span id="reserves-cash-change-display" class="text-comfort-xs text-success font-medium">+0.0% vs last month</span>
                                 </div>
                             </div>
                             <div class="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-400 shrink-0">
@@ -425,13 +481,13 @@
                         </div>
 
                         <!-- Card 3: Savings Rate -->
-                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-6 flex items-center justify-between">
+                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-comfort-card flex items-center justify-between">
                             <div>
-                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">Savings Rate</span>
-                                <h2 id="savings-rate-display" class="text-headline-md font-headline-md font-bold text-white">0%</h2>
+                                <span class="text-comfort-sm font-medium text-zinc-400 block mb-1">Savings Rate</span>
+                                <h2 id="savings-rate-display" class="text-[36px] font-bold text-white font-mono">0%</h2>
                                 <div class="flex items-center gap-1 mt-1.5">
                                     <span id="savings-rate-trend-arrow" class="material-symbols-outlined text-[14px] text-success">arrow_upward</span>
-                                    <span id="savings-rate-change-display" class="text-data-sm font-data-sm text-success">+0.0% vs last month</span>
+                                    <span id="savings-rate-change-display" class="text-comfort-xs text-success font-medium">+0.0% vs last month</span>
                                 </div>
                             </div>
                             <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 shrink-0">
@@ -440,12 +496,12 @@
                         </div>
 
                         <!-- Card 4: FIRE Progress -->
-                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-6 flex items-center justify-between">
+                        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass-card p-comfort-card flex items-center justify-between">
                             <div>
-                                <span class="text-label-sm font-label-sm text-on-surface-variant block mb-1">FIRE Progress</span>
-                                <h2 id="fire-display" class="text-headline-md font-headline-md font-bold text-white">0%</h2>
+                                <span class="text-comfort-sm font-medium text-zinc-400 block mb-1">FIRE Progress</span>
+                                <h2 id="fire-display" class="text-[36px] font-bold text-white font-mono">0%</h2>
                                 <div class="flex items-center gap-1 mt-1.5">
-                                    <span id="fire-target-display" class="text-data-sm font-data-sm text-on-surface-variant">of €420,000 goal</span>
+                                    <span id="fire-target-display" class="text-comfort-xs text-zinc-400 font-medium">of €420,000 goal</span>
                                 </div>
                             </div>
                             <div class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
@@ -739,7 +795,7 @@
                                     <!-- Search -->
                                     <div class="relative flex-1 max-w-xs">
                                         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
-                                        <input oninput="filterLedger(this.value)" id="ledger-search-input" class="w-full bg-surface-container-low border border-border-subtle rounded-lg pl-9 pr-3 py-1.5 text-xs text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-all font-mono text-on-surface" placeholder="Search transactions..." type="text" />
+                                        <input oninput="filterLedger(this.value)" id="ledger-search-input" class="w-full h-11 bg-surface-container-low border border-zinc-800 rounded-lg pl-9 pr-3 text-[15px] text-on-surface focus:outline-none focus:border-primary focus:ring-0 transition-all font-sans text-on-surface" placeholder="Search transactions..." type="text" />
                                     </div>
                                     <!-- Account filter badge -->
                                     <div id="ledger-account-filter-badge" class="hidden items-center space-x-1.5 bg-primary/15 border border-primary/20 text-primary px-2.5 py-1 rounded-lg text-xs font-mono">
@@ -747,15 +803,15 @@
                                         <button onclick="clearAccountFilter()" class="hover:text-white inline-flex items-center"><span class="material-symbols-outlined text-xs">close</span></button>
                                     </div>
                                     <!-- Account select -->
-                                    <select onchange="filterAccount(this.value)" id="ledger-account-select" class="bg-surface-container-low border border-border-subtle rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary font-mono appearance-none pr-8 text-on-surface">
+                                    <select onchange="filterAccount(this.value)" id="ledger-account-select" class="h-10 bg-surface-container-low border border-zinc-800 rounded-lg px-3 text-[15px] focus:outline-none focus:border-primary appearance-none pr-8 text-on-surface font-sans">
                                         <option value="ALL">All Accounts</option>
                                     </select>
                                     <!-- Category select -->
-                                    <select onchange="filterCategory(this.value)" id="ledger-category-select" class="bg-surface-container-low border border-border-subtle rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary font-mono appearance-none pr-8 text-on-surface">
+                                    <select onchange="filterCategory(this.value)" id="ledger-category-select" class="h-10 bg-surface-container-low border border-zinc-800 rounded-lg px-3 text-[15px] focus:outline-none focus:border-primary appearance-none pr-8 text-on-surface font-sans">
                                         <option value="ALL">All Categories</option>
                                     </select>
                                     <!-- Limit select -->
-                                    <select onchange="changePageSize(this.value)" id="ledger-pagesize-select" class="bg-surface-container-low border border-border-subtle rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-primary font-mono text-on-surface">
+                                    <select onchange="changePageSize(this.value)" id="ledger-pagesize-select" class="h-10 bg-surface-container-low border border-zinc-800 rounded-lg px-3 text-[15px] focus:outline-none focus:border-primary text-on-surface font-sans">
                                         <option value="15">15 Per Page</option>
                                         <option value="25">25 Per Page</option>
                                         <option value="50">50 Per Page</option>
@@ -1642,19 +1698,27 @@
                     <!-- Sub-view 1: Merchant Library -->
                     <div id="sub-panel-mi-library" class="hidden flex-grow flex flex-col min-h-0 space-y-4">
                         <!-- Search and filter bar -->
-                        <div class="flex flex-col sm:flex-row gap-4 shrink-0">
-                            <div class="relative flex-grow">
+                        <div class="flex flex-col sm:flex-row gap-4 items-center shrink-0">
+                            <div class="relative flex-grow w-full">
                                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant/40 text-sm">search</span>
-                                <input type="text" id="mi-library-search" oninput="filterMerchantLibrary()" placeholder="Search merchants by name..." class="w-full bg-zinc-950/40 border border-border-subtle rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-primary transition-all">
+                                <input type="text" id="mi-library-search" oninput="filterMerchantLibrary()" placeholder="Search merchants by name..." class="w-full h-11 bg-zinc-950/40 border border-zinc-800 rounded-xl pl-10 pr-4 text-[15px] text-white placeholder-white/30 focus:outline-none focus:border-primary transition-all font-sans">
                             </div>
-                            <div class="w-48 shrink-0">
-                                <select id="mi-library-category-filter" onchange="filterMerchantLibrary()" class="w-full bg-zinc-950/40 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary cursor-pointer">
+                            <div class="w-full sm:w-48 shrink-0">
+                                <select id="mi-library-category-filter" onchange="filterMerchantLibrary()" class="w-full h-10 bg-zinc-950/40 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary cursor-pointer">
                                     <option value="">All Categories</option>
                                 </select>
                             </div>
-                            <div class="flex items-center gap-2 text-xs text-on-surface-variant">
-                                <input type="checkbox" id="mi-library-system-toggle" onchange="filterMerchantLibrary()" class="rounded border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary">
-                                <label for="mi-library-system-toggle">Show System Transfers</label>
+                            <div class="w-full sm:w-48 shrink-0">
+                                <select id="mi-library-sort" onchange="filterMerchantLibrary()" class="w-full h-10 bg-zinc-950/40 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary cursor-pointer">
+                                    <option value="spend">Total Spend (High-Low)</option>
+                                    <option value="count">Transaction Count</option>
+                                    <option value="last_seen">Last Seen</option>
+                                    <option value="alpha">Alphabetical</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-2 text-comfort-sm text-zinc-400 shrink-0 select-none">
+                                <input type="checkbox" id="mi-library-system-toggle" onchange="filterMerchantLibrary()" class="rounded border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary">
+                                <label for="mi-library-system-toggle" class="cursor-pointer">Show System Transfers</label>
                             </div>
                         </div>
 
@@ -2201,6 +2265,34 @@
                 <button onclick="closeAddTransactionModal()" class="px-4 py-2 rounded-lg text-xs border border-border-subtle hover:bg-white/5 text-on-surface">Cancel</button>
                 <button onclick="submitAddTransaction()" class="px-4 py-2 bg-primary text-black rounded-lg text-xs font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">Save Transaction</button>
             </div>
+    <!-- Recategorize Transaction Modal -->
+    <div id="recategorize-transaction-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-[120] flex items-center justify-center hidden">
+        <div class="glass-panel-modal p-6 w-full max-w-sm space-y-4 border border-zinc-800 bg-zinc-900 rounded-2xl shadow-2xl">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 class="text-comfort-base font-bold text-white">Recategorize Transaction</h3>
+                    <p id="recat-txn-desc" class="text-comfort-xs text-zinc-400 mt-1 truncate max-w-[280px]">Transaction Name</p>
+                </div>
+                <button onclick="closeRecategorizeModal()" class="text-zinc-500 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+            </div>
+            <div class="space-y-4 text-comfort-sm pt-2">
+                <div class="space-y-1.5">
+                    <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Select Category</label>
+                    <select id="recat-category-select" onchange="toggleRecatCustomInput()" class="w-full h-10 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary cursor-pointer font-sans">
+                        <!-- Categories populated dynamically -->
+                    </select>
+                </div>
+                <div id="recat-custom-container" class="space-y-1.5 hidden">
+                    <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Custom Category Name</label>
+                    <input type="text" id="recat-custom-input" class="w-full h-11 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary font-sans" placeholder="Enter custom category...">
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t border-zinc-800/80">
+                <button onclick="closeRecategorizeModal()" class="px-4 py-2 rounded-xl text-comfort-xs border border-zinc-800 hover:bg-white/5 text-white font-sans transition-all">Cancel</button>
+                <button onclick="submitRecategorizeModal()" class="px-5 py-2 bg-primary text-black rounded-xl text-comfort-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-md shadow-primary/20 font-sans">Save Category</button>
+            </div>
         </div>
     </div>
 
@@ -2312,12 +2404,12 @@
     <!-- Merchant Profile Detail Drawer/Modal -->
     <div id="merchant-profile-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[110] flex justify-end hidden">
         <!-- Slide in from right -->
-        <div class="w-full max-w-2xl bg-zinc-950/90 border-l border-border-subtle h-full flex flex-col shadow-2xl p-6 overflow-hidden">
+        <div class="w-full max-w-2xl bg-zinc-900 border-l border-zinc-800 h-full flex flex-col shadow-2xl p-6 overflow-hidden">
             <!-- Header -->
-            <div class="flex justify-between items-start border-b border-border-subtle pb-4 shrink-0">
+            <div class="flex justify-between items-start border-b border-zinc-800 pb-4 shrink-0">
                 <div>
                     <h3 id="mi-profile-title" class="text-lg font-bold text-white">Merchant Profile</h3>
-                    <p id="mi-profile-subtitle" class="text-xs text-on-surface-variant">Normalized parent or intent service details</p>
+                    <p id="mi-profile-subtitle" class="text-comfort-xs text-zinc-400">Normalized parent or intent service details</p>
                 </div>
                 <button onclick="closeMerchantProfileModal()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors">
                     <span class="material-symbols-outlined text-sm">close</span>
@@ -2327,40 +2419,40 @@
             <!-- Body -->
             <div class="flex-grow overflow-y-auto scroll-zone py-6 space-y-6 pr-1">
                 <!-- Config / Edit Form -->
-                <div class="glass-card p-5 space-y-4">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Metadata Configuration</h4>
+                <div class="glass-card p-comfort-card space-y-4">
+                    <h4 class="text-comfort-xs font-bold uppercase tracking-wider text-primary">Metadata Configuration</h4>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
-                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Display Name</label>
-                            <input type="text" id="mi-profile-edit-name" class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary">
+                            <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Display Name</label>
+                            <input type="text" id="mi-profile-edit-name" class="w-full h-11 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary font-sans">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Category</label>
-                            <select id="mi-profile-edit-category" onchange="onProfileCategoryChange()" class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary cursor-pointer">
+                            <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Category</label>
+                            <select id="mi-profile-edit-category" onchange="onProfileCategoryChange()" class="w-full h-10 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary cursor-pointer font-sans">
                                 <option value="">No Category</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Subcategory</label>
-                            <select id="mi-profile-edit-subcategory" class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary cursor-pointer">
+                            <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Subcategory</label>
+                            <select id="mi-profile-edit-subcategory" class="w-full h-10 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary cursor-pointer font-sans">
                                 <option value="">No Subcategory</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Parent Merchant</label>
-                            <select id="mi-profile-edit-parent" class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary cursor-pointer">
+                            <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Parent Merchant</label>
+                            <select id="mi-profile-edit-parent" class="w-full h-10 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary cursor-pointer font-sans">
                                 <option value="">None (Is Parent)</option>
                             </select>
                         </div>
                         <div class="flex items-end pl-2">
-                            <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
-                                <input type="checkbox" id="mi-profile-edit-verified" class="rounded border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                            <label class="inline-flex items-center text-comfort-xs text-white cursor-pointer select-none mb-2">
+                                <input type="checkbox" id="mi-profile-edit-verified" class="rounded border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mr-2 h-4 w-4">
                                 User Verified Pinned
                             </label>
                         </div>
                     </div>
                     <div class="flex justify-end pt-2">
-                        <button onclick="saveMerchantProfile()" class="bg-primary text-black px-4 py-2 rounded-xl text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-md shadow-primary/20">
+                        <button onclick="saveMerchantProfile()" class="bg-primary text-black px-6 py-2 rounded-xl text-comfort-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-md shadow-primary/20 font-sans">
                             Save Changes
                         </button>
                     </div>
@@ -2421,12 +2513,12 @@
     </div>
 
     <!-- Merchant Inbox Detail Drawer -->
-    <div id="inbox-detail-drawer" class="fixed inset-y-0 right-0 w-full max-w-2xl bg-zinc-950/95 border-l border-border-subtle h-full flex flex-col shadow-2xl z-[120] transform translate-x-full transition-transform duration-300 ease-in-out">
+    <div id="inbox-detail-drawer" class="fixed inset-y-0 right-0 w-full max-w-[500px] bg-zinc-900 border-l border-zinc-800 h-full flex flex-col shadow-2xl z-[120] transform translate-x-full transition-transform duration-300 ease-in-out">
         <!-- Header -->
-        <div class="flex justify-between items-start border-b border-border-subtle p-6 shrink-0">
+        <div class="flex justify-between items-start border-b border-zinc-800 p-6 shrink-0">
             <div>
                 <h3 id="inbox-drawer-title" class="text-lg font-bold text-white">Merchant Suggestion Detail</h3>
-                <p id="inbox-drawer-merchant-name" class="text-xs text-on-surface-variant font-mono">Raw key: -</p>
+                <p id="inbox-drawer-merchant-name" class="text-comfort-xs text-zinc-400 font-mono">Raw key: -</p>
             </div>
             <button onclick="closeInboxDetailDrawer()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/70 hover:bg-white/10 hover:text-white transition-colors">
                 <span class="material-symbols-outlined text-sm">close</span>
@@ -2434,7 +2526,7 @@
         </div>
 
         <!-- Responsive drawer tabs selector -->
-        <div class="flex space-x-2 bg-surface-container-lowest border-b border-border-subtle px-6 py-2 w-full text-xs font-bold shrink-0">
+        <div class="flex space-x-2 bg-surface-container-lowest border-b border-zinc-800 px-6 py-2 w-full text-xs font-bold shrink-0">
             <button onclick="switchInboxDetailTab('identity')" id="inbox-drawer-btn-identity" class="px-3 py-1.5 rounded-lg bg-white/10 text-white text-xs font-bold">Identity</button>
             <button onclick="switchInboxDetailTab('transactions')" id="inbox-drawer-btn-transactions" class="px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-white text-xs font-medium">Transactions</button>
             <button onclick="switchInboxDetailTab('recognition')" id="inbox-drawer-btn-recognition" class="px-3 py-1.5 rounded-lg text-on-surface-variant hover:text-white text-xs font-medium">Recognition</button>
@@ -2446,36 +2538,36 @@
             <!-- Tab 1: Identity & Classification -->
             <div id="inbox-drawer-pane-identity" class="space-y-6">
                 <!-- Name and Category -->
-                <div class="glass-card p-5 space-y-4">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-primary">Name & Classification</h4>
+                <div class="glass-card p-comfort-card space-y-4">
+                    <h4 class="text-comfort-xs font-bold uppercase tracking-wider text-primary">Name & Classification</h4>
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2">
-                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Suggested Display Name</label>
-                            <input type="text" id="inbox-detail-name-input" class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary">
+                            <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Suggested Display Name</label>
+                            <input type="text" id="inbox-detail-name-input" class="w-full h-11 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary">
                         </div>
                         <div class="col-span-2">
-                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Category</label>
-                            <select id="inbox-detail-category-select" class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary cursor-pointer">
+                            <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Category</label>
+                            <select id="inbox-detail-category-select" class="w-full h-10 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary cursor-pointer">
                                 <!-- Loaded dynamically -->
                             </select>
                         </div>
                         <div class="col-span-2">
-                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Spend Necessity / Priority</label>
+                            <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Spend Necessity / Priority</label>
                             <div class="flex flex-wrap gap-4 mt-1">
-                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
-                                    <input type="radio" name="inbox-detail-priority" value="Fixed" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                <label class="inline-flex items-center text-comfort-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-priority" value="Fixed" class="rounded-full border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mr-2">
                                     Fixed
                                 </label>
-                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
-                                    <input type="radio" name="inbox-detail-priority" value="Flexible" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                <label class="inline-flex items-center text-comfort-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-priority" value="Flexible" class="rounded-full border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mr-2">
                                     Flexible
                                 </label>
-                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
-                                    <input type="radio" name="inbox-detail-priority" value="Discretionary" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                <label class="inline-flex items-center text-comfort-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-priority" value="Discretionary" class="rounded-full border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mr-2">
                                     Discretionary
                                 </label>
-                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
-                                    <input type="radio" name="inbox-detail-priority" value="Income" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                <label class="inline-flex items-center text-comfort-xs text-white cursor-pointer select-none">
+                                    <input type="radio" name="inbox-detail-priority" value="Income" class="rounded-full border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mr-2">
                                     Income
                                 </label>
                             </div>
@@ -2484,24 +2576,24 @@
                 </div>
 
                 <!-- Explainable Confidence -->
-                <div class="glass-card p-5 space-y-4">
+                <div class="glass-card p-comfort-card space-y-4">
                     <div class="flex justify-between items-center">
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-white">Explainable Confidence</h4>
-                        <span id="inbox-detail-score" class="text-xs font-bold font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">-</span>
+                        <h4 class="text-comfort-xs font-bold uppercase tracking-wider text-white">Explainable Confidence</h4>
+                        <span id="inbox-detail-score" class="text-comfort-xs font-bold font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">-</span>
                     </div>
                     <div class="space-y-3">
                         <div>
-                            <span class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Primary Reason</span>
-                            <p id="inbox-detail-reason" class="text-xs text-zinc-300 italic">No explanation generated.</p>
+                            <span class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Primary Reason</span>
+                            <p id="inbox-detail-reason" class="text-comfort-xs text-zinc-300 italic">No explanation generated.</p>
                         </div>
                         <div>
-                            <span class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Supporting Signals</span>
+                            <span class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Supporting Signals</span>
                             <ul id="inbox-detail-signals" class="space-y-1.5 mt-1">
                                 <!-- Dynamic -->
                             </ul>
                         </div>
                         <div id="inbox-detail-conflicts-container" class="hidden">
-                            <span class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Conflict Indicators</span>
+                            <span class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Conflict Indicators</span>
                             <ul id="inbox-detail-conflicts" class="space-y-1.5 mt-1">
                                 <!-- Dynamic -->
                             </ul>
@@ -2512,8 +2604,8 @@
 
             <!-- Tab 2: Transactions -->
             <div id="inbox-drawer-pane-transactions" class="space-y-6 hidden">
-                <div class="glass-card p-5 space-y-4">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-white">Recent Transactions in Cluster</h4>
+                <div class="glass-card p-comfort-card space-y-4">
+                    <h4 class="text-comfort-xs font-bold uppercase tracking-wider text-white">Recent Transactions in Cluster</h4>
                     <div id="inbox-detail-txn-list" class="space-y-2 max-h-96 overflow-y-auto scroll-zone">
                         <!-- Loaded dynamically -->
                     </div>
@@ -2522,83 +2614,89 @@
 
             <!-- Tab 3: Recognition & Pattern Matching (Progressive Disclosure) -->
             <div id="inbox-drawer-pane-recognition" class="space-y-6 hidden">
-                <div class="glass-card p-5 space-y-4">
+                <div class="glass-card p-comfort-card space-y-4">
                     <div class="flex justify-between items-center">
-                        <h4 class="text-xs font-bold uppercase tracking-wider text-white">Recognition & Matching</h4>
-                        <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
-                            <input type="checkbox" id="inbox-dev-mode-switch" onchange="toggleDeveloperMode(this.checked)" class="rounded border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                        <h4 class="text-comfort-sm font-bold uppercase tracking-wider text-white">Recognition & Matching</h4>
+                        <label class="inline-flex items-center text-comfort-xs text-white cursor-pointer select-none">
+                            <input type="checkbox" id="inbox-dev-mode-switch" onchange="toggleDeveloperMode(this.checked)" class="rounded border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mr-2">
                             ⚙️ Developer Mode
                         </label>
                     </div>
                     
-                    <p class="text-[11px] text-on-surface-variant leading-relaxed">
+                    <p class="text-comfort-xs text-zinc-400 leading-relaxed">
                         These parameters dictate how future statement imports are auto-resolved through the Memory Engine.
                     </p>
 
-                    <!-- Advanced parameters hidden unless in Developer Mode -->
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Recognition Phrase / Pattern</label>
-                            <input type="text" id="inbox-detail-pattern-input" class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary font-mono">
-                        </div>
+                    <!-- Advanced parameters inside details disclosure widget -->
+                    <details class="group border border-zinc-800 rounded-xl p-4 bg-zinc-950/30" open>
+                        <summary class="flex justify-between items-center text-comfort-xs font-semibold text-zinc-400 uppercase tracking-wider cursor-pointer select-none">
+                            <span>Advanced Configurations</span>
+                            <span class="material-symbols-outlined text-sm group-open:rotate-180 transition-transform">expand_more</span>
+                        </summary>
+                        <div class="mt-4 space-y-4">
+                            <div>
+                                <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Recognition Phrase / Pattern</label>
+                                <input type="text" id="inbox-detail-pattern-input" class="w-full h-11 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary font-mono">
+                            </div>
 
-                        <div>
-                            <label class="block text-[10px] font-bold uppercase text-on-surface-variant mb-1">Match Type</label>
-                            <div class="flex flex-wrap gap-4 mt-1">
-                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
-                                    <input type="radio" name="inbox-detail-match-type" value="substring" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
-                                    Contains
-                                </label>
-                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
-                                    <input type="radio" name="inbox-detail-match-type" value="prefix" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
-                                    Starts with
-                                </label>
-                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none">
-                                    <input type="radio" name="inbox-detail-match-type" value="exact" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
-                                    Is exactly
-                                </label>
-                                <label class="inline-flex items-center text-xs text-white cursor-pointer select-none dev-mode-only hidden">
-                                    <input type="radio" name="inbox-detail-match-type" value="regex" class="rounded-full border-border-subtle bg-zinc-950/40 text-primary focus:ring-primary mr-2">
-                                    Regex (Pattern)
-                                </label>
+                            <div>
+                                <label class="block text-comfort-xxs font-bold uppercase text-zinc-400 mb-1.5">Match Type</label>
+                                <div class="flex flex-wrap gap-4 mt-1">
+                                    <label class="inline-flex items-center text-comfort-xs text-white cursor-pointer select-none">
+                                        <input type="radio" name="inbox-detail-match-type" value="substring" class="rounded-full border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                        Contains
+                                    </label>
+                                    <label class="inline-flex items-center text-comfort-xs text-white cursor-pointer select-none">
+                                        <input type="radio" name="inbox-detail-match-type" value="prefix" class="rounded-full border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                        Starts with
+                                    </label>
+                                    <label class="inline-flex items-center text-comfort-xs text-white cursor-pointer select-none">
+                                        <input type="radio" name="inbox-detail-match-type" value="exact" class="rounded-full border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                        Is exactly
+                                    </label>
+                                    <label class="inline-flex items-center text-comfort-xs text-white cursor-pointer select-none dev-mode-only hidden">
+                                        <input type="radio" name="inbox-detail-match-type" value="regex" class="rounded-full border-zinc-800 bg-zinc-950/40 text-primary focus:ring-primary mr-2">
+                                        Regex (Pattern)
+                                    </label>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Developer Mode Details -->
-                        <div class="dev-mode-only hidden border-t border-border-subtle/30 pt-4 space-y-3 font-mono text-[10px] text-on-surface-variant">
-                            <h5 class="font-bold text-white uppercase tracking-wider text-[9px]">Advanced System Telemetry</h5>
-                            <div class="flex justify-between">
-                                <span>Suggested display name:</span>
-                                <span id="inbox-dev-suggested-name" class="text-white">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Regex/Substring:</span>
-                                <span id="inbox-dev-pattern" class="text-white">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Base Confidence:</span>
-                                <span id="inbox-dev-score" class="text-white">-</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>Cluster transactions:</span>
-                                <span id="inbox-dev-count" class="text-white">-</span>
+                            <!-- Developer Mode Details -->
+                            <div class="dev-mode-only hidden border-t border-zinc-800 pt-4 space-y-3 font-mono text-comfort-xs text-zinc-450">
+                                <h5 class="font-bold text-white uppercase tracking-wider text-[9px]">Advanced System Telemetry</h5>
+                                <div class="flex justify-between">
+                                    <span>Suggested display name:</span>
+                                    <span id="inbox-dev-suggested-name" class="text-white font-semibold">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Regex/Substring:</span>
+                                    <span id="inbox-dev-pattern" class="text-white font-semibold">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Base Confidence:</span>
+                                    <span id="inbox-dev-score" class="text-white font-semibold">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Cluster transactions:</span>
+                                    <span id="inbox-dev-count" class="text-white font-semibold">-</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </details>
                 </div>
             </div>
 
             <!-- Combine/Merge Section -->
-            <div class="glass-card p-5 space-y-4">
-                <h4 class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+            <div class="glass-card p-comfort-card space-y-4">
+                <h4 class="text-comfort-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                     <span class="material-symbols-outlined text-xs">merge</span> Combine with Existing Brand
                 </h4>
-                <p class="text-[10px] text-on-surface-variant">
+                <p class="text-comfort-xs text-zinc-400">
                     If this is a secondary outlet or alternate spelling for an established brand in your library, search for and combine them here.
                 </p>
                 <div class="relative">
-                    <input type="text" id="inbox-combine-search" placeholder="Type parent merchant name..." class="w-full bg-zinc-950/60 border border-border-subtle rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary">
-                    <ul id="inbox-combine-results" class="absolute left-0 right-0 mt-1 bg-zinc-900 border border-border-subtle rounded-xl max-h-40 overflow-y-auto z-[130] divide-y divide-white/5">
+                    <input type="text" id="inbox-combine-search" placeholder="Type parent merchant name..." class="w-full h-11 bg-zinc-950/60 border border-zinc-800 rounded-xl px-3 text-[15px] text-white focus:outline-none focus:border-primary font-sans">
+                    <ul id="inbox-combine-results" class="absolute left-0 right-0 mt-1 bg-zinc-900 border border-zinc-800 rounded-xl max-h-40 overflow-y-auto z-[130] divide-y divide-white/5">
                         <!-- Autocomplete matches -->
                     </ul>
                 </div>
@@ -2607,15 +2705,15 @@
         </div>
 
         <!-- Floating action footer -->
-        <div class="border-t border-border-subtle p-6 bg-zinc-950 flex flex-wrap justify-between items-center gap-3 shrink-0">
-            <button onclick="rejectInboxSuggestion(activeDetailSuggestion.suggestion_id)" class="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-bold transition-all active:scale-95">
+        <div class="border-t border-zinc-800 p-6 bg-zinc-950 flex flex-wrap justify-between items-center gap-3 shrink-0">
+            <button onclick="rejectInboxSuggestion(activeDetailSuggestion.suggestion_id)" class="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 rounded-xl text-comfort-xs font-bold transition-all active:scale-95">
                 Reject Suggestion
             </button>
             <div class="flex gap-2">
-                <button onclick="closeInboxDetailDrawer()" class="px-4 py-2 border border-border-subtle hover:bg-white/5 text-white rounded-xl text-xs font-bold transition-all active:scale-95">
+                <button onclick="closeInboxDetailDrawer()" class="px-4 py-2 border border-zinc-800 hover:bg-white/5 text-white rounded-xl text-comfort-xs font-bold transition-all active:scale-95 font-sans">
                     Cancel
                 </button>
-                <button onclick="saveInboxDetail()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all active:scale-95 shadow-lg shadow-emerald-600/20">
+                <button onclick="saveInboxDetail()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-comfort-xs font-bold transition-all active:scale-95 shadow-lg shadow-emerald-600/20 font-sans">
                     Confirm Memory
                 </button>
             </div>
