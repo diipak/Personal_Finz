@@ -211,7 +211,23 @@ CREATE TABLE IF NOT EXISTS merchant_signatures (
 
 CREATE INDEX IF NOT EXISTS idx_signatures_pattern ON merchant_signatures(pattern_string);
 
--- 16. Unified Resolved View
+-- 16. Import Resolution Summaries Table
+CREATE TABLE IF NOT EXISTS import_summaries (
+    summary_id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    import_date          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    import_type          TEXT NOT NULL,               -- 'manual_file' | 'enable_banking'
+    institution_id       TEXT NOT NULL,               -- e.g. bank name or bank type
+    total_imported       INTEGER NOT NULL,
+    resolved_exact       INTEGER DEFAULT 0,
+    resolved_prefix      INTEGER DEFAULT 0,
+    resolved_rules       INTEGER DEFAULT 0,
+    similarity_suggestions INTEGER DEFAULT 0,
+    ai_suggestions       INTEGER DEFAULT 0,
+    unknown_merchants    INTEGER DEFAULT 0,
+    auto_resolved_rate   REAL DEFAULT 0.0
+);
+
+-- 17. Unified Resolved View
 CREATE VIEW IF NOT EXISTS v_transactions_resolved AS
 SELECT 
     t.transaction_id,

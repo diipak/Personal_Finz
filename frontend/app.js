@@ -6969,6 +6969,88 @@ async function loadMiAnalyticsData() {
             }
         }
         
+        // --- Ingestion Validation Telemetry Fetch ---
+        try {
+            const valRes = await fetch('/api/merchant-intelligence/validation-metrics');
+            if (valRes.ok) {
+                const vk = await valRes.json();
+                
+                const hitRate = vk.total_imported > 0 
+                    ? ((vk.resolved_exact + vk.resolved_prefix) / vk.total_imported * 100) 
+                    : 0;
+                
+                const memHit = document.getElementById('val-kpi-mem-hit-rate');
+                if (memHit) memHit.textContent = `${hitRate.toFixed(1)}%`;
+                
+                const memHitDesc = document.getElementById('val-kpi-mem-hit-desc');
+                if (memHitDesc) memHitDesc.textContent = `${vk.resolved_exact + vk.resolved_prefix} of ${vk.total_imported} from memory`;
+                
+                const autoRes = document.getElementById('val-kpi-auto-resolved');
+                if (autoRes) autoRes.textContent = `${(vk.auto_resolved_percentage || 0).toFixed(1)}%`;
+                
+                const autoResDesc = document.getElementById('val-kpi-auto-res-desc');
+                if (autoResDesc) autoResDesc.textContent = `${vk.resolved_exact + vk.resolved_prefix + vk.resolved_rules} of ${vk.total_imported} resolved`;
+                
+                const llmUse = document.getElementById('val-kpi-llm-usage');
+                if (llmUse) llmUse.textContent = `${(vk.llm_usage_percentage || 0).toFixed(1)}%`;
+                
+                const llmUseDesc = document.getElementById('val-kpi-llm-use-desc');
+                if (llmUseDesc) llmUseDesc.textContent = `${vk.ai_suggestions} used LLM fallback`;
+                
+                const newMerchants = document.getElementById('val-kpi-new-merchants');
+                if (newMerchants) newMerchants.textContent = `${vk.new_merchants_this_month || 0}`;
+            }
+        } catch (valErr) {
+            console.warn("Failed to load validation metrics:", valErr);
+        }
+        
+        try {
+            const sumRes = await fetch('/api/imports/summaries');
+            const tableBody = document.getElementById('mi-validation-summaries-table-body');
+            if (sumRes.ok && tableBody) {
+                const summaries = await sumRes.json();
+                tableBody.innerHTML = '';
+                
+                if (summaries.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="10" class="text-center py-6 text-on-surface-variant font-mono text-[10px]">
+                                No import summaries recorded yet. Import statements or sync feeds to start validation.
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    summaries.forEach(s => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-white/5 border-b border-border-subtle/30';
+                        
+                        const dateStr = new Date(s.import_date).toLocaleString();
+                        const sourceIcon = s.import_type === 'manual_file' ? 'upload_file' : 'sync';
+                        const sourceLabel = s.import_type === 'manual_file' ? 'Manual File' : 'PSD2 Sync';
+                        
+                        tr.innerHTML = `
+                            <td class="px-3 py-2 text-on-surface-variant font-mono text-[10px]">${dateStr}</td>
+                            <td class="px-3 py-2 font-bold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-xs text-on-surface-variant/70">${sourceIcon}</span>
+                                <span class="truncate max-w-[120px]">${s.institution_id}</span>
+                            </td>
+                            <td class="px-3 py-2 text-right font-mono font-bold text-white">${s.total_imported}</td>
+                            <td class="px-3 py-2 text-right font-mono text-emerald-400">${s.resolved_exact}</td>
+                            <td class="px-3 py-2 text-right font-mono text-emerald-400">${s.resolved_prefix}</td>
+                            <td class="px-3 py-2 text-right font-mono text-primary">${s.resolved_rules}</td>
+                            <td class="px-3 py-2 text-right font-mono text-amber-400">${s.similarity_suggestions}</td>
+                            <td class="px-3 py-2 text-right font-mono text-purple-400">${s.ai_suggestions}</td>
+                            <td class="px-3 py-2 text-right font-mono text-error">${s.unknown_merchants}</td>
+                            <td class="px-3 py-2 text-right font-mono font-bold text-primary">${s.auto_resolved_rate.toFixed(1)}%</td>
+                        `;
+                        tableBody.appendChild(tr);
+                    });
+                }
+            }
+        } catch (sumErr) {
+            console.warn("Failed to load import summaries:", sumErr);
+        }
+        
     } catch (e) {
         console.error("loadMiAnalyticsData failed:", e);
     }
@@ -7017,6 +7099,18 @@ async function loadMiWorkbenchData() {
             const verifiedBadge = c.is_user_verified ? '<span class="material-symbols-outlined text-xs text-success" title="Verified">verified</span>' : '';
             const lockIcon = c.is_locked ? 'lock' : 'lock_open';
             
+            const reason = c.workbench_reason || 'New Merchant';
+            let badgeClass = 'bg-white/5 text-white/70 border-white/10';
+            if (reason === 'Similarity Match') {
+                badgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+            } else if (reason === 'AI Suggestion') {
+                badgeClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+            } else if (reason === 'Transfer Review') {
+                badgeClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+            } else if (reason === 'Classification Conflict') {
+                badgeClass = 'bg-error/10 text-error border-error/20';
+            }
+
             const card = document.createElement('div');
             card.className = `p-3 rounded-xl border transition-all cursor-pointer text-left ${
                 miSelectedClusterId === c.cluster_id 
@@ -7032,14 +7126,17 @@ async function loadMiWorkbenchData() {
             
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-1">
-                    <div class="flex items-center gap-1.5">
-                        <span class="material-symbols-outlined text-xs text-primary">hub</span>
-                        <span class="text-xs font-bold truncate max-w-[180px]">${c.cluster_name}</span>
-                        ${verifiedBadge}
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-xs text-primary">hub</span>
+                            <span class="text-xs font-bold truncate max-w-[180px]">${c.cluster_name}</span>
+                            ${verifiedBadge}
+                        </div>
+                        <span class="w-fit px-1.5 py-0.5 rounded text-[8px] font-mono border ${badgeClass}">${reason}</span>
                     </div>
                     <span class="text-[9px] font-mono text-on-surface-variant font-bold">${c.transaction_count} Tx</span>
                 </div>
-                <div class="flex justify-between items-center text-[10px]">
+                <div class="flex justify-between items-center text-[10px] mt-2">
                     <span class="text-on-surface-variant font-mono">Confidence: ${confidencePct}%</span>
                     <span class="material-symbols-outlined text-xs text-on-surface-variant/60">${lockIcon}</span>
                 </div>
@@ -7089,16 +7186,66 @@ async function selectMiWorkbenchCluster(clusterId) {
             </label>
         `).join('');
         
+        const reason = cluster.workbench_reason || 'New Merchant';
+        let badgeClass = 'bg-white/5 text-white/70 border-white/10';
+        let reasonDesc = "This is a new merchant description pattern that has not been seen before and has no similarity matches.";
+        if (reason === 'Similarity Match') {
+            badgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+            reasonDesc = "This pattern is highly similar to an existing merchant in your library and is suggested for mapping.";
+        } else if (reason === 'AI Suggestion') {
+            badgeClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+            reasonDesc = "The local AI engine has analyzed this cluster and suggested a categorization rule.";
+        } else if (reason === 'Transfer Review') {
+            badgeClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+            reasonDesc = "This cluster contains transaction markers matching internal transfers or system movements.";
+        } else if (reason === 'Classification Conflict') {
+            badgeClass = 'bg-error/10 text-error border-error/20';
+            reasonDesc = "Transactions in this cluster have conflicting categories or match multiple merchants.";
+        }
+
         detailsContainer.innerHTML = `
             <div class="space-y-6">
-                <!-- Header Info -->
+                <!-- Header Info & Reason Attribution -->
                 <div class="border-b border-border-subtle pb-3">
-                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                        <span class="material-symbols-outlined text-primary text-base">hub</span>
-                        ${cluster.cluster_name}
-                    </h3>
-                    <p class="text-[10px] text-on-surface-variant mt-1">Confidence Score: ${Math.round(cluster.confidence_score * 100)}% | User Verified: ${cluster.is_user_verified ? 'Yes' : 'No'}</p>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary text-base">hub</span>
+                                ${cluster.cluster_name}
+                            </h3>
+                            <p class="text-[10px] text-on-surface-variant mt-1">Confidence Score: ${Math.round(cluster.confidence_score * 100)}% | User Verified: ${cluster.is_user_verified ? 'Yes' : 'No'}</p>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeClass}">${reason}</span>
+                    </div>
+                    <p class="text-[10px] text-on-surface-variant/85 mt-2.5 bg-zinc-950/40 border border-border-subtle/50 p-2 rounded-lg leading-relaxed">
+                        ${reasonDesc}
+                    </p>
                 </div>
+
+                <!-- Suggested Merchant Recommendation Banner -->
+                ${cluster.suggested_merchant ? `
+                <div class="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-3">
+                    <h4 class="text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">auto_awesome</span>
+                        Recommended Mapping
+                    </h4>
+                    <div class="flex justify-between items-center text-xs">
+                        <div>
+                            <p class="font-bold text-white text-sm">${cluster.suggested_merchant}</p>
+                            <p class="text-[10px] text-on-surface-variant mt-0.5">Category: <span class="text-white font-semibold">${cluster.suggested_category}</span></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-mono text-primary font-bold text-sm">${Math.round(cluster.suggested_confidence * 100)}% Match</p>
+                            <p class="text-[9px] text-on-surface-variant">Confidence Score</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 pt-1 border-t border-primary/10">
+                        <button onclick="applyWorkbenchSuggestion('${cluster.suggested_merchant.replace(/'/g, "\\'")}', '${cluster.suggested_category.replace(/'/g, "\\'")}')" class="flex-grow bg-primary text-black py-1.5 rounded-lg text-[10px] font-bold hover:brightness-110 active:scale-95 transition-all">
+                            Quick Fill Recommendation
+                        </button>
+                    </div>
+                </div>
+                ` : ''}
 
                 <!-- 1. Promote to Merchant -->
                 <div class="p-4 rounded-xl border border-border-subtle bg-zinc-950/30 space-y-3">
@@ -7202,6 +7349,23 @@ async function selectMiWorkbenchCluster(clusterId) {
         console.error("selectMiWorkbenchCluster failed:", e);
         detailsContainer.innerHTML = `<div class="text-center py-12 text-error font-mono text-xs">Error loading details: ${e.message}</div>`;
     }
+}
+
+function applyWorkbenchSuggestion(merchantName, category) {
+    const nameEl = document.getElementById('wb-promote-name');
+    const catEl = document.getElementById('wb-promote-category');
+    if (nameEl) nameEl.value = merchantName;
+    if (catEl) {
+        // Find matching option or set value
+        catEl.value = category;
+    }
+    
+    const nameInput = document.getElementById('wb-promote-name');
+    if (nameInput) {
+        nameInput.classList.add('border-primary');
+        setTimeout(() => nameInput.classList.remove('border-primary'), 1000);
+    }
+    showToast('Suggested name and category filled. Review and click Promote & Link.');
 }
 
 async function workbenchPromote(clusterId) {

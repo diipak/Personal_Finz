@@ -1903,11 +1903,67 @@ def delete_merchant(merchant_id: int):
     finally:
         conn.close()
 
+def determine_workbench_reason(db_conn, cluster_id, cluster_name, merchant_id, verified_signatures) -> str:
+    cursor = db_conn.cursor()
+    
+    # 1. Check for Transfer Review
+    cursor.execute(
+        "SELECT COUNT(*) FROM transactions WHERE cluster_id = ? AND (transfer_subtype IS NOT NULL OR category = 'Transfer')",
+        (cluster_id,)
+    )
+    if cursor.fetchone()[0] > 0:
+        return "Transfer Review"
+        
+    # 2. Check for Classification Conflict
+    cursor.execute(
+        "SELECT COUNT(DISTINCT category) FROM transactions WHERE cluster_id = ? AND category != 'Unsorted'",
+        (cluster_id,)
+    )
+    if cursor.fetchone()[0] > 1:
+        return "Classification Conflict"
+        
+    # Check Jaccard similarity conflicts
+    from engine.memory import calculate_jaccard_similarity
+    matched_merchant_ids = set()
+    normalized_pattern = cluster_name.lower().strip()
+    
+    for sig in verified_signatures:
+        score = calculate_jaccard_similarity(normalized_pattern, sig["pattern_string"])
+        if score >= 0.7:
+            matched_merchant_ids.add(sig["merchant_id"])
+            
+    if len(matched_merchant_ids) > 1:
+        return "Classification Conflict"
+        
+    # 3. Check for Similarity Match
+    if len(matched_merchant_ids) == 1:
+        return "Similarity Match"
+        
+    # Alternatively check if a pending suggested rule is linked to an existing merchant
+    cursor.execute(
+        "SELECT merchant_name FROM ai_suggested_rules WHERE pattern_string = ? AND status = 'PENDING'",
+        (normalized_pattern,)
+    )
+    sug_row = cursor.fetchone()
+    if sug_row:
+        cursor.execute("SELECT 1 FROM merchants WHERE name = ? AND is_system = 0", (sug_row["merchant_name"],))
+        if cursor.fetchone():
+            return "Similarity Match"
+        else:
+            return "AI Suggestion"
+            
+    # Default fallback
+    return "New Merchant"
+
 @app.get("/api/merchant-clusters/workbench")
 def get_workbench_clusters():
     conn = get_db()
     cursor = conn.cursor()
     try:
+        # Load verified signatures once
+        cursor.execute("SELECT merchant_id, pattern_string FROM merchant_signatures WHERE is_user_verified = 1")
+        verified_signatures = [dict(row) for row in cursor.fetchall()]
+        
         cursor.execute("""
             SELECT 
                 c.cluster_id, c.cluster_name, c.confidence_score, c.is_locked, c.is_user_verified, c.sample_descriptions,
@@ -1929,10 +1985,105 @@ def get_workbench_clusters():
                 sug["sample_descriptions"] = json.loads(sug["sample_descriptions"])
             except Exception:
                 sug["sample_descriptions"] = [sug["sample_descriptions"]] if sug["sample_descriptions"] else []
+                
+            # Determine reason
+            sug["workbench_reason"] = determine_workbench_reason(conn, sug["cluster_id"], sug["cluster_name"], sug["merchant_id"], verified_signatures)
+            
+            # Fetch pending suggestions if any
+            cursor.execute(
+                """
+                SELECT merchant_name, suggested_category, confidence_score 
+                FROM ai_suggested_rules 
+                WHERE pattern_string = ? AND status = 'PENDING'
+                """,
+                (sug["cluster_name"].lower().strip(),)
+            )
+            sug_row = cursor.fetchone()
+            if sug_row:
+                sug["suggested_merchant"] = sug_row["merchant_name"]
+                sug["suggested_category"] = sug_row["suggested_category"]
+                sug["suggested_confidence"] = sug_row["confidence_score"]
+            else:
+                sug["suggested_merchant"] = None
+                sug["suggested_category"] = None
+                sug["suggested_confidence"] = None
+                
             clusters.append(sug)
         return clusters
     except Exception as e:
         logger.error(f"Error fetching workbench clusters: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.get("/api/merchant-intelligence/validation-metrics")
+def get_validation_metrics():
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # Sum metrics from import_summaries
+        cursor.execute(
+            """
+            SELECT 
+                COALESCE(SUM(total_imported), 0) as total_imported,
+                COALESCE(SUM(resolved_exact), 0) as resolved_exact,
+                COALESCE(SUM(resolved_prefix), 0) as resolved_prefix,
+                COALESCE(SUM(resolved_rules), 0) as resolved_rules,
+                COALESCE(SUM(similarity_suggestions), 0) as similarity_suggestions,
+                COALESCE(SUM(ai_suggestions), 0) as ai_suggestions,
+                COALESCE(SUM(unknown_merchants), 0) as unknown_merchants
+            FROM import_summaries
+            """
+        )
+        stats = dict(cursor.fetchone())
+        
+        # Calculate rates
+        total = stats["total_imported"]
+        if total > 0:
+            stats["auto_resolved_percentage"] = round(((stats["resolved_exact"] + stats["resolved_prefix"] + stats["resolved_rules"]) / total) * 100, 2)
+            stats["llm_usage_percentage"] = round((stats["ai_suggestions"] / total) * 100, 2)
+        else:
+            stats["auto_resolved_percentage"] = 0.0
+            stats["llm_usage_percentage"] = 0.0
+            
+        # Review Queue Size
+        cursor.execute("SELECT COUNT(*) FROM merchant_clusters WHERE is_user_verified = 0")
+        stats["review_queue_size"] = cursor.fetchone()[0] or 0
+        
+        # New Merchants This Month
+        cursor.execute(
+            """
+            SELECT COUNT(*) FROM merchants 
+            WHERE is_system = 0 AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')
+            """
+        )
+        stats["new_merchants_this_month"] = cursor.fetchone()[0] or 0
+        
+        return stats
+    except Exception as e:
+        logger.error(f"Error fetching validation metrics: {e}")
+        raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
+
+@app.get("/api/imports/summaries")
+def get_import_summaries():
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT summary_id, import_date, import_type, institution_id, total_imported,
+                   resolved_exact, resolved_prefix, resolved_rules,
+                   similarity_suggestions, ai_suggestions, unknown_merchants, auto_resolved_rate
+            FROM import_summaries
+            ORDER BY import_date DESC
+            """
+        )
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+    except Exception as e:
+        logger.error(f"Error fetching import summaries: {e}")
         raise HTTPException(status_code=500, detail="Database error")
     finally:
         conn.close()

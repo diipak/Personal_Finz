@@ -25,6 +25,44 @@ from db.sync_ez import sync_new_transactions
 
 logger = logging.getLogger(__name__)
 
+def record_import_summary(db_conn, import_type: str, institution_id: str, stats: dict):
+    cursor = db_conn.cursor()
+    total = stats.get("total_imported", 0)
+    if total == 0:
+        return
+        
+    resolved_exact = stats.get("resolved_exact", 0)
+    resolved_prefix = stats.get("resolved_prefix", 0)
+    resolved_rules = stats.get("resolved_rules", 0)
+    similarity = stats.get("similarity_suggestions", 0)
+    ai = stats.get("ai_suggestions", 0)
+    unknown = stats.get("unknown", 0)
+    
+    auto_resolved_count = resolved_exact + resolved_prefix + resolved_rules
+    auto_resolved_rate = round((auto_resolved_count / total) * 100, 2) if total > 0 else 0.0
+    
+    try:
+        cursor.execute(
+            """
+            INSERT INTO import_summaries (
+                import_type, institution_id, total_imported,
+                resolved_exact, resolved_prefix, resolved_rules,
+                similarity_suggestions, ai_suggestions, unknown_merchants,
+                auto_resolved_rate
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                import_type, institution_id, total,
+                resolved_exact, resolved_prefix, resolved_rules,
+                similarity, ai, unknown,
+                auto_resolved_rate
+            )
+        )
+        db_conn.commit()
+        logger.info(f"Saved import summary: {total} txs, rate {auto_resolved_rate}%")
+    except Exception as e:
+        logger.error(f"Error saving import summary: {e}")
+
 def process_manual_file(file_path: str, account_name: str, bank_type: str = None) -> int:
     """
     Parses a bank statement file, categorizes transactions,
@@ -166,7 +204,17 @@ def process_manual_file(file_path: str, account_name: str, bank_type: str = None
             "is_guess": 1
         }
         
-    # Step 4: Write transactions to SQLite
+    # Step 4: Write transactions to SQLite & collect telemetry
+    import_stats = {
+        "total_imported": 0,
+        "resolved_exact": 0,
+        "resolved_prefix": 0,
+        "resolved_rules": 0,
+        "similarity_suggestions": 0,
+        "ai_suggestions": 0,
+        "unknown": 0
+    }
+    
     for row in processed_rows:
         try:
             norm_key = row["normalized_key"]
@@ -190,8 +238,37 @@ def process_manual_file(file_path: str, account_name: str, bank_type: str = None
             if upsert_manual_transaction(conn, txn_dict):
                 success_count += 1
                 
+                # Telemetry matching analysis
+                desc = row["desc_val"]
+                amt = row["amount_val"]
+                category_val = cls["category"]
+                
+                from engine.memory import match_memory
+                mem_match = match_memory(conn, desc)
+                if mem_match:
+                    if mem_match["is_auto_resolved"]:
+                        if mem_match["match_type"] == "EXACT":
+                            import_stats["resolved_exact"] += 1
+                        elif mem_match["match_type"] == "PREFIX":
+                            import_stats["resolved_prefix"] += 1
+                    else:
+                        import_stats["similarity_suggestions"] += 1
+                else:
+                    rule_match = match_rule(desc, amt, conn=conn)
+                    if rule_match:
+                        import_stats["resolved_rules"] += 1
+                    else:
+                        if category_val in ["Unsorted", "Other", None, ""]:
+                            import_stats["unknown"] += 1
+                        else:
+                            import_stats["ai_suggestions"] += 1
+                
         except Exception as row_err:
             logger.error(f"Error processing row upsert {row}: {row_err}")
+            
+    if success_count > 0:
+        import_stats["total_imported"] = success_count
+        record_import_summary(conn, "manual_file", bank_type or "Manual Statement", import_stats)
             
     conn.close()
     logger.info(f"Successfully loaded {success_count} manual transactions to database.")
@@ -327,7 +404,17 @@ def process_enable_banking_sync(account_id: str, account_name: str) -> int:
             "is_guess": 1
         }
         
-    # Step 4: Write transactions to SQLite
+    # Step 4: Write transactions to SQLite & collect telemetry
+    import_stats = {
+        "total_imported": 0,
+        "resolved_exact": 0,
+        "resolved_prefix": 0,
+        "resolved_rules": 0,
+        "similarity_suggestions": 0,
+        "ai_suggestions": 0,
+        "unknown": 0
+    }
+    
     success_count = 0
     for txn in processed_txns:
         try:
@@ -342,8 +429,38 @@ def process_enable_banking_sync(account_id: str, account_name: str) -> int:
             
             if upsert_api_transaction(conn, txn):
                 success_count += 1
+                
+                # Telemetry matching analysis
+                desc = txn["description"]
+                amt = txn["amount"]
+                category_val = cls["category"]
+                
+                from engine.memory import match_memory
+                mem_match = match_memory(conn, desc)
+                if mem_match:
+                    if mem_match["is_auto_resolved"]:
+                        if mem_match["match_type"] == "EXACT":
+                            import_stats["resolved_exact"] += 1
+                        elif mem_match["match_type"] == "PREFIX":
+                            import_stats["resolved_prefix"] += 1
+                    else:
+                        import_stats["similarity_suggestions"] += 1
+                else:
+                    rule_match = match_rule(desc, amt, conn=conn)
+                    if rule_match:
+                        import_stats["resolved_rules"] += 1
+                    else:
+                        if category_val in ["Unsorted", "Other", None, ""]:
+                            import_stats["unknown"] += 1
+                        else:
+                            import_stats["ai_suggestions"] += 1
+                            
         except Exception as txn_err:
             logger.error(f"Error processing synced transaction {txn}: {txn_err}")
+            
+    if success_count > 0:
+        import_stats["total_imported"] = success_count
+        record_import_summary(conn, "enable_banking", account_name, import_stats)
             
     conn.close()
     logger.info(f"Successfully upserted {success_count} API transactions to database.")

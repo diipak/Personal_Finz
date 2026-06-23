@@ -683,6 +683,107 @@ class TestPersonalFinzCore(unittest.TestCase):
         
         conn.close()
 
+    def test_import_validation_metrics(self):
+        """Test the validation metrics telemetry collection and API endpoints."""
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        # 1. Seed categories
+        cursor.execute("INSERT OR IGNORE INTO categories (name, flexibility_tier) VALUES ('Shopping', 'Flexible')")
+        cursor.execute("INSERT OR IGNORE INTO categories (name, flexibility_tier) VALUES ('Dining', 'Discretionary')")
+        
+        # 2. Seed a merchant and memory signature
+        cursor.execute("INSERT INTO merchants (name, category_id, is_verified) VALUES ('Amazon', 1, 1)")
+        amazon_id = cursor.lastrowid
+        cursor.execute(
+            """
+            INSERT INTO merchant_signatures (pattern_string, merchant_id, signature_type, source_action, is_user_verified, confidence_score)
+            VALUES ('amazon', ?, 'EXACT', 'user_verify', 1, 1.0)
+            """,
+            (amazon_id,)
+        )
+        
+        # 3. Seed a rule (directly linked to merchant)
+        cursor.execute("INSERT INTO merchants (name, category_id, is_verified) VALUES ('Starbucks', 2, 1)")
+        starbucks_id = cursor.lastrowid
+        cursor.execute(
+            """
+            INSERT INTO regex_rules (pattern_string, match_type, target_category, target_merchant_id, flexibility_tier)
+            VALUES ('starbucks', 'substring', 'Dining', ?, 'Discretionary')
+            """,
+            (starbucks_id,)
+        )
+        conn.commit()
+        conn.close()
+        
+        # 4. Create a mock CSV statement file
+        import csv
+        temp_csv_fd, temp_csv_path = tempfile.mkstemp(suffix=".csv")
+        try:
+            with open(temp_csv_path, "w", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(["Completed Date", "Description", "Amount", "Currency", "State"])
+                writer.writerow(["2026-06-20", "AMAZON DE", "-49.99", "EUR", "COMPLETED"])
+                writer.writerow(["2026-06-21", "STARBUCKS COFFEE", "-5.50", "EUR", "COMPLETED"])
+                writer.writerow(["2026-06-22", "UNKNOWN CAFE", "-15.00", "EUR", "COMPLETED"])
+                
+            # 5. Run the manual import pipeline
+            from pipeline import process_manual_file
+            # Make sure we set Revolut bank type which parses CSV
+            count = process_manual_file(temp_csv_path, "Revolut Main", bank_type="Revolut")
+            self.assertEqual(count, 3)
+            
+            # 6. Verify import_summaries is populated
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM import_summaries")
+            summaries = cursor.fetchall()
+            self.assertEqual(len(summaries), 1)
+            s = summaries[0]
+            self.assertEqual(s["total_imported"], 3)
+            self.assertEqual(s["resolved_exact"], 1) # amazon de
+            self.assertEqual(s["resolved_prefix"], 0)
+            self.assertEqual(s["resolved_rules"], 1) # starbucks
+            # either ai_suggestions or unknown_merchants depending on LLM response (mocked or cache)
+            self.assertEqual(s["resolved_exact"] + s["resolved_prefix"] + s["resolved_rules"] + s["similarity_suggestions"] + s["ai_suggestions"] + s["unknown_merchants"], 3)
+            conn.close()
+            
+            # 7. Check the API Endpoints via fastapi TestClient
+            from fastapi.testclient import TestClient
+            from api.main import app
+            client = TestClient(app)
+            
+            # Validation Metrics API
+            metrics_resp = client.get("/api/merchant-intelligence/validation-metrics")
+            self.assertEqual(metrics_resp.status_code, 200)
+            metrics_data = metrics_resp.json()
+            self.assertEqual(metrics_data["total_imported"], 3)
+            self.assertEqual(metrics_data["resolved_exact"], 1)
+            self.assertEqual(metrics_data["resolved_rules"], 1)
+            
+            # Import Summaries List API
+            list_resp = client.get("/api/imports/summaries")
+            self.assertEqual(list_resp.status_code, 200)
+            list_data = list_resp.json()
+            self.assertEqual(len(list_data), 1)
+            self.assertEqual(list_data[0]["total_imported"], 3)
+            
+            # Workbench reasons API
+            wb_resp = client.get("/api/merchant-clusters/workbench")
+            self.assertEqual(wb_resp.status_code, 200)
+            wb_data = wb_resp.json()
+            
+            # Check if any cluster is loaded and has a workbench reason
+            if wb_data:
+                first_wb = wb_data[0]
+                self.assertIn("workbench_reason", first_wb)
+                self.assertIsNotNone(first_wb["workbench_reason"])
+                
+        finally:
+            os.close(temp_csv_fd)
+            if os.path.exists(temp_csv_path):
+                os.remove(temp_csv_path)
+
 if __name__ == "__main__":
     unittest.main()
 

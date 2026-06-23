@@ -10,7 +10,7 @@ from db.database import get_db
 
 logger = logging.getLogger(__name__)
 
-def match_rule(description: str, amount: float) -> dict:
+def match_rule(description: str, amount: float, conn=None) -> dict:
     """
     Checks the description and amount against SQLite rules.
     Returns a dict of metadata to apply, or None if no match is found.
@@ -19,7 +19,10 @@ def match_rule(description: str, amount: float) -> dict:
     desc = str(description).strip()
     abs_amount = abs(amount)
     
-    conn = get_db()
+    should_close = False
+    if conn is None:
+        conn = get_db()
+        should_close = True
     cursor = conn.cursor()
     try:
         # Check Memory Engine first (exact and prefix matches only)
@@ -139,7 +142,8 @@ def match_rule(description: str, amount: float) -> dict:
     except Exception as e:
         logger.error(f"Error matching rules: {e}")
     finally:
-        conn.close()
+        if should_close:
+            conn.close()
         
     return None
 

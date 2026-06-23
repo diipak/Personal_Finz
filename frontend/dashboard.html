@@ -1664,6 +1664,65 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- 3. Validation Performance Section -->
+                        <div class="grid grid-cols-12 gap-6 mt-6">
+                            <div class="col-span-12 glass-card p-6">
+                                <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-primary text-sm">analytics</span>
+                                    Memory Engine Performance & Ingestion Telemetry
+                                </h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                                    <div class="bg-zinc-950/40 border border-border-subtle/50 p-4 rounded-xl">
+                                        <span class="text-[10px] uppercase font-bold text-on-surface-variant block mb-1">Memory Hit Rate</span>
+                                        <h4 id="val-kpi-mem-hit-rate" class="text-lg font-bold text-white">0%</h4>
+                                        <p id="val-kpi-mem-hit-desc" class="text-[9px] text-on-surface-variant/80 mt-1">0 matches from memory</p>
+                                    </div>
+                                    <div class="bg-zinc-950/40 border border-border-subtle/50 p-4 rounded-xl">
+                                        <span class="text-[10px] uppercase font-bold text-on-surface-variant block mb-1">Auto-Resolved Rate</span>
+                                        <h4 id="val-kpi-auto-resolved" class="text-lg font-bold text-primary">0%</h4>
+                                        <p id="val-kpi-auto-res-desc" class="text-[9px] text-on-surface-variant/80 mt-1">Memory + rules matched</p>
+                                    </div>
+                                    <div class="bg-zinc-950/40 border border-border-subtle/50 p-4 rounded-xl">
+                                        <span class="text-[10px] uppercase font-bold text-on-surface-variant block mb-1">LLM Usage Rate</span>
+                                        <h4 id="val-kpi-llm-usage" class="text-lg font-bold text-error">0%</h4>
+                                        <p id="val-kpi-llm-use-desc" class="text-[9px] text-on-surface-variant/80 mt-1">AI suggestions generated</p>
+                                    </div>
+                                    <div class="bg-zinc-950/40 border border-border-subtle/50 p-4 rounded-xl">
+                                        <span class="text-[10px] uppercase font-bold text-on-surface-variant block mb-1">New Merchants</span>
+                                        <h4 id="val-kpi-new-merchants" class="text-lg font-bold text-success">0</h4>
+                                        <p class="text-[9px] text-on-surface-variant/80 mt-1">Ingested this month</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-border-subtle/30 pt-4">
+                                    <h4 class="text-xs font-mono font-bold text-white mb-3">Recent Statement Ingestions</h4>
+                                    <div class="overflow-x-auto max-h-60 scroll-zone">
+                                        <table class="w-full text-xs text-left text-white/90">
+                                            <thead class="text-[9px] uppercase text-on-surface-variant border-b border-border-subtle bg-white/5 font-mono">
+                                                <tr>
+                                                    <th class="px-3 py-2">Date</th>
+                                                    <th class="px-3 py-2">Source</th>
+                                                    <th class="px-3 py-2 text-right">Imported</th>
+                                                    <th class="px-3 py-2 text-right text-emerald-400">Memory Exact</th>
+                                                    <th class="px-3 py-2 text-right text-emerald-400">Memory Prefix</th>
+                                                    <th class="px-3 py-2 text-right text-primary">Rules</th>
+                                                    <th class="px-3 py-2 text-right text-amber-400">Similarity</th>
+                                                    <th class="px-3 py-2 text-right text-purple-400">AI</th>
+                                                    <th class="px-3 py-2 text-right text-error">Unknown</th>
+                                                    <th class="px-3 py-2 text-right text-primary">Auto-Resolved Rate</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="mi-validation-summaries-table-body" class="divide-y divide-border-subtle/30">
+                                                <tr>
+                                                    <td colspan="10" class="text-center py-6 text-on-surface-variant font-mono">No import summaries recorded yet.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Sub-view 3: Cluster Workbench -->
